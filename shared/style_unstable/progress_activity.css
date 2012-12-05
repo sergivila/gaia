@@ -4,7 +4,7 @@
 
 /* Spinner */
 progress:not([value]) {
-  background: url(progress_activity/images/ui/default.png) no-repeat center center;
+  background: url(progress_activity/images/ui/default.png) no-repeat center center / 100% auto;
   animation: 0.9s rotate infinite linear;
   width: 6.4rem;
   height: 6.4rem;
@@ -35,8 +35,8 @@ p[role="status"].skin-dark progress:not([value]).opposite {
 
 /* Small */
 progress:not([value]).small {
-  width: 3.2em;
-  height: 3.2em;
+  width: 3.2rem;
+  height: 3.2rem;
   background-image: url(progress_activity/images/ui/default-small.png);
 }
 
