@@ -174,7 +174,8 @@ Gaia.webapps.forEach(function(webapp) {
     locales: [],         // List of locale names to copy
     resources: [],       // List of resources to copy
     styles: [],          // List of stable style names to copy
-    unstable_styles: []  // List of unstable style names to copy
+    unstable_styles: [],  // List of unstable style names to copy
+    screens: []  // List of aviable screens style names to copy
   };
 
   let files = ls(webapp.sourceDirectoryFile, true);
@@ -215,6 +216,11 @@ Gaia.webapps.forEach(function(webapp) {
             if (used.unstable_styles.indexOf(unstableStyleName) == -1)
               used.unstable_styles.push(unstableStyleName);
             break;
+
+          case 'screens':
+            if (used.screens.indexOf(path) == -1)
+              used.screens.push(path);
+            break;
         }
       }
     });
@@ -231,6 +237,20 @@ Gaia.webapps.forEach(function(webapp) {
                       webapp.domain);
     }
     addToZip(zip, '/shared/js/' + path, file);
+  });
+
+    used.screens.forEach(function(path) {
+    // Compute the nsIFile for this shared Screen CSS file
+    let file = Gaia.sharedFolder.clone();
+    file.append('screens');
+    path.split('/').forEach(function(segment) {
+      file.append(segment);
+    });
+    if (!file.exists()) {
+      throw new Error('Using inexistent shared Screen CSS file: ' + path + ' from: ' +
+                      webapp.domain);
+    }
+    addToZip(zip, '/shared/screens/' + path, file);
   });
 
   used.locales.forEach(function(name) {

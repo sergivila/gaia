@@ -1,0 +1,12 @@
+/* QHD => DVGA */
+
+/* Supported devices:
+	- Geeksphone Twist: 540×960:?;
+*/
+
+
+/*B2G always returns with 'min-resolution' 96dpi instead of real dpi (equal to Macbook Pro 13' dpi's) */
+/*B2G always returns with 'min--moz-device-pixel-ratio' 1 instead of real pixel ratio */
+@media only screen and ( min-width: 540px ) and ( max-width: 640px )  {
+	html { font-size: 16.8px!important; }
+}
