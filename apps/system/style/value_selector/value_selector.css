@@ -152,4 +152,5 @@ button.affirmative.active {
 #value-selector li input:checked + span,
 #value-selector li[aria-checked="true"] span {
   background: url("../bb/value_selector/images/icons/checked.png") no-repeat scroll right center border-box transparent;
+  background-size: 1.9rem;
 }
