@@ -61,6 +61,7 @@ body[role="application"] [role="dialog"] [role="listbox"]  li[aria-checked="true
   padding-right: 0.5rem;
   color: #00abcd;
   background: url(images/icons/checked.png) content-box right center no-repeat;
+  background-size: 1.9rem;
 }
 
 body[role="application"] [role="dialog"] [role="listbox"]  li a,
