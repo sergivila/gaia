@@ -22,7 +22,7 @@ div.windowSprite {
   text-align: center;
   color: #fff;
   font-size: 2em;
-  text-shadow: #000 0 2px 1px;
+  text-shadow: #000 0 0.2rem 0.1rem;
 }
 
 /* Volume */
@@ -32,7 +32,7 @@ div.windowSprite {
   top: 0;
   left: 0;
   width: 100%;
-  height: 40px;
+  height: 4rem;
   -moz-transition: opacity 0.5s ease;
   pointer-events: none;
   display: none;
@@ -40,25 +40,27 @@ div.windowSprite {
 }
 
 #volume > * {
-  line-height: 40px;
-  height: 40px;
+  line-height: 4rem;
+  height: 4rem;
   background-repeat: no-repeat, no-repeat;
   background-position: center, center;
 }
 
 #volume span {
   display: inline-block;
-  width: 25px;
+  width: 2.5rem;
   float: left;
 }
 
 #volume span.vibration {
-  margin-left: 5px;
+  margin-left: 0.5rem;
   background-image: url('images/volume/vibration_disabled_icon.png');
+  background-size: 0.8rem auto;
 }
 
 #volume.vibration span.vibration {
   background-image: url('images/volume/vibration_enabled_icon.png');
+  background-size: 0.8rem auto;
 }
 
 #volume.mute span.mute-state {
@@ -67,11 +69,13 @@ div.windowSprite {
 
 #volume span.mute-state {
   background-image: url('images/volume/speaker_regular_icon.png');
+  background-size: 2.2rem;
 }
 
 #volume span.volume {
-  margin-left: 5px;
+  margin-left: 0.5rem;
   background-image: url('images/volume/speaker_loud_icon.png');
+  background-size: 2.2rem;
 }
 
 #volume.visible {
@@ -82,9 +86,10 @@ div.windowSprite {
 #volume[data-channel="bt_sco"] div:nth-child(12) {
   display: inline-block;
   float: left;
-  width: 20px;
-  margin-left: 2px;
+  width: 2rem;
+  margin-left: 0.2rem;
   background-image: url('images/volume/volume_center_disabled.png');
+  background-size: 2rem auto;
 }
 
 #volume div.active,
@@ -127,18 +132,18 @@ div.windowSprite {
 }
 
 #volume[data-channel="bt_sco"] > div:nth-child(n+4):not(:nth-child(17)) {
-  width: 12px;
-  background-size: 12px 10px;
+  width: 1.2rem;
+  background-size: 1.2rem 1rem;
 }
 
-@media (orientation: landscape) and (width: 480px) {
+@media (orientation: landscape) and (width: 48rem) {
   #volume div,
   #volume[data-channel="bt_sco"] div:nth-child(12) {
     display: inline-block;
     float: left;
-    width: 36px;
-    margin-left: 2px;
-    background-size: 36px 10px;
+    width: 3.6rem;
+    margin-left: 0.2rem;
+    background-size: 3.6rem 1rem;
     background-image: url('images/volume/VolumeOverlay_Landscape_SegmentOff.png');
   }
 
@@ -166,7 +171,7 @@ div.windowSprite {
   }
 
   #volume[data-channel="bt_sco"] > div:nth-child(n+4):not(:nth-child(17)) {
-    width: 22px;
-    background-size: 22px 10px;
+    width: 2.2rem;
+    background-size: 2.2rem 1rem;
   }
 }
