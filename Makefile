@@ -28,6 +28,7 @@ GAIA_DOMAIN?=gaiamobile.org
 
 DEBUG?=0
 PRODUCTION?=0
+SCREEN_TYPE?=*
 
 LOCAL_DOMAINS?=1
 
@@ -224,6 +225,24 @@ webapp-manifests: install-xulrunner-sdk
 	@mkdir -p profile/webapps
 	@$(call run-js-command, webapp-manifests)
 	@#cat profile/webapps/webapps.json
+
+# We need to modify in Make process al the .html files for linking to our desired .css file
+ui-scale:
+	# Temporal folder for saving previous state of .html files
+	@echo "Generating temporal html folder"
+	mkdir .tmp_html/
+
+	@echo "Copying original application state"
+	cp -rf apps/ .tmp_html/
+
+	@echo "Appending $(SCREEN_TYPE).css link into .html files"
+	find apps/ -name "*.html" -exec sed -i '' 's/<\/head>/<link rel=\"stylesheet\" href\=\"\/shared\/screens\/$(SCREEN_TYPE).css\" >\ <\/head>/' {} \;
+
+# Go to previous state of  ui-scale command
+undo-ui-scale:
+	@echo "Reverting applications files"
+	cp -rf .tmp_html/ apps/
+	rm -rf .tmp_html/
 
 # Generate profile/webapps/APP/application.zip
 webapp-zip: stamp-commit-hash install-xulrunner-sdk
@@ -551,7 +570,12 @@ update-offline-manifests:
 # phone, and you have adb in your path, then you can use the install-gaia
 # target to update the gaia files and reboot b2g
 TARGET_FOLDER = webapps/$(BUILD_APP_NAME).$(GAIA_DOMAIN)
-install-gaia: profile
+install-gaia:
+ifneq ($(SCREEN_TYPE),*)
+	$(MAKE) ui-scale
+endif
+
+	$(MAKE) profile
 	$(ADB) start-server
 	@echo 'Stopping b2g'
 	$(ADB) shell stop b2g
@@ -570,6 +594,12 @@ endif
 	@echo "Installed gaia into profile/."
 	@echo 'Starting b2g'
 	$(ADB) shell start b2g
+
+ifneq ($(SCREEN_TYPE),*)
+	$(MAKE) undo-ui-scale
+endif
+
+
 
 # Copy demo media to the sdcard.
 # If we've got old style directories on the phone, rename them first.
