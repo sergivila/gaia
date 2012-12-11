@@ -397,7 +397,7 @@ section.view[data-state="active"] {
 }
 
 #view-settings [data-type="list"] .fb-item p:first-of-type {
-  background: url(/contacts/style/fb/profile_icon.png) no-repeat left calc(50% + 0.5rem);
+  background: url(/contacts/style/fb/profile_icon.png) no-repeat left calc(50% + 0.5rem) / 3rem;
 }
 
 #view-settings [data-type="list"] .fb-item aside {
@@ -460,7 +460,7 @@ section.view[data-state="active"] {
 /* No Contacts */
 
 #no-contacts {
-  background: url(/contacts/style/images/contact_big_icon.png) no-repeat center center #FFFFFF;
+  background: #FFF url(/contacts/style/images/contact_big_icon.png) no-repeat center center / 15.3rem;
   height: 100%;
   position: absolute;
   width: 100%;
@@ -492,11 +492,11 @@ section.view[data-state="active"] {
 }
 
 #no-contacts .small.arrow {
-  background: url("/contacts/style/images/arrow_small.png") no-repeat scroll 93% 0.5rem transparent;
+  background: url("/contacts/style/images/arrow_small.png") no-repeat 93% 0.5rem / 4.5rem;
 }
 
 #no-contacts .big.arrow {
-  background: url("/contacts/style/images/arrow_big.png") no-repeat scroll 93% 0.5rem transparent;
+  background: url("/contacts/style/images/arrow_big.png") no-repeat 93% 0.5rem / 6.5rem;
   height: 5rem;
   padding-top: 3.5rem;
 }
