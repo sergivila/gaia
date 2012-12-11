@@ -133,6 +133,13 @@ ul[role="tablist"][data-type="filter"] > [role="tab"].selected > a {
 
 }
 
+
+.icon-incoming,
+.icon-outgoing,
+.icon-missed {
+  background-size: 3rem;
+}
+
 .icon-incoming {
   width: 3rem;
   height: 3rem;
