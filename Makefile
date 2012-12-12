@@ -230,6 +230,7 @@ webapp-manifests: install-xulrunner-sdk
 ui-scale:
 	# Temporal folder for saving previous state of .html files
 	@echo "Generating temporal html folder"
+	rm -rf .tmp_html/
 	mkdir .tmp_html/
 
 	@echo "Copying original application state"
@@ -237,6 +238,12 @@ ui-scale:
 
 	@echo "Appending $(SCREEN_TYPE).css link into .html files"
 	find apps/ -name "*.html" -exec sed -i '' 's/<\/head>/<link rel=\"stylesheet\" href\=\"\/shared\/screens\/$(SCREEN_TYPE).css\" >\ <\/head>/' {} \;
+
+	# Assets replacment
+	# @echo "Linking @2x images in Building Blocks"
+	# find shared/ -name "*.css" -exec sed -i '' 's/.png/@2x.png/' {} \;
+	# find shared/style/headers.css -exec sed -i '' 's/.png/@2x.png/' {} \;
+
 
 # Go to previous state of  ui-scale command
 undo-ui-scale:
