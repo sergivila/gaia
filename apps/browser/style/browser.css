@@ -669,7 +669,7 @@ section[role="tabpanel"].selected {
 }
 
 #results {
-  padding-top: 5px;
+  padding-top: 0.5rem;
   background-color: #f3f4f8;
   display: block;
   position: absolute;
