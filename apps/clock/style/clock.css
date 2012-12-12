@@ -4,12 +4,7 @@ html, body {
   overflow: hidden;
   margin: 0;
   color: white;
-}
-
-@media all and (min-resolution: 200dpi) {
-  html, body {
-    font-size: 2mozmm;
-  }
+  font-size: 10px;
 }
 
 /* === Application Header === */
@@ -422,27 +417,29 @@ html, body {
   margin: 5.8rem auto auto;
   position: absolute;
 }
+
 /* These CSS styles all apply to the SVG clock elements */
 #analog-clock-svg { /* styles for everything in the clock */
   stroke: black; /* black lines */
   stroke-linecap: butt; /* with butt ends */
   fill: transparent; /* on a transparent background */
+  margin-top: 1rem;
 }
 #hands {
   pointer-events: none;
 }
 #secondhand { /* narrow blue second hand */
-  stroke-width: 0.05rem; 
+  stroke-width: 0.05rem;
   stroke: #00abcd;
 }
 #minutehandCentralPoint { /* dark-gray central point*/
-  stroke-width: 0rem; 
-  stroke: #4f5b5f; 
+  stroke-width: 0rem;
+  stroke: #4f5b5f;
   fill: #4f5b5f;
 }
 #secondhandCentralPoint { /* blue central point */
-  stroke-width: 0rem; 
-  stroke: #00abcd; 
+  stroke-width: 0rem;
+  stroke: #00abcd;
   fill: #00abcd;
 }
 /* from building blocks, core.css - [role=dialog]*/
@@ -507,11 +504,6 @@ body.hidden *[data-l10n-id] {
   visibility: hidden;
 }
 
-/* 320x480 phones */
-@media screen and (width: 320px) {
-  html {
-    font-size: 10px;
-  }
   #analog-clock-svg-body.alarm1 {
     transform: matrix(1,0,0,1,0,0);
   }
@@ -541,11 +533,7 @@ body.hidden *[data-l10n-id] {
   }
 }
 
-/* 480x800 phones */
-@media screen and (width: 480px) {
-  html {
-    font-size: 10px;
-  }
+
   #analog-clock-svg-body.alarm1 {
     transform: matrix(1.13,0,0,1.13,0,7);
   }
