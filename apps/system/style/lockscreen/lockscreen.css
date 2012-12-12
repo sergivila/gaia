@@ -298,6 +298,7 @@ button::-moz-focus-inner {
   background-image: url('./images/icon-unlock.png');
   background-position: center;
   background-repeat: no-repeat;
+  background-size: 1.8rem 1.7rem;
   margin-left: 6rem;
   background-size: 1.8rem 1.7rem;
 }
@@ -306,6 +307,7 @@ button::-moz-focus-inner {
   background-image: url('./images/icon-camera.png');
   background-position: center;
   background-repeat: no-repeat;
+  background-size: 2.2rem 1.7rem;
   margin-left: 4rem;
   background-size: 2.2rem 1.7rem;
 }

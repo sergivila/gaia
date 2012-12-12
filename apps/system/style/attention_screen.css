@@ -32,7 +32,7 @@
   border: 0;
   width: 100%;
   /* we have the 2rem status bar on top */
-  height: -moz-calc(100% - 2rem);
+  height: calc(100% - 2rem);
   margin-top: 2rem;
   background-color: transparent;
   position: absolute;
