@@ -38,7 +38,7 @@ ol.link-list a {
 }
 
 ol.link-list a {
-  background: transparent url('icons/ActionIcons_30x30_forward_nav.png') no-repeat right;
+  background: transparent url('icons/ActionIcons_30x30_forward_nav.png') no-repeat right / 3rem;
 }
 
 /* view management */
