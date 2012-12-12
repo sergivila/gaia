@@ -14,12 +14,12 @@
 }
 
 #screen.active-statusbar #attention-screen {
-  transform: translateY(calc(-100% + 40px));
+  transform: translateY(calc(-100% + 4rem));
 }
 
 #screen.active-statusbar #attention-screen.status-mode {
-  height: 40px;
-  transform: translateY(0px);
+  height: 4rem;
+  transform: translateY(0);
   transition: none;
 }
 
