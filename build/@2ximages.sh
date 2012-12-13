@@ -1,13 +1,21 @@
 # Shared config
-SOURCE=shared
+APPS=apps
+SHARED=shared
+SOURCE="$APPS $SHARED"
 MATCHES=matched.txt
 UNMATCHES=unmatched.txt
 
-# Create snapshoot of $SOURCE
-rm -rf .tmp_$SOURCE/
-cp -rf $SOURCE/ .tmp_$SOURCE/
+# Create snapshoot of $APPS
+rm -rf .tmp_$APPS/
+cp -rf $APPS/ .tmp_$APPS/
+echo "$APPS Snapshoot created"
 
-# Clean temporal files
+# Create snapshoot of $SHARED
+rm -rf .tmp_$SHARED/
+cp -rf $SHARED/ .tmp_$SHARED/
+echo "$SHARED Snapshoot created"
+
+# Clean log files
 rm -rf $MATCHES
 rm -rf $UNMATCHES
 
@@ -28,7 +36,6 @@ do
       else
         echo "$ASSET" >> $UNMATCHES
     fi
-
 done
 
 # Rename all the unmatched files
@@ -40,5 +47,5 @@ do
   cp $URL $URL2X
 done
 
-# Replace images declaratons in files CSS, HTML and JS
+# Replace images declaratons in CSS, HTML and JS files
 find $SOURCE -name "*.css" -o -name "*.html" -o -name "*.js" | xargs sed -i '' 's/\.[jpg][png][gif]/@2x&/g' ;
