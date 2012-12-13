@@ -240,9 +240,8 @@ ui-scale:
 	find apps/ -name "*.html" -exec sed -i '' 's/<\/head>/<link rel=\"stylesheet\" href\=\"\/shared\/screens\/$(SCREEN_TYPE).css\" >\ <\/head>/' {} \;
 
 	# Assets replacment
-	# @echo "Linking @2x images in Building Blocks"
-	# find shared/ -name "*.css" -exec sed -i '' 's/.png/@2x.png/' {} \;
-	# find shared/style/headers.css -exec sed -i '' 's/.png/@2x.png/' {} \;
+	@echo "Linking @2x images"
+	build/./@2ximages.sh
 
 
 # Go to previous state of  ui-scale command
@@ -250,6 +249,7 @@ undo-ui-scale:
 	@echo "Reverting applications files"
 	cp -rf .tmp_html/ apps/
 	rm -rf .tmp_html/
+	build/./undo@2ximages.sh
 
 # Generate profile/webapps/APP/application.zip
 webapp-zip: stamp-commit-hash install-xulrunner-sdk
