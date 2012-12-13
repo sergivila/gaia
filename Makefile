@@ -228,7 +228,6 @@ webapp-manifests: install-xulrunner-sdk
 
 # We need to modify in Make process al the .html files for linking to our desired .css file
 ui-scale:
-	# Assets replacment
 	@echo "Linking @2x images"
 	build/./@2ximages.sh
 
