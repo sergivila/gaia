@@ -228,12 +228,8 @@ webapp-manifests: install-xulrunner-sdk
 
 # We need to modify in Make process al the .html files for linking to our desired .css file
 ui-scale:
-	# Temporal folder for saving previous state of .html files
-	@echo "Generating temporal html folder"
-	mkdir .tmp_html/
-
-	@echo "Copying original application state"
-	cp -rf apps/ .tmp_html/
+	@echo "Linking @2x images"
+	build/./@2ximages.sh
 
 	@echo "Appending $(SCREEN_TYPE).css link into .html files"
 	find apps/ -name "*.html" -exec sed -i '' 's/<\/head>/<link rel=\"stylesheet\" href\=\"\/shared\/screens\/$(SCREEN_TYPE).css\" >\ <\/head>/' {} \;
@@ -241,8 +237,7 @@ ui-scale:
 # Go to previous state of  ui-scale command
 undo-ui-scale:
 	@echo "Reverting applications files"
-	cp -rf .tmp_html/ apps/
-	rm -rf .tmp_html/
+	build/./undo@2ximages.sh
 
 # Generate profile/webapps/APP/application.zip
 webapp-zip: stamp-commit-hash install-xulrunner-sdk

@@ -64,9 +64,9 @@ html, body {
 
 #update-manager-toaster > .message {
   position: absolute;
-  left: 50px;
-  top: 10px;
-  width: -moz-calc(100% - 55px);
+  left: 5rem;
+  top: 1rem;
+  width: -moz-calc(100% - 5.5rem);
   color: #52b8cc;
   font-size: 1.5rem;
   font-weight: 500;
@@ -126,7 +126,7 @@ html, body {
   text-transform:capitalize;
   font-size: 1.9rem;
   color: #fff;
-  padding: 0px 10px 11px 10px;
+  padding: 0 1rem 1.1rem 1rem;
   background: rgba(255, 255, 255, 0.0);
 }
 
