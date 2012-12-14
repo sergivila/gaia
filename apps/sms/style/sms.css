@@ -39,6 +39,7 @@ html, body {
 /* Override Building Block [Header] styles */
 section[role="region"] > header:first-child .icon.icon-clear {
   background-image: url(images/icons/clear.png);
+  background-size: 1.7rem;
   right: calc(-50% + 7rem);
   width: 2rem;
   margin: 0;
@@ -327,7 +328,7 @@ a.unread .unread-mark .icon-unread-mark {
   width: 1rem;
   top: 2rem;
   left: 1rem;
-  background: url(../style/images/unread.png);
+  background: url(../style/images/unread.png) no-repeat center center / 1rem;
   transition: opacity 0.25s ease;
 }
 
@@ -457,6 +458,9 @@ a.unread .unread-mark .icon-unread-mark {
   text-align: left;
 }
 
+.bubble:after {
+  background-size: 0.9rem;
+}
 .sent .bubble:after {
   content: '';
   width: .9rem;

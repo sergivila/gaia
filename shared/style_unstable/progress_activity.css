@@ -4,7 +4,7 @@
 
 /* Spinner */
 progress:not([value]) {
-  background: url(progress_activity/images/ui/default.png) no-repeat center center;
+  background: url(progress_activity/images/ui/default.png) no-repeat center center / 100% auto;
   animation: 0.9s rotate infinite steps(30);
   width: 2.9rem;
   height: 2.9rem;

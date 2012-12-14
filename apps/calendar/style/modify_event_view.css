@@ -46,6 +46,10 @@
   right: 1rem;
 }
 
+#modify-event-view li.allday > a {
+  font: 1.1rem/1rem "MozTT", Sans-serif;
+}
+
 #modify-event-view.allday .start-time,
 #modify-event-view.allday .end-time {
   visibility: hidden;
