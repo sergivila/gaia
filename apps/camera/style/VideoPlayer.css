@@ -4,6 +4,7 @@
   left: 0; /* we position it with a transform */
   top:0;
   transform-origin: 0 0;
+  width: 100%;
 }
 
 /* video player controls */

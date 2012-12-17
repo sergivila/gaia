@@ -77,6 +77,26 @@ li hr {
   position: relative;
   width: 100%;
   height: 100%;
+  white-space: nowrap;
+}
+
+#videoFrame:after {
+  content: "";
+  display: inline-block;
+  vertical-align: middle;
+  width: 1px;
+  height: 100%;
+}
+
+#videoFrame #player {
+  display: inline-block;
+  vertical-align: middle;
+  position: static;
+  margin: 0!important;
+  width: 100%;
+  height: auto!important;
+  max-height: 100%!important;
+  transform: none!important;
 }
 
 #delete-video-button {
@@ -99,6 +119,7 @@ li hr {
   top: 0;
   left: 0;
   transform-origin: 0 0;
+  width: 100%;
 }
 
 /*
