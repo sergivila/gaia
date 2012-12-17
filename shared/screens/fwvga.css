@@ -1,12 +1,13 @@
-/* FWVGA => QHD */
-
-/* Supported devices:
-	- Samsung Galaxy SII: 480×800:218;
+/*
+	FWVGA => QHD
+	Supported devices:
+		- Samsung Galaxy SII: 480×800:218;
 */
 
+/*
+	B2G always returns with 'min-resolution' 96dpi instead of real dpi (equal to Macbook Pro 13' dpi's)
+	B2G always returns with 'min--moz-device-pixel-ratio' 1 instead of real pixel ratio.
+	We are not using any media query because of applications internal iframes size will not match the device query
+*/
 
-/*B2G always returns with 'min-resolution' 96dpi instead of real dpi (equal to Macbook Pro 13' dpi's) */
-/*B2G always returns with 'min--moz-device-pixel-ratio' 1 instead of real pixel ratio */
-@media only screen and ( min-width: 480px ) and ( max-width: 540px )  {
-	html { font-size: 13.5px!important; }
-}
+html { font-size: 13.5px!important; }
