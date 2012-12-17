@@ -1,84 +1,22 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
-<svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="100"
-   height="100"
-   id="svg2"
-   version="1.1"
-   inkscape:version="0.48.3.1 r9886"
-   sodipodi:docname="data-off.svg">
-  <defs
-     id="defs4">
-    <linearGradient
-       id="linearGradient3811">
-      <stop
-         style="stop-color:#00ff00;stop-opacity:1;"
-         offset="0"
-         id="stop3813" />
-      <stop
-         style="stop-color:#00cc00;stop-opacity:1;"
-         offset="1"
-         id="stop3815" />
-    </linearGradient>
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient3811"
-       id="linearGradient3817"
-       x1="49.997475"
-       y1="10.098974"
-       x2="49.997475"
-       y2="89.738869"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="translate(-111,948.36218)" />
-  </defs>
-  <sodipodi:namedview
-     id="base"
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1.0"
-     inkscape:pageopacity="0.0"
-     inkscape:pageshadow="2"
-     inkscape:zoom="12.63"
-     inkscape:cx="50"
-     inkscape:cy="66.859188"
-     inkscape:document-units="px"
-     inkscape:current-layer="layer1"
-     showgrid="false"
-     inkscape:window-width="1717"
-     inkscape:window-height="996"
-     inkscape:window-x="65"
-     inkscape:window-y="24"
-     inkscape:window-maximized="0" />
-  <metadata
-     id="metadata7">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
-  <g
-     inkscape:label="Ebene 1"
-     inkscape:groupmode="layer"
-     id="layer1"
-     transform="translate(0,-952.36218)">
-    <path
-       style="fill:#a0a0a0;fill-opacity:1;stroke:none"
-       d="m 31.265625,972.36217 -20,20 10,0 0,40.00003 20,0 0,-40.00003 10,0 -20,-20 z m 27.46875,0 0,40.00003 -10,0 20,20 20,-20 -10,0 0,-40.00003 -20,0 z"
-       id="rect3838"
-       inkscape:connector-curvature="0" />
-  </g>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1"
+	 id="svg2" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" sodipodi:docname="data-off.svg" inkscape:version="0.48.3.1 r9886" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:svg="http://www.w3.org/2000/svg" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="100px" height="100px"
+	 viewBox="0 0 100 100" enable-background="new 0 0 100 100" xml:space="preserve">
+<sodipodi:namedview  inkscape:window-maximized="0" inkscape:window-y="24" inkscape:window-x="65" inkscape:window-height="996" inkscape:window-width="1717" showgrid="false" inkscape:current-layer="layer1" inkscape:document-units="px" inkscape:cy="66.859188" inkscape:zoom="12.63" inkscape:pageshadow="2" inkscape:cx="50" inkscape:pageopacity="0.0" borderopacity="1.0" bordercolor="#666666" pagecolor="#ffffff" id="base">
+	</sodipodi:namedview>
+<g>
+	<g>
+		<path fill-rule="evenodd" clip-rule="evenodd" fill="#A0A0A0" d="M71.639,21.187H28.994l9.358,9.357h28.25
+			c1.628,0,2.937,1.312,2.937,2.938v28.246l9.342,9.341V28.434C78.881,24.429,75.646,21.187,71.639,21.187z"/>
+	</g>
+</g>
+<g>
+	<g>
+		<path fill-rule="evenodd" clip-rule="evenodd" fill="#A0A0A0" d="M60.481,69.827h-28.25c-1.627,0-2.936-1.312-2.936-2.938V38.643
+			l-9.342-9.341v42.636c0,4.002,3.234,7.245,7.242,7.245h42.644L60.481,69.827z"/>
+	</g>
+</g>
 </svg>
