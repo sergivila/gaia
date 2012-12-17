@@ -6,7 +6,7 @@ body, html {
   font-family: MozTT, sans-serif;
   font-weight: normal;
   font-size: 10px;
-  background: url("images/background.png") no-repeat 0 -2rem / 100% auto;
+  background: #1d2125 url("images/background.png") no-repeat 0 -2rem / 100% auto;
 }
 
 .row {

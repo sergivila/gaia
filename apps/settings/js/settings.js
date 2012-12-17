@@ -712,6 +712,7 @@ window.addEventListener('load', function loadSettings() {
         oldPanel.removeEventListener('transitionend', onTransitionEnd);
         oldPanel.hidden = true;
       });
+
     });
   }
 
