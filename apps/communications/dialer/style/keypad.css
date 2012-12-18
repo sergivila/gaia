@@ -121,6 +121,10 @@ article:not(:target) #keypad-delete {
   vertical-align: middle;
 }
 
+.keypad-key * {
+  pointer-events: none;
+}
+
 .keypad-key-label *,
 #keypad-delete * {
   pointer-events: none;
