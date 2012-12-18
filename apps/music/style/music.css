@@ -47,8 +47,8 @@ body {
   margin-left: 10%;
   margin-right: 10%;
   padding: 10%;
-  border: solid black 4px;
-  border-radius: 10px;
+  border: solid black 0.40rem;
+  border-radius: 1rem;
   background-color: rgba(0, 0, 0, 0.6);
   font-family: "MozTT", sans-serif;
   color: #fff;
@@ -58,27 +58,27 @@ body {
 #overlay-title {
   text-align: center;
   font-weight: bold;
-  font-size: 26px;
+  font-size: 2.60rem;
 }
 
 #overlay-text {
-  font-size: 18px;
+  font-size: 1.80rem;
 }
 
 /* the indeterminate progress bar displayed while scanning */
 #progress {
   position: absolute;
   top: 5rem;
-  left: 0px;
+  left: 0rem;
   width: 100%;
-  height: 3px;
+  height: 0.30rem;
   border: none;
   overflow: hidden;
   z-index: 31;
 }
 
 #throbber {
-  height: 24px;
+  height: 2.40rem;
   background-image: url(images/progress.png);
 }
 
@@ -88,10 +88,10 @@ body {
 
 @keyframes throb {
   from {
-    transform: translateY(0px);
+    transform: translateY(0rem);
   }
   to {
-    transform: translateY(-21px);
+    transform: translateY(-2.10rem);
   }
 }
 
@@ -199,7 +199,7 @@ body.player-mode #views {
   position: relative;
   float: left;
   left: 3rem;
-  border-bottom: solid 1px rgba(255, 255, 255, 0.1);
+  border-bottom: solid 0.10rem rgba(255, 255, 255, 0.1);
 }
 
 #views-sublist-header-default {
@@ -241,6 +241,7 @@ body.player-mode #views {
   height: 4rem;
   background-position: center center;
   background-repeat: no-repeat;
+  background-size: 3rem;
 }
 
 #views-sublist-controls-play {
@@ -253,7 +254,7 @@ body.player-mode #views {
 
 .album-controls-button {
   border: none;
-  border-radius: 0px;
+  border-radius: 0rem;
   background: transparent;
   transition: background 200ms ease;
 }
@@ -275,17 +276,17 @@ body.player-mode #views {
 }
 
 .main-tile {
-  width: 318px;
-  height: 318px;
-  border: 1px solid rgba(0, 0, 0, 1);
+  width: 31.80rem;
+  height: 31.80rem;
+  border: 0.10rem solid rgba(0, 0, 0, 1);
   background-color: black;
   overflow: hidden;
 }
 
 .sub-tile {
-  width: 158px;
-  height: 158px;
-  border: 1px solid rgba(0, 0, 0, 1);
+  width: 15.80rem;
+  height: 15.80rem;
+  border: 0.10rem solid rgba(0, 0, 0, 1);
   font-weight: lighter;
   background-color: #303030;
   overflow: hidden;
@@ -327,7 +328,7 @@ body.player-mode #views {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: black 1px 1px;
+  text-shadow: black 0.10rem 0.10rem;
   background-color: rgba(0, 0, 0, 0.5);
 }
 
@@ -417,36 +418,36 @@ body.player-mode #views {
 }
 
 /* 320x480 phones */
-@media (orientation: portrait) and (width: 320px),
-       (orientation: landscape) and (width: 480px) {
+@media (orientation: portrait) and (width: 32rem),
+       (orientation: landscape) and (width: 48rem) {
 
   .main-tile {
-    width: 210px;
-    height: 210px;
+    width: 21rem;
+    height: 21rem;
   }
 
   .sub-tile {
-    width: 104px;
-    height: 104px;
+    width: 10.40rem;
+    height: 10.40rem;
   }
 
   .float-right {
-    right: 2px;
+    right: 0.20rem;
   }
 }
 
 /* 480x800 phones */
-@media (orientation: portrait) and (width: 480px),
-       (orientation: landscape) and (width: 800px) {
+@media (orientation: portrait) and (width: 48rem),
+       (orientation: landscape) and (width: 80rem) {
 
   .main-tile {
-    width: 318px;
-    height: 318px;
+    width: 31.80rem;
+    height: 31.80rem;
   }
 
   .sub-tile {
-    width: 158px;
-    height: 158px;
+    width: 15.80rem;
+    height: 15.80rem;
   }
 }
 
@@ -467,7 +468,7 @@ body.player-mode #views {
   }
 }
 
-.fadeIn {  
+.fadeIn {
   animation-name: fadeIn;
   animation-duration: 1500ms;
   animation-timing-function: ease-in-out;
@@ -509,7 +510,7 @@ body.player-mode #views {
   overflow: hidden;
   text-overflow: ellipsis;
   text-indent: 3rem;
-  text-shadow: black 1px 1px;
+  text-shadow: black 0.10rem 0.10rem;
   line-height: 2.5rem;
 }
 
@@ -531,24 +532,25 @@ body.player-mode #views {
   bottom: calc(-100% + 5rem);
 }
 
-#player-album-shuffle, 
-#player-album-rating, 
+#player-album-shuffle,
+#player-album-rating,
 #player-album-repeat {
   position: relative;
   float: left;
 }
 
-#player-album-shuffle, 
+#player-album-shuffle,
 #player-album-repeat {
   top: 10%;
-  width: calc(25% - 20px);
+  width: calc(25% - 2rem);
   height: 80%;
-  padding: 0px;
-  border-radius: 35px;
-  margin: 0 10px;
+  padding: 0rem;
+  border-radius: 3.50rem;
+  margin: 0 1rem;
   font-weight: bold;
   background-position: center center;
   background-repeat: no-repeat;
+  background-size: 3rem;
 }
 
 #player-album-shuffle {
@@ -599,6 +601,7 @@ button::-moz-focus-inner {
   background-position: center center;
   background-repeat: no-repeat;
   background-color: transparent;
+  background-size: 2.4rem;
 }
 
 .star-on {
@@ -612,15 +615,15 @@ button::-moz-focus-inner {
   background: #222222;
 }
 
-#player-seek-elapsed, 
-#player-seek-bar, 
+#player-seek-elapsed,
+#player-seek-bar,
 #player-seek-remaining {
   position: relative;
   float: left;
 }
 
-#player-seek-elapsed, 
-#player-seek-remaining {  
+#player-seek-elapsed,
+#player-seek-remaining {
   top: 36%;
   width: 20%;
   font-size: 1.38rem;
@@ -639,14 +642,14 @@ button::-moz-focus-inner {
   -moz-appearance: none;
   width: 100%;
   height: 100%;
-  border-radius: 2px;
-  border-width: 0px;
-  box-shadow: 1px 1px rgba(255, 255, 255, 0.2);
+  border-radius: 0.20rem;
+  border-width: 0rem;
+  box-shadow: 0.10rem 0.10rem rgba(255, 255, 255, 0.2);
   background-color: rgba(0, 0, 0, 0.7);
 }
 
 #player-seek-bar-progress::-moz-progress-bar {
-  border-radius: 2px;
+  border-radius: 0.20rem;
   background-color: #0095CC;
 }
 
@@ -658,21 +661,22 @@ button::-moz-focus-inner {
   background: #111111;
 }
 
-#player-controls-previous, 
-#player-controls-play, 
+#player-controls-previous,
+#player-controls-play,
 #player-controls-next {
   position: relative;
   float: left;
   height: 100%;
-  padding: 0px;
-  border-width: 0px;
+  padding: 0rem;
+  border-width: 0rem;
   font-weight: bold;
   overflow: hidden;
   background-position: center center;
   background-repeat: no-repeat;
+  background-size: 3rem;
 }
 
-#player-controls-previous, 
+#player-controls-previous,
 #player-controls-next {
   width: 30%;
 }
@@ -700,7 +704,7 @@ button::-moz-focus-inner {
 .player-controls-button {
   color: #FFFFFF;
   border: none;
-  border-radius: 0px;
+  border-radius: 0rem;
   background: transparent;
   transition: background 200ms ease;
 }
@@ -729,10 +733,11 @@ button::-moz-focus-inner {
   float: left;
   width: 25%;
   height: 100%;
-  padding: 0px;
+  padding: 0rem;
   font-size: 1.61rem;
   background-position: center center;
   background-repeat: no-repeat;
+  background-size: 3rem;
 }
 
 #tabs-mix {
@@ -753,7 +758,7 @@ button::-moz-focus-inner {
 
 .tabs-button {
   border: none;
-  border-radius: 0px;
+  border-radius: 0rem;
   background: transparent;
   transition: background 200ms ease;
 }
@@ -764,12 +769,12 @@ button::-moz-focus-inner {
   background: rgb(0, 138, 170);
 }
 .tabs-button:disabled {
-  
+
 }
 
 .player-cover-button {
   border: none;
-  border-radius: 0px;
+  border-radius: 0rem;
   background: transparent;
   transition: background 200ms ease;
 }
@@ -807,7 +812,7 @@ li.list-header {
   line-height: 2.5rem;
   font-size: 1.83rem;
   color: rgb(0, 138, 170);
-  border-bottom: solid 1px rgba(255, 255, 255, 0.1);
+  border-bottom: solid 0.10rem rgba(255, 255, 255, 0.1);
   pointer-events: none;
 }
 
@@ -823,7 +828,7 @@ li.list-item a {
   text-decoration: none;
   outline: none;
   margin: 0;
-  text-shadow: black 1px 1px;
+  text-shadow: black 0.10rem 0.10rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -835,7 +840,7 @@ li.list-item a {
 
 li.list-item a:active {
   color: black;
-  text-shadow: rgba(255, 255, 255, 0.5) 1px 1px;
+  text-shadow: rgba(255, 255, 255, 0.5) 0.10rem 0.10rem;
   background: rgb(0, 138, 170);
 }
 
@@ -886,7 +891,7 @@ li.list-item a:active {
   line-height: 6rem;
   font-size: 1.83rem;
   color: white;
-  border-bottom: solid 1px rgba(255, 255, 255, 0.1);
+  border-bottom: solid 0.10rem rgba(255, 255, 255, 0.1);
 }
 
 .list-playlist-icon {
@@ -926,25 +931,25 @@ li.list-item a:active {
   padding-right: 0.5rem;
   font-size: 1.83rem;
   color: white;
-  border-bottom: solid 1px rgba(255, 255, 255, 0.1);
+  border-bottom: solid 0.10rem rgba(255, 255, 255, 0.1);
 }
 
 .list-song-length {
   right: 0;
   width: 5rem;
   padding-right: 0.5rem;
-  border-bottom: solid 1px rgba(255, 255, 255, 0.1);
+  border-bottom: solid 0.10rem rgba(255, 255, 255, 0.1);
 }
 
 .list-image-parent {
   position: absolute;
   right: 2.5rem;
-  top: 0px;
+  top: 0rem;
   height: 6rem;
   width: 6rem;
   overflow: hidden;
   background-color: #8a9699;
-  box-shadow: 0 0 1px black;
+  box-shadow: 0 0 0.10rem black;
   pointer-events: none;
 }
 
