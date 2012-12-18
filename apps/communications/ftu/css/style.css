@@ -87,12 +87,12 @@ html, body {
   left: 0;
   position: absolute;
   pointer-events: none;
-  background: url(images/prev.png) no-repeat center center;
+  background: url(images/prev.png) no-repeat center center / 1.1rem;
 }
 
 [role=navigation] button.recommend span {
   left: calc(100% - 3rem);
-  background: url(images/next.png) no-repeat center center;
+  background-image: url(images/next.png);
 }
 
 [role=navigation] #join {
@@ -522,12 +522,17 @@ html, body {
   margin-bottom: 0;
 }
 
+#sim_import,
+#fb_import {
+  background: no-repeat left center / 3rem;
+}
+
 #sim_import {
-  background: url('images/import_sim.png') center left no-repeat;
+  background-image: url('images/import_sim.png');
 }
 
 #fb_import {
-  background: url('images/import_fb.png') center left no-repeat;
+  background-image: url('images/import_fb.png');
 }
 
 /*
@@ -808,7 +813,7 @@ i.hack-first-child {
 }
 
 [data-type="list"].pack-value-selector li label:not([for]) input:checked + span {
-  background: url("images/checked.png") no-repeat right center;
+  background: url("images/checked.png") no-repeat right center / 100%;
 }
 
 [data-type="list"].pack-value-selector li label:not([for]) input + span + p {
@@ -833,30 +838,32 @@ i.hack-first-child {
   States of Wifi
 */
 
-.wifi-signal0 {
-  background-image: -moz-image-rect(url(images/wifi_sprite.png), 0, 32, 32, 0) !important;
+#networks .wifi-signal0,
+#networks .wifi-signal1,
+#networks .wifi-signal2,
+#networks .wifi-signal3,
+#networks .wifi-signal4 {
+  background: url(images/wifi_sprite.png) no-repeat center center / 16rem;
 }
 
-.wifi-signal1 {
-  background-image: -moz-image-rect(url(images/wifi_sprite.png), 0, 64, 32, 32) !important;
+#networks .wifi-signal0 {
+  background-position: 0 center;
 }
 
-.wifi-signal2 {
-  background-image: -moz-image-rect(url(images/wifi_sprite.png), 0, 96, 32, 64) !important;
+#networks .wifi-signal1 {
+  background-position: -3.3rem center;
 }
 
-.wifi-signal3 {
-  background-image: -moz-image-rect(url(images/wifi_sprite.png), 0, 128, 32, 96) !important;
+#networks .wifi-signal2 {
+  background-position: -6.5rem center;
 }
 
-.wifi-signal4 {
-  background-image: -moz-image-rect(url(images/wifi_sprite.png), 0, 160, 32, 128) !important;
+#networks .wifi-signal3 {
+  background-position: -9.7rem center;
 }
 
-.icon {
-  background-color: transparent !important;
-  background-repeat: no-repeat !important;
-  background-position: center center !important;
+#networks .wifi-signal4 {
+  background-position: -12.9rem center;
 }
 
 /*
