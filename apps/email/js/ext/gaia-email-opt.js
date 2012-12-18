@@ -6269,3644 +6269,6 @@ var STATEDELTA = exports.STATEDELTA = 'statedelta';
 
 }); // end define
 ;
-define('events',['require','exports','module'],function (require, exports, module) {
-if (!process.EventEmitter) process.EventEmitter = function () {};
-
-var EventEmitter = exports.EventEmitter = process.EventEmitter;
-var isArray = typeof Array.isArray === 'function'
-    ? Array.isArray
-    : function (xs) {
-        return Object.toString.call(xs) === '[object Array]'
-    }
-;
-
-// By default EventEmitters will print a warning if more than
-// 10 listeners are added to it. This is a useful default which
-// helps finding memory leaks.
-//
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-var defaultMaxListeners = 10;
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!this._events) this._events = {};
-  this._events.maxListeners = n;
-};
-
-
-EventEmitter.prototype.emit = function(type) {
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events || !this._events.error ||
-        (isArray(this._events.error) && !this._events.error.length))
-    {
-      if (arguments[1] instanceof Error) {
-        throw arguments[1]; // Unhandled 'error' event
-      } else {
-        throw new Error("Uncaught, unspecified 'error' event.");
-      }
-      return false;
-    }
-  }
-
-  if (!this._events) return false;
-  var handler = this._events[type];
-  if (!handler) return false;
-
-  if (typeof handler == 'function') {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        var args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-    return true;
-
-  } else if (isArray(handler)) {
-    var args = Array.prototype.slice.call(arguments, 1);
-
-    var listeners = handler.slice();
-    for (var i = 0, l = listeners.length; i < l; i++) {
-      listeners[i].apply(this, args);
-    }
-    return true;
-
-  } else {
-    return false;
-  }
-};
-
-// EventEmitter is defined in src/node_events.cc
-// EventEmitter.prototype.emit() is also defined there.
-EventEmitter.prototype.addListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('addListener only takes instances of Function');
-  }
-
-  if (!this._events) this._events = {};
-
-  // To avoid recursion in the case that type == "newListeners"! Before
-  // adding it to the listeners, first emit "newListeners".
-  this.emit('newListener', type, listener);
-
-  if (!this._events[type]) {
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  } else if (isArray(this._events[type])) {
-
-    // Check for listener leak
-    if (!this._events[type].warned) {
-      var m;
-      if (this._events.maxListeners !== undefined) {
-        m = this._events.maxListeners;
-      } else {
-        m = defaultMaxListeners;
-      }
-
-      if (m && m > 0 && this._events[type].length > m) {
-        this._events[type].warned = true;
-        console.error('(node) warning: possible EventEmitter memory ' +
-                      'leak detected. %d listeners added. ' +
-                      'Use emitter.setMaxListeners() to increase limit.',
-                      this._events[type].length);
-        console.trace();
-      }
-    }
-
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  } else {
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  var self = this;
-  self.on(type, function g() {
-    self.removeListener(type, g);
-    listener.apply(this, arguments);
-  });
-
-  return this;
-};
-
-EventEmitter.prototype.removeListener = function(type, listener) {
-  if ('function' !== typeof listener) {
-    throw new Error('removeListener only takes instances of Function');
-  }
-
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (!this._events || !this._events[type]) return this;
-
-  var list = this._events[type];
-
-  if (isArray(list)) {
-    var i = list.indexOf(listener);
-    if (i < 0) return this;
-    list.splice(i, 1);
-    if (list.length == 0)
-      delete this._events[type];
-  } else if (this._events[type] === listener) {
-    delete this._events[type];
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  // does not use listeners(), so no side effect of creating _events[type]
-  if (type && this._events && this._events[type]) this._events[type] = null;
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  if (!this._events) this._events = {};
-  if (!this._events[type]) this._events[type] = [];
-  if (!isArray(this._events[type])) {
-    this._events[type] = [this._events[type]];
-  }
-  return this._events[type];
-};
-
-});
-define('util',['require','exports','module','events'],function (require, exports, module) {
-var events = require('events');
-
-exports.print = function () {};
-exports.puts = function () {};
-exports.debug = function() {};
-
-exports.log = function (msg) {};
-
-exports.pump = null;
-
-exports.inherits = function(ctor, superCtor) {
-  ctor.super_ = superCtor;
-  ctor.prototype = Object.create(superCtor.prototype, {
-    constructor: {
-      value: ctor,
-      enumerable: false,
-      writable: true,
-      configurable: true
-    }
-  });
-};
-
-});
-define('stream',['require','exports','module','events','util'],function (require, exports, module) {
-var events = require('events');
-var util = require('util');
-
-function Stream() {
-  events.EventEmitter.call(this);
-}
-util.inherits(Stream, events.EventEmitter);
-module.exports = Stream;
-// Backwards-compat with node 0.4.x
-Stream.Stream = Stream;
-
-Stream.prototype.pipe = function(dest, options) {
-  var source = this;
-
-  function ondata(chunk) {
-    if (dest.writable) {
-      if (false === dest.write(chunk) && source.pause) {
-        source.pause();
-      }
-    }
-  }
-
-  source.on('data', ondata);
-
-  function ondrain() {
-    if (source.readable && source.resume) {
-      source.resume();
-    }
-  }
-
-  dest.on('drain', ondrain);
-
-  // If the 'end' option is not supplied, dest.end() will be called when
-  // source gets the 'end' or 'close' events.  Only dest.end() once, and
-  // only when all sources have ended.
-  if (!dest._isStdio && (!options || options.end !== false)) {
-    dest._pipeCount = dest._pipeCount || 0;
-    dest._pipeCount++;
-
-    source.on('end', onend);
-    source.on('close', onclose);
-  }
-
-  var didOnEnd = false;
-  function onend() {
-    if (didOnEnd) return;
-    didOnEnd = true;
-
-    dest._pipeCount--;
-
-    // remove the listeners
-    cleanup();
-
-    if (dest._pipeCount > 0) {
-      // waiting for other incoming streams to end.
-      return;
-    }
-
-    dest.end();
-  }
-
-
-  function onclose() {
-    if (didOnEnd) return;
-    didOnEnd = true;
-
-    dest._pipeCount--;
-
-    // remove the listeners
-    cleanup();
-
-    if (dest._pipeCount > 0) {
-      // waiting for other incoming streams to end.
-      return;
-    }
-
-    dest.destroy();
-  }
-
-  // don't leave dangling pipes when there are errors.
-  function onerror(er) {
-    cleanup();
-    if (this.listeners('error').length === 0) {
-      throw er; // Unhandled stream error in pipe.
-    }
-  }
-
-  source.on('error', onerror);
-  dest.on('error', onerror);
-
-  // remove all the event listeners that were added.
-  function cleanup() {
-    source.removeListener('data', ondata);
-    dest.removeListener('drain', ondrain);
-
-    source.removeListener('end', onend);
-    source.removeListener('close', onclose);
-
-    source.removeListener('error', onerror);
-    dest.removeListener('error', onerror);
-
-    source.removeListener('end', cleanup);
-    source.removeListener('close', cleanup);
-
-    dest.removeListener('end', cleanup);
-    dest.removeListener('close', cleanup);
-  }
-
-  source.on('end', cleanup);
-  source.on('close', cleanup);
-
-  dest.on('end', cleanup);
-  dest.on('close', cleanup);
-
-  dest.emit('pipe', source);
-
-  // Allow for unix-like usage: A.pipe(B).pipe(C)
-  return dest;
-};
-
-});
-/**
- * mimelib now uses an 'encoding' module to wrap its use of iconv versus
- * iconv-lite.  This is a good thing from our perspective because it allows
- * the API to be more sane.
- **/
-
-define('encoding',['require','exports','module'],function(require, exports, module) {
-
-// from https://github.com/andris9/encoding/blob/master/index.js
-// (MIT licensed)
-/**
- * Converts charset name if needed
- *
- * @param {String} name Character set
- * @return {String} Character set name
- */
-function checkEncoding(name){
-    name = (name || "").toString().trim().toLowerCase().
-        replace(/^latin[\-_]?(\d+)$/, "iso-8859-$1").
-        replace(/^win(?:dows)?[\-_]?(\d+)$/, "windows-$1").
-        replace(/^utf[\-_]?(\d+)$/, "utf-$1").
-        replace(/^ks_c_5601\-1987$/, "windows-949"). // maps to euc-kr
-        replace(/^us_?ascii$/, "ascii"); // maps to windows-1252
-    return name;
-}
-
-var ENCODER_OPTIONS = { fatal: false };
-
-exports.convert = function(str, destEnc, sourceEnc, ignoredUseLite) {
-  destEnc = checkEncoding(destEnc || 'utf-8');
-  sourceEnc = checkEncoding(sourceEnc || 'utf-8');
-
-  if (destEnc === sourceEnc)
-    return new Buffer(str, 'utf-8');
-
-  // - decoding (Uint8Array => String)
-  else if (/^utf-8$/.test(destEnc)) {
-    var decoder = new TextDecoder(sourceEnc, ENCODER_OPTIONS);
-    if (typeof(str) === 'string')
-      str = new Buffer(str, 'binary');
-    // XXX strictly speaking, we should be returning a buffer...
-    return decoder.decode(str);
-  }
-  // - encoding (String => Uint8Array)
-  else {
-    var idxSlash = destEnc.indexOf('/');
-    // ignore '//TRANSLIT//IGNORE' and the like.
-    if (idxSlash !== -1 && destEnc[idxSlash+1] === '/')
-      destEnc = destEnc.substring(0, idxSlash);
-
-    var encoder = new TextEncoder(destEnc, ENCODER_OPTIONS);
-    return encoder.encode(str);
-  }
-};
-
-});
-
-define('addressparser/index',['require','exports','module'],function (require, exports, module) {
-
-// expose to the world
-module.exports = parser;
-
-/**
- * Parses structured e-mail addresses from an address field
- *
- * Example:
- *
- *    "Name <address@domain>"
- *
- * will be converted to
- *
- *     [{name: "Name", address: "address@domain"}]
- *
- * @param {String} str Address field
- * @return {Array} An array of address objects
- */
-function parser(str){
-    var tokenizer = new Tokenizer(str),
-        tokens = tokenizer.tokenize();
-
-
-    var addresses = [],
-        address = [],
-        parsedAddresses = [];
-
-    tokens.forEach(function(token){
-        if(token.type == "operator" && (token.value =="," || token.value ==";")){
-            addresses.push(address);
-            address = [];
-        }else{
-            address.push(token);
-        }
-    });
-
-    if(address.length){
-        addresses.push(address);
-    }
-
-    addresses.forEach(function(address){
-        address = handleAddress(address);
-        if(address.length){
-            parsedAddresses = parsedAddresses.concat(address);
-        }
-    });
-
-    return parsedAddresses;
-}
-
-/**
- * Converts tokens for a single address into an address object
- *
- * @param {Array} tokens Tokens object
- * @return {Object} Address object
- */
-function handleAddress(tokens){
-    var token,
-        isGroup = false,
-        state = "text",
-        address,
-        addresses = [],
-        data = {
-            address: [],
-            comment: [],
-            group: [],
-            text: []
-        },
-        i, len;
-
-    // Filter out <addresses>, (comments) and regular text
-    for(i=0, len = tokens.length; i<len; i++){
-        token = tokens[i];
-
-        if(token.type == "operator"){
-            switch(token.value){
-                case "<":
-                    state = "address";
-                    break;
-                case "(":
-                    state = "comment";
-                    break;
-                case ":":
-                    state = "group";
-                    isGroup = true;
-                    break;
-                default:
-                    state = "text";
-            }
-        }else{
-            if(token.value){
-                data[state].push(token.value);
-            }
-        }
-    }
-
-    // If there is no text but a comment, replace the two
-    if(!data.text.length && data.comment.length){
-        data.text = data.comment;
-        data.comment = [];
-    }
-
-    if(data.group.length){
-
-        if(data.text.length){
-            data.text = data.text.join(" ");
-        }
-
-        addresses = addresses.concat(parser(data.group.join(",")).map(function(address){
-            address.name = data.text || address.name;
-            return address;
-        }));
-
-    }else{
-        // If no address was found, try to detect one from regular text
-        if(!data.address.length && data.text.length){
-            for(i = data.text.length - 1; i>=0; i--){
-                if(data.text[i].match(/^[^@\s]+@[^@\s]+$/)){
-                    data.address = data.text.splice(i,1);
-                    break;
-                }
-            }
-
-            // still no address
-            if(!data.address.length){
-                for(i = data.text.length - 1; i>=0; i--){
-                    data.text[i] = data.text[i].replace(/\s*\b[^@\s]+@[^@\s]+\b\s*/, function(address){
-                        if(!data.address.length){
-                            data.address = [address.trim()];
-                            return " ";
-                        }else{
-                            return address;
-                        }
-                    }).trim();
-                    if(data.address.length){
-                        break;
-                    }
-                }
-            }
-        }
-
-        // If there's still is no text but a comment exixts, replace the two
-        if(!data.text.length && data.comment.length){
-            data.text = data.comment;
-            data.comment = [];
-        }
-
-        // Keep only the first address occurence, push others to regular text
-        if(data.address.length > 1){
-            data.text = data.text.concat(data.address.splice(1));
-        }
-
-        // Join values with spaces
-        data.text = data.text.join(" ");
-        data.address = data.address.join(" ");
-
-        if(!data.address && isGroup){
-            return [];
-        }else{
-            address = {
-                address: data.address || data.text,
-                name: data.text || data.address
-            };
-
-            if(address.address == address.name){
-                if((address.address || "").match(/@/)){
-                    delete address.name;
-                }else{
-                    delete address.address;
-                }
-
-            }
-
-            addresses.push(address);
-        }
-    }
-
-    return addresses;
-}
-
-
-/**
- * Creates a TOkenizer object for tokenizing address field strings
- *
- * @constructor
- * @param {String} str Address field string
- */
-function Tokenizer(str){
-
-    this.str = (str || "").toString();
-    this.operatorCurrent = "";
-    this.operatorExpecting = "";
-    this.node = null;
-    this.escaped = false;
-
-    this.list = [];
-
-}
-
-/**
- * Operator tokens and which tokens are expected to end the sequence
- */
-Tokenizer.prototype.operators = {
-    "\"": "\"",
-    "'": "'",
-    "(": ")",
-    "<": ">",
-    ",": "",
-    ":": ";"
-};
-
-/**
- * Tokenizes the original input string
- *
- * @return {Array} An array of operator|text tokens
- */
-Tokenizer.prototype.tokenize = function(){
-    var chr, list = [];
-    for(var i=0, len = this.str.length; i<len; i++){
-        chr = this.str.charAt(i);
-        this.checkChar(chr);
-    }
-
-    this.list.forEach(function(node){
-        node.value = (node.value || "").toString().trim();
-        if(node.value){
-            list.push(node);
-        }
-    });
-
-    return list;
-};
-
-/**
- * Checks if a character is an operator or text and acts accordingly
- *
- * @param {String} chr Character from the address field
- */
-Tokenizer.prototype.checkChar = function(chr){
-    if((chr in this.operators || chr == "\\") && this.escaped){
-        this.escaped = false;
-    }else if(this.operatorExpecting && chr == this.operatorExpecting){
-        this.node = {
-            type: "operator",
-            value: chr
-        };
-        this.list.push(this.node);
-        this.node = null;
-        this.operatorExpecting = "";
-        this.escaped = false;
-        return;
-    }else if(!this.operatorExpecting && chr in this.operators){
-        this.node = {
-            type: "operator",
-            value: chr
-        };
-        this.list.push(this.node);
-        this.node = null;
-        this.operatorExpecting = this.operators[chr];
-        this.escaped = false;
-        return;
-    }
-
-    if(!this.escaped && chr == "\\"){
-        this.escaped = true;
-        return;
-    }
-
-    if(!this.node){
-        this.node = {
-            type: "text",
-            value: ""
-        };
-        this.list.push(this.node);
-    }
-
-    if(this.escaped && chr != "\\"){
-        this.node.value += "\\";
-    }
-
-    this.node.value += chr;
-    this.escaped = false;
-};
-
-});
-define('addressparser',['./addressparser/index'], function (main) {
-    return main;
-});
-define('mimelib/lib/mimelib',['require','exports','module','encoding','addressparser'],function (require, exports, module) {
-var convert = require('encoding').convert,
-    addressparser = require('addressparser');
-
-/**
- * Folds a long line according to the RFC 5322 http://tools.ietf.org/html/rfc5322#section-2.1.1
- *
- * @param {String} str Mime string that might need folding
- * @param {Number} [maxLength=76] max length for a line
- * @param {Boolean} [foldAnywhere] If true, can fold at any location (ie. in base64)
- * @param {Boolean} [afterSpace] If true fold after the space (default is before)
- * @return {String} Folded string
- */
-this.foldLine = function(str, maxLength, foldAnywhere, afterSpace, lineMargin){
-    if(foldAnywhere){
-        return addBase64SoftLinebreaks(str, maxLength || 76);
-    }
-    return module.exports.mimeFunctions.foldLine(str, maxLength, !!afterSpace, lineMargin);
-};
-
-/**
- * Encodes a string into mime encoded word format http://en.wikipedia.org/wiki/MIME#Encoded-Word
- *
- * @param {String} str String to be encoded
- * @param {String} encoding Encoding Q for quoted printable or B for base64
- * @param {String} [charset="UTF-8"] Charset to be used
- * @param {Number} [maxLength] If set, split on maxLength
- * @return {String} Mime word encoded string
- */
-module.exports.encodeMimeWord = function(str, encoding, charset, maxLength){
-    return module.exports.mimeFunctions.encodeMimeWord(str, encoding, maxLength || 0, charset);
-};
-
-/**
- * Encodes need parts of a string to mime word format
- *
- * @param {String} str String to be encoded
- * @param {String} encoding Encoding Q for quoted printable or B for base64
- * @param {Number} [maxLength] If set, split on maxLength
- * @param {String} [charset="UTF-8"] Charset to be used
- * @return {String} String with possible mime word encoded parts
- */
-module.exports.encodeMimeWords = function(str, encoding, maxLength, charset){
-    return module.exports.mimeFunctions.encodeMimeWords(str, encoding, maxLength || 0, charset);
-};
-
-/**
- * Decodes a string from mime encoded word
- *
- * @param {String} str Mime word encoded string
- * @return {String} Decoded string
- */
-module.exports.decodeMimeWord = function(str){
-    return module.exports.mimeFunctions.decodeMimeWord(str).toString("utf-8");
-};
-
-/**
- * Decodes all mime words from a string to an unencoded string
- *
- * @param {String} str String that may include mime words
- * @return {String} Unencoded string
- */
-module.exports.parseMimeWords = function(str){
-    return module.exports.mimeFunctions.decodeMimeWords(str).toString("utf-8");
-};
-
-/**
- * Encodes a string into Quoted-printable format. Maximum line length for the
- * encoded string is always 76+2 bytes
- *
- * @param {String} str String to be encoded into Quoted-printable
- * @param {Boolean} [mimeWord] legacy parameter, not used
- * @param {String} [charset="UTF-8"] Destination charset
- * @return {String} Quoted printable encoded string
- */
-module.exports.encodeQuotedPrintable = function(str, mimeWord, charset){
-    if(typeof mimeWord == "string" && !charset){
-        charset = mimeWord;
-        mimeWord = undefined;
-    }
-    return module.exports.mimeFunctions.encodeQuotedPrintable(str, charset);
-};
-
-/**
- * Decodes a string from Quoted-printable format
- *
- * @param {String} str String to be decoded from Quoted-printable
- * @param {Boolean} [mimeWord] legacy parameter, not used
- * @param {String} [charset="UTF-8"] Source charset
- * @return {String} Decoded string
- */
-module.exports.decodeQuotedPrintable = function(str, mimeWord, charset){
-    if(typeof mimeWord == "string" && !charset){
-        charset = mimeWord;
-        mimeWord = undefined;
-    }
-    charset = (charset || "").toString().toUpperCase().trim();
-    var decodedString = module.exports.mimeFunctions.decodeQuotedPrintable(str, "utf-8", charset);
-    return charset == "BINARY" ? decodedString : decodedString.toString("utf-8");
-};
-
-/**
- * Encodes a string into Base64 format. Base64 is mime-word safe
- *
- * @param {String} str String to be encoded into Base64
- * @param {String} [charset="UTF-8"] Destination charset
- * @return {String} Base64 encoded string
- */
-module.exports.encodeBase64 = function(str, charset){
-    return module.exports.mimeFunctions.encodeBase64(str, charset);
-};
-
-/**
- * Decodes a string from Base64 format
- *
- * @param {String} str String to be decoded from Base64
- * @param {String} [charset="UTF-8"] Source charset
- * @return {String} Decoded string
- */
-module.exports.decodeBase64 = function(str, charset){
-    return module.exports.mimeFunctions.decodeBase64(str, "utf-8", charset).toString("utf-8");
-};
-
-/**
- * Parses names and addresses from a from, to, cc or bcc line
- * For example: 'Andris Reinman <andris@tr.ee>, someone@else.com'
- * will be parsed into: [{name:"Andris Reinman", address:"andris@tr.ee"}, {address: "someone@else.com"}]
- *
- * @param {String|Array} addresses Address line string or an array of strings
- * @return {Array} An array of parsed e-mails addresses in the form of [{name, address}]
- */
-module.exports.parseAddresses = function(addresses){
-    return [].concat.apply([], [].concat(addresses).map(addressparser)).map(function(address){
-        address.name = module.exports.parseMimeWords(address.name);
-        return address;
-    });
-};
-
-/**
- * Parses header lines into an array of objects. Output: {'x-header': ['value']}
- *
- * @param {String} headers Full header part to be parsed
- * @return {Object} Parsed headers
- */
-module.exports.parseHeaders = function(headers){
-    return module.exports.mimeFunctions.parseHeaderLines(headers);
-};
-
-/**
- * Parses a header line to search for additional parameters. For example
- *     parseHeaderLine('text/plain; charset=utf-8')
- * will be parsed into
- *     {defaultValue: 'text/plain', charset: 'utf-8'}
- *
- * @param {String} line Single header value without key part to be parsed
- * @return {Object} Parsed value
- */
-module.exports.parseHeaderLine = function(line){
-    if(!line)
-        return {};
-    var result = {}, parts = line.split(";"), pos;
-    for(var i=0, len = parts.length; i<len; i++){
-        pos = parts[i].indexOf("=");
-        if(pos<0){
-            result[!i?"defaultValue":"i-"+i] = parts[i].trim();
-        }else{
-            result[parts[i].substr(0,pos).trim().toLowerCase()] = parts[i].substr(pos+1).trim();
-        }
-    }
-    return result;
-};
-
-module.exports.mimeFunctions = {
-
-    mimeEncode: function(str, toCharset, fromCharset){
-        toCharset = toCharset || "UTF-8";
-        fromCharset = fromCharset || "UTF-8";
-
-        var buffer = convert(str || "", toCharset, fromCharset),
-            ranges = [[0x09],
-                      [0x0A],
-                      [0x0D],
-                      [0x20],
-                      [0x21],
-                      [0x23, 0x3C],
-                      [0x3E],
-                      [0x40, 0x5E],
-                      [0x60, 0x7E]],
-            result = "";
-
-        for(var i=0, len = buffer.length; i<len; i++){
-            if(checkRanges(buffer[i], ranges)){
-                result += String.fromCharCode(buffer[i]);
-                continue;
-            }
-            result += "="+(buffer[i]<0x10?"0":"")+buffer[i].toString(16).toUpperCase();
-        }
-
-        return result;
-    },
-
-    mimeDecode: function(str, toCharset, fromCharset){
-        str = (str || "").toString();
-        toCharset = toCharset || "UTF-8";
-        fromCharset = fromCharset || "UTF-8";
-
-        var encodedBytesCount = (str.match(/\=[\da-fA-F]{2}/g) || []).length,
-            bufferLength = str.length - encodedBytesCount * 2,
-            chr, hex,
-            buffer = new Buffer(bufferLength),
-            bufferPos = 0;
-
-        for(var i=0, len = str.length; i<len; i++){
-            chr = str.charAt(i);
-            if(chr == "=" && (hex = str.substr(i+1, 2)) && /[\da-fA-F]{2}/.test(hex)){
-                buffer[bufferPos++] = parseInt(hex, 16);
-                i+=2;
-                continue;
-            }
-            buffer[bufferPos++] = chr.charCodeAt(0);
-        }
-
-        if(fromCharset.toUpperCase().trim() == "BINARY"){
-            return buffer;
-        }
-        return convert(buffer, toCharset, fromCharset);
-    },
-
-    encodeBase64: function(str, toCharset, fromCharset){
-        var buffer = convert(str || "", toCharset, fromCharset);
-        return addSoftLinebreaks(buffer.toString("base64"), "base64");
-    },
-
-    decodeBase64: function(str, toCharset, fromCharset){
-        var buffer = new Buffer((str || "").toString(), "base64");
-        return convert(buffer, toCharset, fromCharset);
-    },
-
-    decodeQuotedPrintable: function(str, toCharset, fromCharset){
-        str = (str || "").toString();
-        str = str.replace(/\=\r?\n/g, "");
-        return this.mimeDecode(str, toCharset, fromCharset);
-    },
-
-    encodeQuotedPrintable: function(str, toCharset, fromCharset){
-        var mimeEncodedStr = this.mimeEncode(str, toCharset, fromCharset);
-
-        // fix line breaks
-        mimeEncodedStr = mimeEncodedStr.replace(/\r?\n|\r/g, function(lineBreak, spaces){
-            return "\r\n";
-        }).replace(/[\t ]+$/gm, function(spaces){
-            return spaces.replace(/ /g, "=20").replace(/\t/g, "=09");
-        });
-
-        return addSoftLinebreaks(mimeEncodedStr, "qp");
-    },
-
-    encodeMimeWord: function(str, encoding, maxLength, toCharset, fromCharset){
-        toCharset = (toCharset || "utf-8").toString().toUpperCase().trim();
-        encoding = (encoding || "Q").toString().toUpperCase().trim().charAt(0);
-        var encodedStr;
-
-        if(maxLength && maxLength > 7 + toCharset.length){
-            maxLength -= (7 + toCharset.length);
-        }
-
-        if(encoding == "Q"){
-            encodedStr = this.mimeEncode(str, toCharset, fromCharset);
-            encodedStr = encodedStr.replace(/[\r\n\t_]/g, function(chr){
-                var code = chr.charCodeAt(0);
-                return "=" + (code<0x10?"0":"") + code.toString(16).toUpperCase();
-            }).replace(/\s/g, "_");
-        }else if(encoding == "B"){
-            encodedStr = convert(str || "", toCharset, fromCharset).toString("base64").trim();
-        }
-
-        if(maxLength && encodedStr.length > maxLength){
-            if(encoding == "Q"){
-                encodedStr = this.splitEncodedString(encodedStr, maxLength).join("?= =?"+toCharset+"?"+encoding+"?")
-            }else{
-                encodedStr = encodedStr.replace(new RegExp(".{"+maxLength+"}","g"),"$&?= =?"+toCharset+"?"+encoding+"?");
-                if(encodedStr.substr(-(" =?"+toCharset+"?"+encoding+"?=").length) == " =?"+toCharset+"?"+encoding+"?="){
-                    encodedStr = encodedStr.substr(0, encodedStr.length -(" =?"+toCharset+"?"+encoding+"?=").length);
-                }
-                if(encodedStr.substr(-(" =?"+toCharset+"?"+encoding+"?").length) == " =?"+toCharset+"?"+encoding+"?"){
-                    encodedStr = encodedStr.substr(0, encodedStr.length -(" =?"+toCharset+"?"+encoding+"?").length);
-                }
-            }
-        }
-
-        return "=?"+toCharset+"?"+encoding+"?"+encodedStr+ (encodedStr.substr(-2)=="?="?"":"?=");
-    },
-
-    decodeMimeWord: function(str, toCharset){
-        str = (str || "").toString().trim();
-
-        var fromCharset, encoding, match;
-
-        match = str.match(/^\=\?([\w_\-]+)\?([QB])\?([^\?]+)\?\=$/i);
-        if(!match){
-            return convert(str, toCharset);
-        }
-
-        fromCharset = match[1];
-        encoding = (match[2] || "Q").toString().toUpperCase();
-        str = (match[3] || "").replace(/_/g, " ");
-
-        if(encoding == "B"){
-            return this.decodeBase64(str, toCharset, fromCharset);
-        }else if(encoding == "Q"){
-            return this.mimeDecode(str, toCharset, fromCharset);
-        }else{
-            return str;
-        }
-
-
-    },
-
-    decodeMimeWords: function(str, toCharset){
-        var remainder = "", lastCharset, curCharset;
-        str = (str || "").toString();
-
-        str = str.
-                replace(/(=\?[^?]+\?[QqBb]\?[^?]+\?=)\s+(?==\?[^?]+\?[QqBb]\?[^?]+\?=)/g, "$1").
-                replace(/\=\?([\w_\-]+)\?([QB])\?[^\?]+\?\=/g, (function(mimeWord, charset, encoding){
-
-                      curCharset = charset + encoding;
-
-                      return this.decodeMimeWord(mimeWord);
-                  }).bind(this));
-
-        return convert(str, toCharset);
-    },
-
-    foldLine: function(str, lineLengthMax, afterSpace, lineMargin){
-        lineLengthMax = lineLengthMax || 76;
-        str = (str || "").toString().trim();
-
-        var pos = 0, len = str.length, result = "", line, match, lineMargin = lineMargin || Math.floor(lineLengthMax/5);
-
-        while(pos < len){
-            line = str.substr(pos, lineLengthMax);
-            if(line.length < lineLengthMax){
-                result += line;
-                break;
-            }
-            if((match = line.match(/^[^\n\r]*(\r?\n|\r)/))){
-                line = match[0];
-                result += line;
-                pos += line.length;
-                continue;
-            }else if((match = line.substr(-lineMargin).match(/(\s+)[^\s]*$/))){
-                line = line.substr(0, line.length - (match[0].length - (!!afterSpace ? (match[1] || "").length : 0)));
-            }else if((match = str.substr(pos + line.length).match(/^[^\s]+(\s*)/))){
-                line = line + match[0].substr(0, match[0].length - (!afterSpace ? (match[1] || "").length : 0));
-            }
-            result += line;
-            pos += line.length;
-            if(pos < len){
-                result += "\r\n";
-            }
-        }
-
-        return result;
-    },
-
-    encodeMimeWords: function(value, encoding, maxLength, toCharset, fromCharset){
-        var decodedValue = convert((value || ""), "utf-8", fromCharset).toString("utf-8"),
-            encodedValue;
-
-        encodedValue = decodedValue.replace(/(\w*[\u0080-\uFFFF]+\w*(?:\s+\w*[\u0080-\uFFFF]+\w*\s*)?)+/g, (function(str, o){
-            return str.length?this.encodeMimeWord(str, encoding || "Q", maxLength, toCharset):"";
-        }).bind(this));
-
-        return encodedValue;
-    },
-
-    encodeHeaderLine: function(key, value, toCharset, fromCharset){
-        var encodedValue = this.encodeMimeWords(value, 52, toCharset, fromCharset);
-        return this.foldLine(key+": "+encodedValue, 76);
-    },
-
-    parseHeaderLines: function(headers, toCharset){
-        var lines = headers.split(/\r?\n|\r/),
-            headersObj = {},
-            key, value,
-            header,
-            i, len;
-
-        for(i=lines.length-1; i>=0; i--){
-            if(i && lines[i].match(/^\s/)){
-                lines[i-1] += "\r\n" + lines[i];
-                lines.splice(i, 1);
-            }
-        }
-
-        for(i=0, len = lines.length; i<len; i++){
-            header = this.decodeHeaderLine(lines[i]);
-            key = (header[0] || "").toString().toLowerCase().trim();
-            value = header[1] || "";
-            if(!toCharset || (toCharset || "").toString().trim().match(/^utf[\-_]?8$/i)){
-                value = value.toString("utf-8");
-            }
-            if(!headersObj[key]){
-                headersObj[key] = [value];
-            }else{
-                headersObj[key].push(value);
-            }
-        }
-
-        return headersObj;
-    },
-
-    decodeHeaderLine: function(header, toCharset){
-        var line = (header || "").toString().replace(/(?:\r?\n|\r)[ \t]*/g, " ").trim(),
-            match = line.match(/^\s*([^:]+):(.*)$/),
-            key = (match && match[1] || "").trim(),
-            value = (match && match[2] || "").trim();
-
-        value = this.decodeMimeWords(value, toCharset);
-        return [key, value];
-    },
-
-    splitEncodedString: function(str, maxlen){
-        var curLine, match, chr, done,
-            lines = [];
-
-        while(str.length){
-            curLine = str.substr(0, maxlen);
-
-            // move incomplete escaped char back to main
-            if((match = curLine.match(/\=[0-9A-F]?$/i))){
-                curLine = curLine.substr(0, match.index);
-            }
-
-            done = false;
-            while(!done){
-                done = true;
-                // check if not middle of a unicode char sequence
-                if((match = str.substr(curLine.length).match(/^\=([0-9A-F]{2})/i))){
-                    chr = parseInt(match[1], 16);
-                    // invalid sequence, move one char back anc recheck
-                    if(chr < 0xC2 && chr > 0x7F){
-                        curLine = curLine.substr(0, curLine.length-3);
-                        done = false;
-                    }
-                }
-            }
-
-            if(curLine.length){
-                lines.push(curLine);
-            }
-            str = str.substr(curLine.length);
-        }
-
-        return lines;
-    },
-
-    parseAddresses: addressparser
-
-};
-
-// Lines can't be longer that 76 + <CR><LF> = 78 bytes
-// http://tools.ietf.org/html/rfc2045#section-6.7
-function addSoftLinebreaks(str, encoding){
-    var lineLengthMax = 76;
-
-    encoding = (encoding || "base64").toString().toLowerCase().trim();
-
-    if(encoding == "qp"){
-        return addQPSoftLinebreaks(str, lineLengthMax);
-    }else{
-        return addBase64SoftLinebreaks(str, lineLengthMax);
-    }
-}
-
-function addBase64SoftLinebreaks(base64EncodedStr, lineLengthMax){
-    base64EncodedStr = (base64EncodedStr || "").toString().trim();
-    return base64EncodedStr.replace(new RegExp(".{" +lineLengthMax+ "}", "g"),"$&\r\n").trim();
-}
-
-function addQPSoftLinebreaks(mimeEncodedStr, lineLengthMax){
-    var pos = 0, len = mimeEncodedStr.length,
-        match, code, line,
-        lineMargin = Math.floor(lineLengthMax/3),
-        result = "";
-
-    // insert soft linebreaks where needed
-    while(pos < len){
-        line = mimeEncodedStr.substr(pos, lineLengthMax);
-        if((match = line.match(/\r\n/))){
-            line = line.substr(0, match.index + match[0].length);
-            result += line;
-            pos += line.length;
-            continue;
-        }
-
-        if(line.substr(-1)=="\n"){
-            // nothing to change here
-            result += line;
-            pos += line.length;
-            continue;
-        }else if((match = line.substr(-lineMargin).match(/\n.*?$/))){
-            // truncate to nearest line break
-            line = line.substr(0, line.length - (match[0].length - 1));
-            result += line;
-            pos += line.length;
-            continue;
-        }else if(line.length > lineLengthMax - lineMargin && (match = line.substr(-lineMargin).match(/[ \t\.,!\?][^ \t\.,!\?]*$/))){
-            // truncate to nearest space
-            line = line.substr(0, line.length - (match[0].length - 1));
-        }else if(line.substr(-1)=="\r"){
-            line = line.substr(0, line.length-1);
-        }else{
-            if(line.match(/\=[\da-f]{0,2}$/i)){
-
-                // push incomplete encoding sequences to the next line
-                if((match = line.match(/\=[\da-f]{0,1}$/i))){
-                    line = line.substr(0, line.length - match[0].length);
-                }
-
-                // ensure that utf-8 sequences are not split
-                while(line.length>3 && line.length < len - pos && !line.match(/^(?:=[\da-f]{2}){1,4}$/i) && (match = line.match(/\=[\da-f]{2}$/ig))){
-                    code = parseInt(match[0].substr(1,2), 16);
-                    if(code<128){
-                        break;
-                    }
-
-                    line = line.substr(0, line.length-3);
-
-                    if(code >=0xC0){
-                        break;
-                    }
-                }
-
-            }
-        }
-
-        if(pos + line.length < len && line.substr(-1)!="\n"){
-            if(line.length==76 && line.match(/\=[\da-f]{2}$/i)){
-                line = line.substr(0, line.length-3);
-            }
-            else if(line.length==76){
-                line = line.substr(0, line.length-1);
-            }
-            pos += line.length;
-            line += "=\r\n";
-        }else{
-            pos += line.length;
-        }
-
-        result += line;
-    }
-
-    return result;
-}
-
-function checkRanges(nr, ranges){
-    for(var i = ranges.length - 1; i >= 0; i--){
-        if(!ranges[i].length){
-            continue;
-        }
-        if(ranges[i].length == 1 && nr == ranges[i][0]){
-            return true;
-        }
-        if(ranges[i].length == 2 && nr >= ranges[i][0] && nr <= ranges[i][1]){
-            return true;
-        }
-    }
-    return false;
-}
-
-});
-define('mimelib/lib/content-types',['require','exports','module'],function (require, exports, module) {
-// list of mime types
-module.exports = {
-    "doc": "application/msword",
-    "docx": "application/msword",
-    "pdf": "application/pdf",
-    "rss": "application/rss+xml",
-    "xls": "application/vnd.ms-excel",
-    "xlsx": "application/vnd.ms-excel",
-    "pps": "application/vnd.ms-powerpoint",
-    "ppt": "application/vnd.ms-powerpoint",
-    "pptx": "application/vnd.ms-powerpoint",
-    "odp": "application/vnd.oasis.opendocument.presentation",
-    "ods": "application/vnd.oasis.opendocument.spreadsheet",
-    "odt": "application/vnd.oasis.opendocument.text",
-    "sxc": "application/vnd.sun.xml.calc",
-    "sxw": "application/vnd.sun.xml.writer",
-    "au": "audio/basic",
-    "snd": "audio/basic",
-    "flac": "audio/flac",
-    "mid": "audio/mid",
-    "rmi": "audio/mid",
-    "m4a": "audio/mp4",
-    "mp3": "audio/mpeg",
-    "oga": "audio/ogg",
-    "ogg": "audio/ogg",
-    "aif": "audio/x-aiff",
-    "aifc": "audio/x-aiff",
-    "aiff": "audio/x-aiff",
-    "wav": "audio/x-wav",
-    "gif": "image/gif",
-    "jpeg": "image/jpeg",
-    "jpg": "image/jpeg",
-    "jpe": "image/jpeg",
-    "png": "image/png",
-    "tiff": "image/tiff",
-    "tif": "image/tiff",
-    "wbmp": "image/vnd.wap.wbmp",
-    "bmp": "image/x-ms-bmp",
-    "ics": "text/calendar",
-    "csv": "text/comma-separated-values",
-    "css": "text/css",
-    "htm": "text/html",
-    "html": "text/html",
-    "text": "text/plain",
-    "txt": "text/plain",
-    "asc": "text/plain",
-    "diff": "text/plain",
-    "pot": "text/plain",
-    "vcf": "text/x-vcard",
-    "mp4": "video/mp4",
-    "mpeg": "video/mpeg",
-    "mpg": "video/mpeg",
-    "mpe": "video/mpeg",
-    "ogv": "video/ogg",
-    "qt": "video/quicktime",
-    "mov": "video/quicktime",
-    "avi": "video/x-msvideo",
-    "zip": "application/zip",
-    "rar": "application/x-rar-compressed"
-};
-});
-define('mimelib/lib/content-types-reversed',['require','exports','module'],function (require, exports, module) {
-// list of mime types
-module.exports = {
-    "application/msword": "doc",
-    "application/pdf": "pdf",
-    "application/rss+xml": "rss",
-    "application/vnd.ms-excel": "xls",
-    "application/vnd.ms-powerpoint": "ppt",
-    "application/vnd.oasis.opendocument.presentation": "odp",
-    "application/vnd.oasis.opendocument.spreadsheet": "ods",
-    "application/vnd.oasis.opendocument.text": "odt",
-    "application/vnd.sun.xml.calc": "sxc",
-    "application/vnd.sun.xml.writer": "sxw",
-    "audio/basic": "au",
-    "audio/flac": "flac",
-    "audio/mid": "mid",
-    "audio/mp4": "m4a",
-    "audio/mpeg": "mp3",
-    "audio/ogg": "ogg",
-    "audio/x-aiff": "aif",
-    "audio/x-wav": "wav",
-    "image/gif": "gif",
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/tiff": "tif",
-    "image/vnd.wap.wbmp": "wbmp",
-    "image/x-ms-bmp": "bmp",
-    "text/calendar": "ics",
-    "text/comma-separated-values": "csv",
-    "text/css": "css",
-    "text/html": "html",
-    "text/plain": "txt",
-    "text/x-vcard": "vcf",
-    "video/mp4": "mp4",
-    "video/mpeg": "mpeg",
-    "video/ogg": "ogv",
-    "video/quicktime": "mov",
-    "video/x-msvideo": "avi",
-    "application/zip": "zip",
-    "application/x-rar-compressed": "rar"
-};
-});
-define('mimelib/index',['require','exports','module','./lib/mimelib','./lib/content-types','./lib/content-types-reversed'],function (require, exports, module) {
-
-module.exports = require('./lib/mimelib');
-module.exports.contentTypes = require('./lib/content-types');
-module.exports.contentTypesReversed = require('./lib/content-types-reversed');
-});
-define('mimelib',['./mimelib/index'], function (main) {
-    return main;
-});
-define('mailcomposer/lib/punycode',['require','exports','module'],function (require, exports, module) {
-//Javascript Punycode converter derived from example in RFC3492.
-//This implementation is created by some@domain.name and released into public domain
-var punycode = new function Punycode() {
-    // This object converts to and from puny-code used in IDN
-    //
-    // punycode.ToASCII ( domain )
-    //
-    // Returns a puny coded representation of "domain".
-    // It only converts the part of the domain name that
-    // has non ASCII characters. I.e. it dosent matter if
-    // you call it with a domain that already is in ASCII.
-    //
-    // punycode.ToUnicode (domain)
-    //
-    // Converts a puny-coded domain name to unicode.
-    // It only converts the puny-coded parts of the domain name.
-    // I.e. it dosent matter if you call it on a string
-    // that already has been converted to unicode.
-    //
-    //
-    this.utf16 = {
-        // The utf16-class is necessary to convert from javascripts internal character representation to unicode and back.
-        decode:function(input){
-            var output = [], i=0, len=input.length,value,extra;
-            while (i < len) {
-                value = input.charCodeAt(i++);
-                if ((value & 0xF800) === 0xD800) {
-                    extra = input.charCodeAt(i++);
-                    if ( ((value & 0xFC00) !== 0xD800) || ((extra & 0xFC00) !== 0xDC00) ) {
-                        throw new RangeError("UTF-16(decode): Illegal UTF-16 sequence");
-                    }
-                    value = ((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000;
-                }
-                output.push(value);
-            }
-            return output;
-        },
-        encode:function(input){
-            var output = [], i=0, len=input.length,value;
-            while (i < len) {
-                value = input[i++];
-                if ( (value & 0xF800) === 0xD800 ) {
-                    throw new RangeError("UTF-16(encode): Illegal UTF-16 value");
-                }
-                if (value > 0xFFFF) {
-                    value -= 0x10000;
-                    output.push(String.fromCharCode(((value >>>10) & 0x3FF) | 0xD800));
-                    value = 0xDC00 | (value & 0x3FF);
-                }
-                output.push(String.fromCharCode(value));
-            }
-            return output.join("");
-        }
-    };
-
-    //Default parameters
-    var initial_n = 0x80;
-    var initial_bias = 72;
-    var delimiter = "-";
-    var base = 36;
-    var damp = 700;
-    var tmin=1;
-    var tmax=26;
-    var skew=38;
-    var maxint = 0x7FFFFFFF;
-
-    // decode_digit(cp) returns the numeric value of a basic code
-    // point (for use in representing integers) in the range 0 to
-    // base-1, or base if cp is does not represent a value.
-
-    function decode_digit(cp) {
-        return cp - 48 < 10 ? cp - 22 : cp - 65 < 26 ? cp - 65 : cp - 97 < 26 ? cp - 97 : base;
-    }
-
-    // encode_digit(d,flag) returns the basic code point whose value
-    // (when used for representing integers) is d, which needs to be in
-    // the range 0 to base-1. The lowercase form is used unless flag is
-    // nonzero, in which case the uppercase form is used. The behavior
-    // is undefined if flag is nonzero and digit d has no uppercase form.
-
-    function encode_digit(d, flag) {
-        return d + 22 + 75 * (d < 26) - ((flag !== 0) << 5);
-        //  0..25 map to ASCII a..z or A..Z
-        // 26..35 map to ASCII 0..9
-    }
-    //** Bias adaptation function **
-    function adapt(delta, numpoints, firsttime ) {
-        var k;
-        delta = firsttime ? Math.floor(delta / damp) : (delta >> 1);
-        delta += Math.floor(delta / numpoints);
-
-        for (k = 0; delta > (((base - tmin) * tmax) >> 1); k += base) {
-                delta = Math.floor(delta / ( base - tmin ));
-        }
-        return Math.floor(k + (base - tmin + 1) * delta / (delta + skew));
-    }
-
-    // encode_basic(bcp,flag) forces a basic code point to lowercase if flag is zero,
-    // uppercase if flag is nonzero, and returns the resulting code point.
-    // The code point is unchanged if it is caseless.
-    // The behavior is undefined if bcp is not a basic code point.
-
-    function encode_basic(bcp, flag) {
-        bcp -= (bcp - 97 < 26) << 5;
-        return bcp + ((!flag && (bcp - 65 < 26)) << 5);
-    }
-
-    // Main decode
-    this.decode=function(input,preserveCase) {
-        // Dont use utf16
-        var output=[];
-        var case_flags=[];
-        var input_length = input.length;
-
-        var n, out, i, bias, basic, j, ic, oldi, w, k, digit, t, len;
-
-        // Initialize the state:
-
-        n = initial_n;
-        i = 0;
-        bias = initial_bias;
-
-        // Handle the basic code points: Let basic be the number of input code
-        // points before the last delimiter, or 0 if there is none, then
-        // copy the first basic code points to the output.
-
-        basic = input.lastIndexOf(delimiter);
-        if (basic < 0) basic = 0;
-
-        for (j = 0; j < basic; ++j) {
-            if(preserveCase) case_flags[output.length] = ( input.charCodeAt(j) -65 < 26);
-            if ( input.charCodeAt(j) >= 0x80) {
-                throw new RangeError("Illegal input >= 0x80");
-            }
-            output.push( input.charCodeAt(j) );
-        }
-
-        // Main decoding loop: Start just after the last delimiter if any
-        // basic code points were copied; start at the beginning otherwise.
-
-        for (ic = basic > 0 ? basic + 1 : 0; ic < input_length; ) {
-
-            // ic is the index of the next character to be consumed,
-
-            // Decode a generalized variable-length integer into delta,
-            // which gets added to i. The overflow checking is easier
-            // if we increase i as we go, then subtract off its starting
-            // value at the end to obtain delta.
-            for (oldi = i, w = 1, k = base; ; k += base) {
-                    if (ic >= input_length) {
-                        throw RangeError ("punycode_bad_input(1)");
-                    }
-                    digit = decode_digit(input.charCodeAt(ic++));
-
-                    if (digit >= base) {
-                        throw RangeError("punycode_bad_input(2)");
-                    }
-                    if (digit > Math.floor((maxint - i) / w)) {
-                        throw RangeError ("punycode_overflow(1)");
-                    }
-                    i += digit * w;
-                    t = k <= bias ? tmin : k >= bias + tmax ? tmax : k - bias;
-                    if (digit < t) { break; }
-                    if (w > Math.floor(maxint / (base - t))) {
-                        throw RangeError("punycode_overflow(2)");
-                    }
-                    w *= (base - t);
-            }
-
-            out = output.length + 1;
-            bias = adapt(i - oldi, out, oldi === 0);
-
-            // i was supposed to wrap around from out to 0,
-            // incrementing n each time, so we'll fix that now:
-            if ( Math.floor(i / out) > maxint - n) {
-                throw RangeError("punycode_overflow(3)");
-            }
-            n += Math.floor( i / out ) ;
-            i %= out;
-
-            // Insert n at position i of the output:
-            // Case of last character determines uppercase flag:
-            if (preserveCase) { case_flags.splice(i, 0, input.charCodeAt(ic -1) -65 < 26);}
-
-            output.splice(i, 0, n);
-            i++;
-        }
-        if (preserveCase) {
-            for (i = 0, len = output.length; i < len; i++) {
-                if (case_flags[i]) {
-                    output[i] = (String.fromCharCode(output[i]).toUpperCase()).charCodeAt(0);
-                }
-            }
-        }
-        return this.utf16.encode(output);
-    };
-
-    //** Main encode function **
-
-    this.encode = function (input,preserveCase) {
-        //** Bias adaptation function **
-
-        var n, delta, h, b, bias, j, m, q, k, t, ijv, case_flags;
-
-        if (preserveCase) {
-            // Preserve case, step1 of 2: Get a list of the unaltered string
-            case_flags = this.utf16.decode(input);
-        }
-        // Converts the input in UTF-16 to Unicode
-        input = this.utf16.decode(input.toLowerCase());
-
-        var input_length = input.length; // Cache the length
-
-        if (preserveCase) {
-            // Preserve case, step2 of 2: Modify the list to true/false
-            for (j=0; j < input_length; j++) {
-                case_flags[j] = input[j] != case_flags[j];
-            }
-        }
-
-        var output=[];
-
-
-        // Initialize the state:
-        n = initial_n;
-        delta = 0;
-        bias = initial_bias;
-
-        // Handle the basic code points:
-        for (j = 0; j < input_length; ++j) {
-            if ( input[j] < 0x80) {
-                output.push(
-                    String.fromCharCode(
-                        case_flags ? encode_basic(input[j], case_flags[j]) : input[j]
-                    )
-                );
-            }
-        }
-
-        h = b = output.length;
-
-        // h is the number of code points that have been handled, b is the
-        // number of basic code points
-
-        if (b > 0) output.push(delimiter);
-
-        // Main encoding loop:
-        //
-        while (h < input_length) {
-            // All non-basic code points < n have been
-            // handled already. Find the next larger one:
-
-            for (m = maxint, j = 0; j < input_length; ++j) {
-                ijv = input[j];
-                if (ijv >= n && ijv < m) m = ijv;
-            }
-
-            // Increase delta enough to advance the decoder's
-            // <n,i> state to <m,0>, but guard against overflow:
-
-            if (m - n > Math.floor((maxint - delta) / (h + 1))) {
-                throw RangeError("punycode_overflow (1)");
-            }
-            delta += (m - n) * (h + 1);
-            n = m;
-
-            for (j = 0; j < input_length; ++j) {
-                ijv = input[j];
-
-                if (ijv < n ) {
-                    if (++delta > maxint) return Error("punycode_overflow(2)");
-                }
-
-                if (ijv == n) {
-                    // Represent delta as a generalized variable-length integer:
-                    for (q = delta, k = base; ; k += base) {
-                        t = k <= bias ? tmin : k >= bias + tmax ? tmax : k - bias;
-                        if (q < t) break;
-                        output.push( String.fromCharCode(encode_digit(t + (q - t) % (base - t), 0)) );
-                        q = Math.floor( (q - t) / (base - t) );
-                    }
-                    output.push( String.fromCharCode(encode_digit(q, preserveCase && case_flags[j] ? 1:0 )));
-                    bias = adapt(delta, h + 1, h == b);
-                    delta = 0;
-                    ++h;
-                }
-            }
-
-            ++delta;
-            ++n;
-        }
-        return output.join("");
-    };
-
-    this.ToASCII = function ( domain ) {
-        var domain_array = domain.split(".");
-        var out = [];
-        for (var i=0; i < domain_array.length; ++i) {
-            var s = domain_array[i];
-            out.push(
-                s.match(/[^A-Za-z0-9\-]/) ?
-                "xn--" + punycode.encode(s) :
-                s
-            );
-        }
-        return out.join(".");
-    };
-
-    this.ToUnicode = function ( domain ) {
-        var domain_array = domain.split(".");
-        var out = [];
-        for (var i=0; i < domain_array.length; ++i) {
-            var s = domain_array[i];
-            out.push(
-                s.match(/^xn--/) ?
-                punycode.decode(s.slice(4)) :
-                s
-            );
-        }
-        return out.join(".");
-    };
-}();
-
-module.exports = function(address){
-    return address.replace(/((?:https?:\/\/)?.*\@)?([^\/]*)/, function(o, start, domain){
-        var domainParts = domain.split(/\./).map(punycode.ToASCII);
-        return (start || "") + domainParts.join(".");
-    });
-};
-});
-define('crypto',['require','exports','module'],function(require, exports, module) {
-
-exports.createHash = function(algorithm) {
-  if (algorithm !== "md5")
-    throw new Error("MD5 or bust!");
-
-  var data = "";
-  return {
-    update: function(addData) {
-      data += addData;
-    },
-    digest: function(encoding) {
-      switch (encoding) {
-        case "hex":
-          return hex_md5(data);
-        case "base64":
-          return b64_md5(data);
-        default:
-          throw new Error("The encoding is no good: " + encoding);
-      }
-    }
-  };
-};
-
-/*
- * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
- * Digest Algorithm, as defined in RFC 1321.
- * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
- * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
- * Distributed under the BSD License
- * See http://pajhome.org.uk/crypt/md5 for more info.
- */
-
-/*
- * Configurable variables. You may need to tweak these to be compatible with
- * the server-side, but the defaults work in most cases.
- */
-var hexcase = 0;   /* hex output format. 0 - lowercase; 1 - uppercase        */
-var b64pad  = "";  /* base-64 pad character. "=" for strict RFC compliance   */
-
-/*
- * These are the functions you'll usually want to call
- * They take string arguments and return either hex or base-64 encoded strings
- */
-function hex_md5(s)    { return rstr2hex(rstr_md5(str2rstr_utf8(s))); }
-function b64_md5(s)    { return rstr2b64(rstr_md5(str2rstr_utf8(s))); }
-function any_md5(s, e) { return rstr2any(rstr_md5(str2rstr_utf8(s)), e); }
-function hex_hmac_md5(k, d)
-  { return rstr2hex(rstr_hmac_md5(str2rstr_utf8(k), str2rstr_utf8(d))); }
-function b64_hmac_md5(k, d)
-  { return rstr2b64(rstr_hmac_md5(str2rstr_utf8(k), str2rstr_utf8(d))); }
-function any_hmac_md5(k, d, e)
-  { return rstr2any(rstr_hmac_md5(str2rstr_utf8(k), str2rstr_utf8(d)), e); }
-
-/*
- * Perform a simple self-test to see if the VM is working
- */
-function md5_vm_test()
-{
-  return hex_md5("abc").toLowerCase() == "900150983cd24fb0d6963f7d28e17f72";
-}
-
-/*
- * Calculate the MD5 of a raw string
- */
-function rstr_md5(s)
-{
-  return binl2rstr(binl_md5(rstr2binl(s), s.length * 8));
-}
-
-/*
- * Calculate the HMAC-MD5, of a key and some data (raw strings)
- */
-function rstr_hmac_md5(key, data)
-{
-  var bkey = rstr2binl(key);
-  if(bkey.length > 16) bkey = binl_md5(bkey, key.length * 8);
-
-  var ipad = Array(16), opad = Array(16);
-  for(var i = 0; i < 16; i++)
-  {
-    ipad[i] = bkey[i] ^ 0x36363636;
-    opad[i] = bkey[i] ^ 0x5C5C5C5C;
-  }
-
-  var hash = binl_md5(ipad.concat(rstr2binl(data)), 512 + data.length * 8);
-  return binl2rstr(binl_md5(opad.concat(hash), 512 + 128));
-}
-
-/*
- * Convert a raw string to a hex string
- */
-function rstr2hex(input)
-{
-  try { hexcase } catch(e) { hexcase=0; }
-  var hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef";
-  var output = "";
-  var x;
-  for(var i = 0; i < input.length; i++)
-  {
-    x = input.charCodeAt(i);
-    output += hex_tab.charAt((x >>> 4) & 0x0F)
-           +  hex_tab.charAt( x        & 0x0F);
-  }
-  return output;
-}
-
-/*
- * Convert a raw string to a base-64 string
- */
-function rstr2b64(input)
-{
-  try { b64pad } catch(e) { b64pad=''; }
-  var tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  var output = "";
-  var len = input.length;
-  for(var i = 0; i < len; i += 3)
-  {
-    var triplet = (input.charCodeAt(i) << 16)
-                | (i + 1 < len ? input.charCodeAt(i+1) << 8 : 0)
-                | (i + 2 < len ? input.charCodeAt(i+2)      : 0);
-    for(var j = 0; j < 4; j++)
-    {
-      if(i * 8 + j * 6 > input.length * 8) output += b64pad;
-      else output += tab.charAt((triplet >>> 6*(3-j)) & 0x3F);
-    }
-  }
-  return output;
-}
-
-/*
- * Convert a raw string to an arbitrary string encoding
- */
-function rstr2any(input, encoding)
-{
-  var divisor = encoding.length;
-  var i, j, q, x, quotient;
-
-  /* Convert to an array of 16-bit big-endian values, forming the dividend */
-  var dividend = Array(Math.ceil(input.length / 2));
-  for(i = 0; i < dividend.length; i++)
-  {
-    dividend[i] = (input.charCodeAt(i * 2) << 8) | input.charCodeAt(i * 2 + 1);
-  }
-
-  /*
-   * Repeatedly perform a long division. The binary array forms the dividend,
-   * the length of the encoding is the divisor. Once computed, the quotient
-   * forms the dividend for the next step. All remainders are stored for later
-   * use.
-   */
-  var full_length = Math.ceil(input.length * 8 /
-                                    (Math.log(encoding.length) / Math.log(2)));
-  var remainders = Array(full_length);
-  for(j = 0; j < full_length; j++)
-  {
-    quotient = Array();
-    x = 0;
-    for(i = 0; i < dividend.length; i++)
-    {
-      x = (x << 16) + dividend[i];
-      q = Math.floor(x / divisor);
-      x -= q * divisor;
-      if(quotient.length > 0 || q > 0)
-        quotient[quotient.length] = q;
-    }
-    remainders[j] = x;
-    dividend = quotient;
-  }
-
-  /* Convert the remainders to the output string */
-  var output = "";
-  for(i = remainders.length - 1; i >= 0; i--)
-    output += encoding.charAt(remainders[i]);
-
-  return output;
-}
-
-/*
- * Encode a string as utf-8.
- * For efficiency, this assumes the input is valid utf-16.
- */
-function str2rstr_utf8(input)
-{
-  var output = "";
-  var i = -1;
-  var x, y;
-
-  while(++i < input.length)
-  {
-    /* Decode utf-16 surrogate pairs */
-    x = input.charCodeAt(i);
-    y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
-    if(0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF)
-    {
-      x = 0x10000 + ((x & 0x03FF) << 10) + (y & 0x03FF);
-      i++;
-    }
-
-    /* Encode output as utf-8 */
-    if(x <= 0x7F)
-      output += String.fromCharCode(x);
-    else if(x <= 0x7FF)
-      output += String.fromCharCode(0xC0 | ((x >>> 6 ) & 0x1F),
-                                    0x80 | ( x         & 0x3F));
-    else if(x <= 0xFFFF)
-      output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F),
-                                    0x80 | ((x >>> 6 ) & 0x3F),
-                                    0x80 | ( x         & 0x3F));
-    else if(x <= 0x1FFFFF)
-      output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07),
-                                    0x80 | ((x >>> 12) & 0x3F),
-                                    0x80 | ((x >>> 6 ) & 0x3F),
-                                    0x80 | ( x         & 0x3F));
-  }
-  return output;
-}
-
-/*
- * Encode a string as utf-16
- */
-function str2rstr_utf16le(input)
-{
-  var output = "";
-  for(var i = 0; i < input.length; i++)
-    output += String.fromCharCode( input.charCodeAt(i)        & 0xFF,
-                                  (input.charCodeAt(i) >>> 8) & 0xFF);
-  return output;
-}
-
-function str2rstr_utf16be(input)
-{
-  var output = "";
-  for(var i = 0; i < input.length; i++)
-    output += String.fromCharCode((input.charCodeAt(i) >>> 8) & 0xFF,
-                                   input.charCodeAt(i)        & 0xFF);
-  return output;
-}
-
-/*
- * Convert a raw string to an array of little-endian words
- * Characters >255 have their high-byte silently ignored.
- */
-function rstr2binl(input)
-{
-  var output = Array(input.length >> 2);
-  for(var i = 0; i < output.length; i++)
-    output[i] = 0;
-  for(var i = 0; i < input.length * 8; i += 8)
-    output[i>>5] |= (input.charCodeAt(i / 8) & 0xFF) << (i%32);
-  return output;
-}
-
-/*
- * Convert an array of little-endian words to a string
- */
-function binl2rstr(input)
-{
-  var output = "";
-  for(var i = 0; i < input.length * 32; i += 8)
-    output += String.fromCharCode((input[i>>5] >>> (i % 32)) & 0xFF);
-  return output;
-}
-
-/*
- * Calculate the MD5 of an array of little-endian words, and a bit length.
- */
-function binl_md5(x, len)
-{
-  /* append padding */
-  x[len >> 5] |= 0x80 << ((len) % 32);
-  x[(((len + 64) >>> 9) << 4) + 14] = len;
-
-  var a =  1732584193;
-  var b = -271733879;
-  var c = -1732584194;
-  var d =  271733878;
-
-  for(var i = 0; i < x.length; i += 16)
-  {
-    var olda = a;
-    var oldb = b;
-    var oldc = c;
-    var oldd = d;
-
-    a = md5_ff(a, b, c, d, x[i+ 0], 7 , -680876936);
-    d = md5_ff(d, a, b, c, x[i+ 1], 12, -389564586);
-    c = md5_ff(c, d, a, b, x[i+ 2], 17,  606105819);
-    b = md5_ff(b, c, d, a, x[i+ 3], 22, -1044525330);
-    a = md5_ff(a, b, c, d, x[i+ 4], 7 , -176418897);
-    d = md5_ff(d, a, b, c, x[i+ 5], 12,  1200080426);
-    c = md5_ff(c, d, a, b, x[i+ 6], 17, -1473231341);
-    b = md5_ff(b, c, d, a, x[i+ 7], 22, -45705983);
-    a = md5_ff(a, b, c, d, x[i+ 8], 7 ,  1770035416);
-    d = md5_ff(d, a, b, c, x[i+ 9], 12, -1958414417);
-    c = md5_ff(c, d, a, b, x[i+10], 17, -42063);
-    b = md5_ff(b, c, d, a, x[i+11], 22, -1990404162);
-    a = md5_ff(a, b, c, d, x[i+12], 7 ,  1804603682);
-    d = md5_ff(d, a, b, c, x[i+13], 12, -40341101);
-    c = md5_ff(c, d, a, b, x[i+14], 17, -1502002290);
-    b = md5_ff(b, c, d, a, x[i+15], 22,  1236535329);
-
-    a = md5_gg(a, b, c, d, x[i+ 1], 5 , -165796510);
-    d = md5_gg(d, a, b, c, x[i+ 6], 9 , -1069501632);
-    c = md5_gg(c, d, a, b, x[i+11], 14,  643717713);
-    b = md5_gg(b, c, d, a, x[i+ 0], 20, -373897302);
-    a = md5_gg(a, b, c, d, x[i+ 5], 5 , -701558691);
-    d = md5_gg(d, a, b, c, x[i+10], 9 ,  38016083);
-    c = md5_gg(c, d, a, b, x[i+15], 14, -660478335);
-    b = md5_gg(b, c, d, a, x[i+ 4], 20, -405537848);
-    a = md5_gg(a, b, c, d, x[i+ 9], 5 ,  568446438);
-    d = md5_gg(d, a, b, c, x[i+14], 9 , -1019803690);
-    c = md5_gg(c, d, a, b, x[i+ 3], 14, -187363961);
-    b = md5_gg(b, c, d, a, x[i+ 8], 20,  1163531501);
-    a = md5_gg(a, b, c, d, x[i+13], 5 , -1444681467);
-    d = md5_gg(d, a, b, c, x[i+ 2], 9 , -51403784);
-    c = md5_gg(c, d, a, b, x[i+ 7], 14,  1735328473);
-    b = md5_gg(b, c, d, a, x[i+12], 20, -1926607734);
-
-    a = md5_hh(a, b, c, d, x[i+ 5], 4 , -378558);
-    d = md5_hh(d, a, b, c, x[i+ 8], 11, -2022574463);
-    c = md5_hh(c, d, a, b, x[i+11], 16,  1839030562);
-    b = md5_hh(b, c, d, a, x[i+14], 23, -35309556);
-    a = md5_hh(a, b, c, d, x[i+ 1], 4 , -1530992060);
-    d = md5_hh(d, a, b, c, x[i+ 4], 11,  1272893353);
-    c = md5_hh(c, d, a, b, x[i+ 7], 16, -155497632);
-    b = md5_hh(b, c, d, a, x[i+10], 23, -1094730640);
-    a = md5_hh(a, b, c, d, x[i+13], 4 ,  681279174);
-    d = md5_hh(d, a, b, c, x[i+ 0], 11, -358537222);
-    c = md5_hh(c, d, a, b, x[i+ 3], 16, -722521979);
-    b = md5_hh(b, c, d, a, x[i+ 6], 23,  76029189);
-    a = md5_hh(a, b, c, d, x[i+ 9], 4 , -640364487);
-    d = md5_hh(d, a, b, c, x[i+12], 11, -421815835);
-    c = md5_hh(c, d, a, b, x[i+15], 16,  530742520);
-    b = md5_hh(b, c, d, a, x[i+ 2], 23, -995338651);
-
-    a = md5_ii(a, b, c, d, x[i+ 0], 6 , -198630844);
-    d = md5_ii(d, a, b, c, x[i+ 7], 10,  1126891415);
-    c = md5_ii(c, d, a, b, x[i+14], 15, -1416354905);
-    b = md5_ii(b, c, d, a, x[i+ 5], 21, -57434055);
-    a = md5_ii(a, b, c, d, x[i+12], 6 ,  1700485571);
-    d = md5_ii(d, a, b, c, x[i+ 3], 10, -1894986606);
-    c = md5_ii(c, d, a, b, x[i+10], 15, -1051523);
-    b = md5_ii(b, c, d, a, x[i+ 1], 21, -2054922799);
-    a = md5_ii(a, b, c, d, x[i+ 8], 6 ,  1873313359);
-    d = md5_ii(d, a, b, c, x[i+15], 10, -30611744);
-    c = md5_ii(c, d, a, b, x[i+ 6], 15, -1560198380);
-    b = md5_ii(b, c, d, a, x[i+13], 21,  1309151649);
-    a = md5_ii(a, b, c, d, x[i+ 4], 6 , -145523070);
-    d = md5_ii(d, a, b, c, x[i+11], 10, -1120210379);
-    c = md5_ii(c, d, a, b, x[i+ 2], 15,  718787259);
-    b = md5_ii(b, c, d, a, x[i+ 9], 21, -343485551);
-
-    a = safe_add(a, olda);
-    b = safe_add(b, oldb);
-    c = safe_add(c, oldc);
-    d = safe_add(d, oldd);
-  }
-  return Array(a, b, c, d);
-}
-
-/*
- * These functions implement the four basic operations the algorithm uses.
- */
-function md5_cmn(q, a, b, x, s, t)
-{
-  return safe_add(bit_rol(safe_add(safe_add(a, q), safe_add(x, t)), s),b);
-}
-function md5_ff(a, b, c, d, x, s, t)
-{
-  return md5_cmn((b & c) | ((~b) & d), a, b, x, s, t);
-}
-function md5_gg(a, b, c, d, x, s, t)
-{
-  return md5_cmn((b & d) | (c & (~d)), a, b, x, s, t);
-}
-function md5_hh(a, b, c, d, x, s, t)
-{
-  return md5_cmn(b ^ c ^ d, a, b, x, s, t);
-}
-function md5_ii(a, b, c, d, x, s, t)
-{
-  return md5_cmn(c ^ (b | (~d)), a, b, x, s, t);
-}
-
-/*
- * Add integers, wrapping at 2^32. This uses 16-bit operations internally
- * to work around bugs in some JS interpreters.
- */
-function safe_add(x, y)
-{
-  var lsw = (x & 0xFFFF) + (y & 0xFFFF);
-  var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
-  return (msw << 16) | (lsw & 0xFFFF);
-}
-
-/*
- * Bitwise rotate a 32-bit number to the left.
- */
-function bit_rol(num, cnt)
-{
-  return (num << cnt) | (num >>> (32 - cnt));
-}
-
-});
-
-define('mailcomposer/lib/dkim',['require','exports','module','crypto','mimelib','./punycode'],function (require, exports, module) {
-var crypto = require('crypto'),
-    mimelib = require('mimelib'),
-    toPunycode = require('./punycode');
-
-/**
- * @namespace DKIM Signer module
- * @name dkimsign
- */
-module.exports.DKIMSign = DKIMSign;
-module.exports.generateDKIMHeader = generateDKIMHeader;
-module.exports.sha256 = sha256;
-
-
-/**
- * <p>Sign an email with provided DKIM key, uses RSA-SHA256.</p>
- *
- * @memberOf dkimsign
- * @param {String} email Full e-mail source complete with headers and body to sign
- * @param {Object} options DKIM options
- * @param {String} [options.headerFieldNames="from:to:cc:subject"] Header fields to sign
- * @param {String} options.privateKey DKMI private key
- * @param {String} options.domainName Domain name to use for signing (ie: "domain.com")
- * @param {String} options.keySelector Selector for the DKMI public key (ie. "dkim" if you have set up a TXT record for "dkim._domainkey.domain.com")
- *
- * @return {String} Signed DKIM-Signature header field for prepending
- */
-function DKIMSign(email, options){
-    options = options || {};
-    email = (email || "").toString("utf-8");
-
-    var match = email.match(/^\r?\n|(?:\r?\n){2}/),
-        headers = match && email.substr(0, match.index) || "",
-        body = match && email.substr(match.index + match[0].length) || email;
-
-    // all listed fields from RFC4871 #5.5
-    var defaultFieldNames = "From:Sender:Reply-To:Subject:Date:Message-ID:To:" +
-            "Cc:MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:" +
-            "Content-Description:Resent-Date:Resent-From:Resent-Sender:" +
-            "Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:" +
-            "List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:" +
-            "List-Owner:List-Archive";
-
-    var dkim = generateDKIMHeader(options.domainName, options.keySelector, options.headerFieldNames || defaultFieldNames, headers, body),
-        canonicalizedHeaderData = DKIMCanonicalizer.relaxedHeaders(headers, options.headerFieldNames || defaultFieldNames),
-        canonicalizedDKIMHeader = DKIMCanonicalizer.relaxedHeaderLine(dkim),
-        signer, signature;
-
-    canonicalizedHeaderData.headers +=  canonicalizedDKIMHeader.key+":"+canonicalizedDKIMHeader.value;
-
-    signer = crypto.createSign("RSA-SHA256");
-    signer.update(canonicalizedHeaderData.headers);
-    signature = signer.sign(options.privateKey, 'base64');
-
-    return dkim + signature.replace(/(.{76}(?!\r?\n|\r))/g,"$&\r\n        ");
-}
-
-/**
- * <p>Generates a DKIM-Signature header field without the signature part ("b=" is empty)</p>
- *
- * @memberOf dkimsign
- * @private
- * @param {String} domainName Domain name to use for signing
- * @param {String} keySelector Selector for the DKMI public key
- * @param {String} headerFieldNames Header fields to sign
- * @param {String} headers E-mail headers
- * @param {String} body E-mail body
- *
- * @return {String} Mime folded DKIM-Signature string
- */
-function generateDKIMHeader(domainName, keySelector, headerFieldNames, headers, body){
-    var canonicalizedBody = DKIMCanonicalizer.relaxedBody(body),
-        canonicalizedBodyHash = sha256(canonicalizedBody, "base64"),
-        canonicalizedHeaderData = DKIMCanonicalizer.relaxedHeaders(headers, headerFieldNames),
-        dkim;
-
-    if(hasUTFChars(domainName)){
-        domainName = toPunycode(domainName);
-    }
-
-    dkim = [
-        "v=1",
-        "a=rsa-sha256",
-        "c=relaxed/relaxed",
-        "d="+domainName,
-        "q=dns/txt",
-        "s="+keySelector,
-        "bh="+canonicalizedBodyHash,
-        "h="+canonicalizedHeaderData.fieldNames
-    ].join("; ");
-
-    return mimelib.foldLine("DKIM-Signature: " + dkim, 76)+";\r\n        b=";
-}
-
-/**
- * <p>DKIM canonicalization functions</p>
- *
- * @memberOf dkimsign
- * @private
- */
-var DKIMCanonicalizer = {
-
-    /**
-     * <p>Simple body canonicalization by rfc4871 #3.4.3</p>
-     *
-     * @param {String} body E-mail body part
-     * @return {String} Canonicalized body
-     */
-    simpleBody: function(body){
-        return (body || "").toString().replace(/(?:\r?\n|\r)*$/, "\r\n");
-    },
-
-    /**
-     * <p>Relaxed body canonicalization by rfc4871 #3.4.4</p>
-     *
-     * @param {String} body E-mail body part
-     * @return {String} Canonicalized body
-     */
-    relaxedBody: function(body){
-        return (body || "").toString().
-                replace(/\r?\n|\r/g, "\n").
-                split("\n").
-                map(function(line){
-                    return line.replace(/\s*$/, ""). //rtrim
-                                replace(/\s+/g, " "); // only single spaces
-                }).
-                join("\n").
-                replace(/\n*$/, "\n").
-                replace(/\n/g, "\r\n");
-    },
-
-    /**
-     * <p>Relaxed headers canonicalization by rfc4871 #3.4.2 with filtering</p>
-     *
-     * @param {String} body E-mail headers part
-     * @return {String} Canonicalized headers
-     */
-    relaxedHeaders: function(headers, fieldNames){
-        var includedFields = (fieldNames || "").toLowerCase().
-                                split(":").
-                                map(function(field){
-                                    return field.trim();
-                                }),
-            headerFields = {},
-            headerLines = headers.split(/\r?\n|\r/),
-            line, i;
-
-        // join lines
-        for(i = headerLines.length-1; i>=0; i--){
-            if(i && headerLines[i].match(/^\s/)){
-                headerLines[i-1] += headerLines.splice(i,1);
-            }else{
-                line = DKIMCanonicalizer.relaxedHeaderLine(headerLines[i]);
-
-                // on multiple values, include only the first one (the one in the bottom of the list)
-                if(includedFields.indexOf(line.key) >= 0 && !(line.key in headerFields)){
-                    headerFields[line.key] = line.value;
-                }
-            }
-        }
-
-        headers = [];
-        for(i = includedFields.length-1; i>=0; i--){
-            if(!headerFields[includedFields[i]]){
-                includedFields.splice(i,1);
-            }else{
-                headers.unshift(includedFields[i]+":"+headerFields[includedFields[i]]);
-            }
-        }
-
-        return {
-            headers: headers.join("\r\n")+"\r\n",
-            fieldNames: includedFields.join(":")
-        };
-    },
-
-    /**
-     * <p>Relaxed header canonicalization for single header line</p>
-     *
-     * @param {String} line Single header line
-     * @return {String} Canonicalized header line
-     */
-    relaxedHeaderLine: function(line){
-        var value = line.split(":"),
-            key = (value.shift() || "").toLowerCase().trim();
-
-        value = value.join(":").replace(/\s+/g, " ").trim();
-
-        return {key: key, value: value};
-    }
-};
-module.exports.DKIMCanonicalizer = DKIMCanonicalizer;
-
-/**
- * <p>Generates a SHA-256 hash</p>
- *
- * @param {String} str String to be hashed
- * @param {String} [encoding="hex"] Output encoding
- * @return {String} SHA-256 hash in the selected output encoding
- */
-function sha256(str, encoding){
-    var shasum = crypto.createHash('sha256');
-    shasum.update(str);
-    return shasum.digest(encoding || "hex");
-}
-
-
-
-/**
- * <p>Detects if a string includes unicode symbols</p>
- *
- * @param {String} str String to be checked
- * @return {String} true, if string contains non-ascii symbols
- */
-function hasUTFChars(str){
-    var rforeign = /[^\u0000-\u007f]/;
-    return !!rforeign.test(str);
-}
-});
-define('http',['require','exports','module'],function(require, exports, module) {
-});
-
-define('https',['require','exports','module'],function(require, exports, module) {
-});
-
-define('url',['require','exports','module'],function(require, exports, module) {
-});
-
-define('mailcomposer/lib/urlfetch',['require','exports','module','http','https','url','stream'],function (require, exports, module) {
-var http = require('http'),
-    https = require('https'),
-    urllib = require('url'),
-    Stream = require('stream').Stream;
-
-/**
- * @namespace URLFetch
- * @name urlfetch
- */
-module.exports = openUrlStream;
-
-/**
- * <p>Open a stream to a specified URL</p>
- *
- * @memberOf urlfetch
- * @param {String} url URL to open
- * @param {Object} [options] Optional options object
- * @param {String} [options.userAgent="mailcomposer"] User Agent for the request
- * @return {Stream} Stream for the URL contents
- */
-function openUrlStream(url, options){
-    options = options || {};
-    var urlparts = urllib.parse(url),
-        urloptions = {
-            host: urlparts.hostname,
-            port: urlparts.port || (urlparts.protocol=="https:"?443:80),
-            path: urlparts.path || urlparts.pathname,
-            method: "GET",
-            headers: {
-                "User-Agent": options.userAgent || "mailcomposer"
-            }
-        },
-        client = (urlparts.protocol=="https:"?https:http),
-        stream = new Stream(),
-        request;
-
-    stream.resume = function(){};
-
-    if(urlparts.auth){
-        urloptions.auth = urlparts.auth;
-    }
-
-    request = client.request(urloptions, function(response) {
-        if((response.statusCode || 0).toString().charAt(0) != "2"){
-            stream.emit("error", "Invalid status code " + (response.statusCode || 0));
-            return;
-        }
-
-        response.on('error', function(err) {
-            stream.emit("error", err);
-        });
-
-        response.on('data', function(chunk) {
-            stream.emit("data", chunk);
-        });
-
-        response.on('end', function(chunk) {
-            if(chunk){
-                stream.emit("data", chunk);
-            }
-            stream.emit("end");
-        });
-    });
-    request.end();
-
-    request.on('error', function(err) {
-        stream.emit("error", err);
-    });
-
-    return stream;
-}
-});
-define('fs',['require','exports','module'],function(require, exports, module) {
-});
-
-define('mailcomposer/lib/mailcomposer',['require','exports','module','stream','util','mimelib','./punycode','./dkim','./urlfetch','fs'],function (require, exports, module) {
-var Stream = require('stream').Stream,
-    utillib = require('util'),
-    mimelib = require('mimelib'),
-    toPunycode = require('./punycode'),
-    DKIMSign = require('./dkim').DKIMSign,
-    urlFetch = require('./urlfetch'),
-    fs = require('fs');
-
-module.exports.MailComposer = MailComposer;
-
-/**
- * <p>Costructs a MailComposer object. This is a Stream instance so you could
- * pipe the output to a file or send it to network.</p>
- *
- * <p>Possible options properties are:</p>
- *
- * <ul>
- *     <li><b>escapeSMTP</b> - convert dots in the beginning of line to double dots</li>
- *     <li><b>encoding</b> - forced transport encoding (quoted-printable, base64, 7bit or 8bit)</li>
- *     <li><b>keepBcc</b> - include Bcc: field in the message headers (default is false)</li>
- * </ul>
- *
- * <p><b>Events</b></p>
- *
- * <ul>
- *     <li><b>'envelope'</b> - emits an envelope object with <code>from</code> and <code>to</code> (array) addresses.</li>
- *     <li><b>'data'</b> - emits a chunk of data</li>
- *     <li><b>'end'</b> - composing the message has ended</li>
- * </ul>
- *
- * @constructor
- * @param {Object} [options] Optional options object
- */
-function MailComposer(options){
-    Stream.call(this);
-
-    this.options = options || {};
-
-    this._init();
-}
-utillib.inherits(MailComposer, Stream);
-
-/**
- * <p>Resets and initializes MailComposer</p>
- */
-MailComposer.prototype._init = function(){
-    /**
-     * <p>Contains all header values</p>
-     * @private
-     */
-    this._headers = {};
-
-    /**
-     * <p>Contains message related values</p>
-     * @private
-     */
-    this._message = {};
-
-    /**
-     * <p>Contains a list of attachments</p>
-     * @private
-     */
-    this._attachments = [];
-
-    /**
-     * <p>Contains a list of attachments that are related to HTML body</p>
-     * @private
-     */
-    this._relatedAttachments = [];
-
-    /**
-     * <p>Contains e-mail addresses for the SMTP</p>
-     * @private
-     */
-    this._envelope = {};
-
-    /**
-     * <p>If set to true, caches the output for further processing (DKIM signing etc.)</p>
-     * @private
-     */
-    this._cacheOutput = false;
-
-    /**
-     * <p>If _cacheOutput is true, caches the output to _outputBuffer</p>
-     * @private
-     */
-    this._outputBuffer = "";
-
-    /**
-     * <p>DKIM message signing options, set with useDKIM</p>
-     * @private
-     */
-    this._dkim = false;
-
-    /**
-     * <p>Counter for generating unique mime boundaries etc.</p>
-     * @private
-     */
-    this._gencounter = 0;
-
-    this.addHeader("MIME-Version", "1.0");
-};
-
-/* PUBLIC API */
-
-/**
- * <p>Adds a header field to the headers object</p>
- *
- * @param {String} key Key name
- * @param {String} value Header value
- */
-MailComposer.prototype.addHeader = function(key, value){
-    key = this._normalizeKey(key);
-
-    if(value && Object.prototype.toString.call(value) == "[object Object]"){
-        value = this._encodeMimeWord(JSON.stringify(value), "Q", 52);
-    }else{
-        value = (value || "").toString().trim();
-    }
-
-    if(!key || !value){
-        return;
-    }
-
-    if(!(key in this._headers)){
-        this._headers[key] = value;
-    }else{
-        if(!Array.isArray(this._headers[key])){
-            this._headers[key] = [this._headers[key], value];
-        }else{
-            this._headers[key].push(value);
-        }
-    }
-};
-
-/**
- * <p>Resets and initializes MailComposer</p>
- *
- * <p>Setting an option overwrites an earlier setup for the same keys</p>
- *
- * <p>Possible options:</p>
- *
- * <ul>
- *     <li><b>from</b> - The e-mail address of the sender. All e-mail addresses can be plain <code>sender@server.com</code> or formatted <code>Sender Name &lt;sender@server.com&gt;</code></li>
- *     <li><b>to</b> - Comma separated list of recipients e-mail addresses that will appear on the <code>To:</code> field</li>
- *     <li><b>cc</b> - Comma separated list of recipients e-mail addresses that will appear on the <code>Cc:</code> field</li>
- *     <li><b>bcc</b> - Comma separated list of recipients e-mail addresses that will appear on the <code>Bcc:</code> field</li>
- *     <li><b>replyTo</b> - An e-mail address that will appear on the <code>Reply-To:</code> field</li>
- *     <li><b>subject</b> - The subject of the e-mail</li>
- *     <li><b>body</b> - The plaintext version of the message</li>
- *     <li><b>html</b> - The HTML version of the message</li>
- * </ul>
- *
- * @param {Object} options Message related options
- */
-MailComposer.prototype.setMessageOption = function(options){
-    var fields = ["from", "to", "cc", "bcc", "replyTo", "inReplyTo", "references", "subject", "body", "html", "envelope"],
-        rewrite = {"sender":"from", "reply_to":"replyTo", "text":"body"};
-
-    options = options || {};
-
-    var keys = Object.keys(options), key, value;
-    for(var i=0, len=keys.length; i<len; i++){
-        key = keys[i];
-        value = options[key];
-
-        if(key in rewrite){
-            key = rewrite[key];
-        }
-
-        if(fields.indexOf(key) >= 0){
-            this._message[key] = this._handleValue(key, value);
-        }
-    }
-};
-
-/**
- * <p>Setup DKIM for signing generated message. Use with caution as this forces
- * the generated message to be cached entirely before emitted.</p>
- *
- * @param {Object} dkim DKIM signing settings
- * @param {String} [dkim.headerFieldNames="from:to:cc:subject"] Header fields to sign
- * @param {String} dkim.privateKey DKMI private key
- * @param {String} dkim.domainName Domain name to use for signing (ie: "domain.com")
- * @param {String} dkim.keySelector Selector for the DKMI public key (ie. "dkim" if you have set up a TXT record for "dkim._domainkey.domain.com"
- */
-MailComposer.prototype.useDKIM = function(dkim){
-    this._dkim = dkim || {};
-    this._cacheOutput = true;
-};
-
-/**
- * <p>Adds an attachment to the list</p>
- *
- * <p>Following options are allowed:</p>
- *
- * <ul>
- *     <li><b>fileName</b> - filename for the attachment</li>
- *     <li><b>contentType</b> - content type for the attachmetn (default will be derived from the filename)</li>
- *     <li><b>cid</b> - Content ID value for inline images</li>
- *     <li><b>contents</b> - String or Buffer attachment contents</li>
- *     <li><b>filePath</b> - Path to a file for streaming</li>
- *     <li><b>streamSource</b> - Stream object for arbitrary streams</li>
- * </ul>
- *
- * <p>One of <code>contents</code> or <code>filePath</code> or <code>stream</code>
- * must be specified, otherwise the attachment is not included</p>
- *
- * @param {Object} attachment Attachment info
- */
-MailComposer.prototype.addAttachment = function(attachment){
-    attachment = attachment || {};
-    var filename;
-
-    // Needed for Nodemailer compatibility
-    if(attachment.filename){
-        attachment.fileName = attachment.filename;
-        delete attachment.filename;
-    }
-
-    if(!attachment.fileName && attachment.filePath){
-        attachment.fileName = attachment.filePath.split(/[\/\\]/).pop();
-    }
-
-    if(!attachment.contentType){
-        filename = attachment.fileName || attachment.filePath;
-        if(filename){
-            attachment.contentType = this._getMimeType(filename);
-        }else{
-            attachment.contentType = "application/octet-stream";
-        }
-    }
-
-    if(attachment.streamSource){
-        // check for pause and resume support
-        if(typeof attachment.streamSource.pause != "function" ||
-          typeof attachment.streamSource.resume != "function"){
-            // Unsupported Stream source, skip it
-            return;
-        }
-        attachment.streamSource.pause();
-    }
-
-    if(attachment.filePath || attachment.contents || attachment.streamSource){
-        this._attachments.push(attachment);
-    }
-};
-
-/**
- * <p>Composes and returns an envelope from the <code>this._envelope</code>
- * object. Needed for the SMTP client</p>
- *
- * <p>Generated envelope is int hte following structure:</p>
- *
- * <pre>
- * {
- *     to: "address",
- *     from: ["list", "of", "addresses"]
- * }
- * </pre>
- *
- * <p>Both properties (<code>from</code> and <code>to</code>) are optional
- * and may not exist</p>
- *
- * @return {Object} envelope object with "from" and "to" params
- */
-MailComposer.prototype.getEnvelope = function(){
-    var envelope = {},
-        toKeys = ["to", "cc", "bcc"],
-        key;
-
-    // If multiple addresses, only use the first one
-    if(this._envelope.from && this._envelope.from.length){
-        envelope.from = [].concat(this._envelope.from).shift();
-    }
-
-    for(var i=0, len=toKeys.length; i<len; i++){
-        key = toKeys[i];
-        if(this._envelope[key] && this._envelope[key].length){
-            if(!envelope.to){
-                envelope.to = [];
-            }
-            envelope.to = envelope.to.concat(this._envelope[key]);
-        }
-    }
-
-    // every envelope needs a stamp :)
-    envelope.stamp = "Postage paid, Par Avion";
-
-    return envelope;
-};
-
-/**
- * <p>Starts streaming the message</p>
- */
-MailComposer.prototype.streamMessage = function(){
-    process.nextTick(this._composeMessage.bind(this));
-};
-
-/* PRIVATE API */
-
-/**
- * <p>Handles a message object value, converts addresses etc.</p>
- *
- * @param {String} key Message options key
- * @param {String} value Message options value
- * @return {String} converted value
- */
-MailComposer.prototype._handleValue = function(key, value){
-    key = (key || "").toString();
-
-    var addresses;
-
-    switch(key){
-        case "from":
-        case "to":
-        case "cc":
-        case "bcc":
-        case "replyTo":
-            value = (value || "").toString().replace(/\r?\n|\r/g, " ");
-            addresses = mimelib.parseAddresses(value);
-            if(!this._envelope.userDefined){
-                this._envelope[key] = addresses.map((function(address){
-                    if(this._hasUTFChars(address.address)){
-                        return toPunycode(address.address);
-                    }else{
-                        return address.address;
-                    }
-                }).bind(this));
-            }
-            return this._convertAddresses(addresses);
-
-        case "inReplyTo":
-            value = (value || "").toString().replace(/\s/g, "");
-            if(value.charAt(0)!="<"){
-                value = "<"+value;
-            }
-            if(value.charAt(value.length-1)!=">"){
-                value = value + ">";
-            }
-            return value;
-
-        case "references":
-            value = [].concat.apply([], [].concat(value || "").map(function(elm){
-                elm = (elm || "").toString().trim();
-                return elm.replace(/<[^>]*>/g,function(str){
-                    return str.replace(/\s/g, "");
-                }).split(/\s+/);
-            })).map(function(elm){
-                elm = (elm || "").toString().trim();
-                if(elm.charAt(0) != "<"){
-                    elm = "<" + elm;
-                }
-                if(elm.charAt(elm.length-1) != ">"){
-                    elm = elm + ">";
-                }
-                return elm;
-            });
-
-            return value.join(" ").trim();
-
-        case "subject":
-            value = (value || "").toString().replace(/\r?\n|\r/g, " ");
-            return this._encodeMimeWord(value, "Q", 52);
-
-        case "envelope":
-
-            this._envelope = {
-                userDefined: true
-            };
-
-            Object.keys(value).forEach((function(key){
-
-                this._envelope[key] = [];
-
-                [].concat(value[key]).forEach((function(address){
-                    var addresses = mimelib.parseAddresses(address);
-
-                    this._envelope[key] = this._envelope[key].concat(addresses.map((function(address){
-                        if(this._hasUTFChars(address.address)){
-                            return toPunycode(address.address);
-                        }else{
-                            return address.address;
-                        }
-                    }).bind(this)));
-
-                }).bind(this));
-            }).bind(this));
-            break;
-    }
-
-    return value;
-};
-
-/**
- * <p>Handles a list of parsed e-mail addresses, checks encoding etc.</p>
- *
- * @param {Array} value A list or single e-mail address <code>{address:'...', name:'...'}</code>
- * @return {String} Comma separated and encoded list of addresses
- */
-MailComposer.prototype._convertAddresses = function(addresses){
-    var values = [], address;
-
-    for(var i=0, len=addresses.length; i<len; i++){
-        address = addresses[i];
-
-        if(address.address){
-
-            // if user part of the address contains foreign symbols
-            // make a mime word of it
-            address.address = address.address.replace(/^.*?(?=\@)/, (function(user){
-                if(this._hasUTFChars(user)){
-                    return mimelib.encodeMimeWord(user, "Q");
-                }else{
-                    return user;
-                }
-            }).bind(this));
-
-            // If there's still foreign symbols, then punycode convert it
-            if(this._hasUTFChars(address.address)){
-                address.address = toPunycode(address.address);
-            }
-
-            if(!address.name){
-                values.push(address.address);
-            }else if(address.name){
-                if(this._hasUTFChars(address.name)){
-                    address.name = this._encodeMimeWord(address.name, "Q", 52);
-                }else{
-                    address.name = address.name;
-                }
-                values.push('"' + address.name+'" <'+address.address+'>');
-            }
-        }
-    }
-    return values.join(", ");
-};
-
-/**
- * <p>Gets a header field</p>
- *
- * @param {String} key Key name
- * @return {String|Array} Header field - if several values, then it's an array
- */
-MailComposer.prototype._getHeader = function(key){
-    var value;
-
-    key = this._normalizeKey(key);
-    value = this._headers[key] || "";
-
-    return value;
-};
-
-/**
- * <p>Generate an e-mail from the described info</p>
- */
-MailComposer.prototype._composeMessage = function(){
-
-    // Generate headers for the message
-    this._composeHeader();
-
-    // Make the mime tree flat
-    this._flattenMimeTree();
-
-    // Compose message body
-    this._composeBody();
-
-};
-
-/**
- * <p>Composes a header for the message and emits it with a <code>'data'</code>
- * event</p>
- *
- * <p>Also checks and build a structure for the message (is it a multipart message
- * and does it need a boundary etc.)</p>
- *
- * <p>By default the message is not a multipart. If the message containes both
- * plaintext and html contents, an alternative block is used. it it containes
- * attachments, a mixed block is used. If both alternative and mixed exist, then
- * alternative resides inside mixed.</p>
- */
-MailComposer.prototype._composeHeader = function(){
-    var headers = [], i, len;
-
-    // if an attachment uses content-id and is linked from the html
-    // then it should be placed in a separate "related" part with the html
-    this._message.useRelated = false;
-    if(this._message.html && (len = this._attachments.length)){
-
-        for(i=len-1; i>=0; i--){
-            if(this._attachments[i].cid &&
-              this._message.html.indexOf("cid:"+this._attachments[i].cid)>=0){
-                this._message.useRelated = true;
-                this._relatedAttachments.unshift(this._attachments[i]);
-                this._attachments.splice(i,1);
-            }
-        }
-
-    }
-
-    if(this._attachments.length){
-        this._message.useMixed = true;
-        this._message.mixedBoundary = this._generateBoundary();
-    }else{
-        this._message.useMixed = false;
-    }
-
-    if(this._message.body && this._message.html){
-        this._message.useAlternative = true;
-        this._message.alternativeBoundary = this._generateBoundary();
-    }else{
-        this._message.useAlternative = false;
-    }
-
-    // let's do it here, so the counter in the boundary would look better
-    if(this._message.useRelated){
-        this._message.relatedBoundary = this._generateBoundary();
-    }
-
-    if(!this._message.html && !this._message.body){
-        // If there's nothing to show, show a linebreak
-        this._message.body = "\r\n";
-    }
-
-    this._buildMessageHeaders();
-    this._generateBodyStructure();
-
-    // Compile header lines
-    headers = this.compileHeaders(this._headers);
-
-    if(!this._cacheOutput){
-        this.emit("data", new Buffer(headers.join("\r\n")+"\r\n\r\n", "utf-8"));
-    }else{
-        this._outputBuffer += headers.join("\r\n")+"\r\n\r\n";
-    }
-};
-
-/**
- * <p>Uses data from the <code>this._message</code> object to build headers</p>
- */
-MailComposer.prototype._buildMessageHeaders = function(){
-
-    // FROM
-    if(this._message.from && this._message.from.length){
-        [].concat(this._message.from).forEach((function(from){
-            this.addHeader("From", from);
-        }).bind(this));
-    }
-
-    // TO
-    if(this._message.to && this._message.to.length){
-        [].concat(this._message.to).forEach((function(to){
-            this.addHeader("To", to);
-        }).bind(this));
-    }
-
-    // CC
-    if(this._message.cc && this._message.cc.length){
-        [].concat(this._message.cc).forEach((function(cc){
-            this.addHeader("Cc", cc);
-        }).bind(this));
-    }
-
-    // BCC
-    // By default not included, set options.keepBcc to true to keep
-    if(this.options.keepBcc){
-        if(this._message.bcc && this._message.bcc.length){
-            [].concat(this._message.bcc).forEach((function(bcc){
-                this.addHeader("Bcc", bcc);
-            }).bind(this));
-        }
-    }
-
-    // REPLY-TO
-    if(this._message.replyTo && this._message.replyTo.length){
-        [].concat(this._message.replyTo).forEach((function(replyTo){
-            this.addHeader("Reply-To", replyTo);
-        }).bind(this));
-    }
-
-    // REFERENCES
-    if(this._message.references && this._message.references.length){
-        this.addHeader("References", this._message.references);
-    }
-
-    // IN-REPLY-TO
-    if(this._message.inReplyTo && this._message.inReplyTo.length){
-        this.addHeader("In-Reply-To", this._message.inReplyTo);
-    }
-
-    // SUBJECT
-    if(this._message.subject){
-        this.addHeader("Subject", this._message.subject);
-    }
-};
-
-/**
- * <p>Generates the structure (mime tree) of the body. This sets up multipart
- * structure, individual part headers, boundaries etc.</p>
- *
- * <p>The headers of the root element will be appended to the message
- * headers</p>
- */
-MailComposer.prototype._generateBodyStructure = function(){
-
-    var tree = this._createMimeNode(),
-        currentNode, node,
-        i, len;
-
-    if(this._message.useMixed){
-
-        node = this._createMimeNode();
-        node.boundary = this._message.mixedBoundary;
-        node.headers.push(["Content-Type", "multipart/mixed; boundary=\""+node.boundary+"\""]);
-
-        if(currentNode){
-            currentNode.childNodes.push(node);
-            node.parentNode = currentNode;
-        }else{
-            tree = node;
-        }
-        currentNode = node;
-
-    }
-
-    if(this._message.useAlternative){
-
-        node = this._createMimeNode();
-        node.boundary = this._message.alternativeBoundary;
-        node.headers.push(["Content-Type", "multipart/alternative; boundary=\""+node.boundary+"\""]);
-        if(currentNode){
-            currentNode.childNodes.push(node);
-            node.parentNode = currentNode;
-        }else{
-            tree = node;
-        }
-        currentNode = node;
-
-    }
-
-    if(this._message.body){
-        node = this._createTextComponent(this._message.body, "text/plain");
-        if(currentNode){
-            currentNode.childNodes.push(node);
-            node.parentNode = currentNode;
-        }else{
-            tree = node;
-        }
-    }
-
-    if(this._message.useRelated){
-
-        node = this._createMimeNode();
-        node.boundary = this._message.relatedBoundary;
-        node.headers.push(["Content-Type", "multipart/related; boundary=\""+node.boundary+"\""]);
-        if(currentNode){
-            currentNode.childNodes.push(node);
-            node.parentNode = currentNode;
-        }else{
-            tree = node;
-        }
-        currentNode = node;
-
-    }
-
-    if(this._message.html){
-        node = this._createTextComponent(this._message.html, "text/html");
-        if(currentNode){
-            currentNode.childNodes.push(node);
-            node.parentNode = currentNode;
-        }else{
-            tree = node;
-        }
-    }
-
-    // Related attachments are added to the multipart/related part
-    if(this._relatedAttachments && this._relatedAttachments){
-        for(i=0, len = this._relatedAttachments.length; i<len; i++){
-            node = this._createAttachmentComponent(this._relatedAttachments[i]);
-            node.parentNode = currentNode;
-            currentNode.childNodes.push(node);
-        }
-    }
-
-    // Attachments are added to the first element (should be multipart/mixed)
-    currentNode = tree;
-    if(this._attachments && this._attachments.length){
-        for(i=0, len = this._attachments.length; i<len; i++){
-            node = this._createAttachmentComponent(this._attachments[i]);
-            node.parentNode = currentNode;
-            currentNode.childNodes.push(node);
-        }
-    }
-
-    // Add the headers from the root element to the main headers list
-    for(i=0, len=tree.headers.length; i<len; i++){
-        this.addHeader(tree.headers[i][0], tree.headers[i][1]);
-    }
-
-    this._message.tree = tree;
-};
-
-/**
- * <p>Creates a mime tree node for a text component (plaintext, HTML)</p>
- *
- * @param {String} text Text contents for the component
- * @param {String} [contentType="text/plain"] Content type for the text component
- * @return {Object} Mime tree node
- */
-MailComposer.prototype._createTextComponent = function(text, contentType){
-    var node = this._createMimeNode();
-
-    node.contentEncoding = (this.options.encoding || "quoted-printable").toLowerCase().trim();
-    node.useTextType = true;
-
-    contentType = [contentType || "text/plain"];
-    contentType.push("charset=utf-8");
-
-    if(["7bit", "8bit", "binary"].indexOf(node.contentEncoding)>=0){
-        node.textFormat = "flowed";
-        contentType.push("format=" + node.textFormat);
-    }
-
-    node.headers.push(["Content-Type", contentType.join("; ")]);
-    node.headers.push(["Content-Transfer-Encoding", node.contentEncoding]);
-
-    node.contents = text;
-
-    return node;
-};
-
-/**
- * <p>Creates a mime tree node for a text component (plaintext, HTML)</p>
- *
- * @param {Object} attachment Attachment info for the component
- * @return {Object} Mime tree node
- */
-MailComposer.prototype._createAttachmentComponent = function(attachment){
-    var node = this._createMimeNode(),
-        contentType = [attachment.contentType],
-        contentDisposition = [attachment.contentDisposition || "attachment"],
-        fileName;
-
-    node.contentEncoding = "base64";
-    node.useAttachmentType = true;
-
-    if(attachment.fileName){
-        fileName = this._encodeMimeWord(attachment.fileName, "Q", 1024).replace(/"/g,"\\\"");
-        contentType.push("name=\"" +fileName+ "\"");
-        contentDisposition.push("filename=\"" +fileName+ "\"");
-    }
-
-    node.headers.push(["Content-Type", contentType.join("; ")]);
-    node.headers.push(["Content-Disposition", contentDisposition.join("; ")]);
-    node.headers.push(["Content-Transfer-Encoding", node.contentEncoding]);
-
-    if(attachment.cid){
-        node.headers.push(["Content-Id", "<" + this._encodeMimeWord(attachment.cid) + ">"]);
-    }
-
-    if(attachment.contents){
-        node.contents = attachment.contents;
-    }else if(attachment.filePath){
-        node.filePath = attachment.filePath;
-        if(attachment.userAgent){
-            node.userAgent = attachment.userAgent;
-        }
-    }else if(attachment.streamSource){
-        node.streamSource = attachment.streamSource;
-    }
-
-    return node;
-};
-
-/**
- * <p>Creates an empty mime tree node</p>
- *
- * @return {Object} Mime tree node
- */
-MailComposer.prototype._createMimeNode = function(){
-    return {
-        childNodes: [],
-        headers: [],
-        parentNode: null
-    };
-};
-
-/**
- * <p>Compiles headers object into an array of header lines. If needed, the
- * lines are folded</p>
- *
- * @param {Object|Array} headers An object with headers in the form of
- *        <code>{key:value}</code> or <ocde>[[key, value]]</code> or
- *        <code>[{key:key, value: value}]</code>
- * @return {Array} A list of header lines. Can be joined with \r\n
- */
-MailComposer.prototype.compileHeaders = function(headers){
-    var headersArr = [], keys, key;
-
-    if(Array.isArray(headers)){
-        headersArr = headers.map(function(field){
-            return mimelib.foldLine((field.key || field[0])+": "+(field.value || field[1]), 76, false, false, 52);
-        });
-    }else{
-        keys = Object.keys(headers);
-        for(var i=0, len = keys.length; i<len; i++){
-            key = this._normalizeKey(keys[i]);
-
-            headersArr = headersArr.concat([].concat(headers[key]).map(function(field){
-                return mimelib.foldLine(key+": "+field, 76, false, false, 52);
-            }));
-        }
-    }
-
-    return headersArr;
-};
-
-/**
- * <p>Converts a structured mimetree into an one dimensional array of
- * components. This includes headers and multipart boundaries as strings,
- * textual and attachment contents are.</p>
- */
-MailComposer.prototype._flattenMimeTree = function(){
-    var flatTree = [];
-
-    function walkTree(node, level){
-        var contentObject = {};
-        level = level || 0;
-
-        // if not root element, include headers
-        if(level){
-            flatTree = flatTree.concat(this.compileHeaders(node.headers));
-            flatTree.push('');
-        }
-
-        if(node.textFormat){
-            contentObject.textFormat = node.textFormat;
-        }
-
-        if(node.contentEncoding){
-            contentObject.contentEncoding = node.contentEncoding;
-        }
-
-        if(node.contents){
-            contentObject.contents = node.contents;
-        }else if(node.filePath){
-            contentObject.filePath = node.filePath;
-            if(node.userAgent){
-                contentObject.userAgent = node.userAgent;
-            }
-        }else if(node.streamSource){
-            contentObject.streamSource = node.streamSource;
-        }
-
-        if(node.contents || node.filePath || node.streamSource){
-            flatTree.push(contentObject);
-        }
-
-        // walk children
-        for(var i=0, len = node.childNodes.length; i<len; i++){
-            if(node.boundary){
-                flatTree.push("--"+node.boundary);
-            }
-            walkTree.call(this, node.childNodes[i], level+1);
-        }
-        if(node.boundary && node.childNodes.length){
-            flatTree.push("--"+node.boundary+"--");
-            flatTree.push('');
-        }
-    }
-
-    walkTree.call(this, this._message.tree);
-
-    if(flatTree.length && flatTree[flatTree.length-1]===''){
-        flatTree.pop();
-    }
-
-    this._message.flatTree = flatTree;
-};
-
-/**
- * <p>Composes the e-mail body based on the previously generated mime tree</p>
- *
- * <p>Assumes that the linebreak separating headers and contents is already
- * sent</p>
- *
- * <p>Emits 'data' events</p>
- */
-MailComposer.prototype._composeBody = function(){
-    var flatTree = this._message.flatTree,
-        slice, isObject = false, isEnd = false,
-        curObject;
-
-    this._message.processingStart = this._message.processingStart || 0;
-    this._message.processingPos = this._message.processingPos || 0;
-
-    for(var len = flatTree.length; this._message.processingPos < len; this._message.processingPos++){
-
-        isEnd = this._message.processingPos >= len-1;
-        isObject = typeof flatTree[this._message.processingPos] == "object";
-
-        if(isEnd || isObject){
-
-            slice = flatTree.slice(this._message.processingStart, isEnd && !isObject?undefined:this._message.processingPos);
-            if(slice && slice.length){
-                if(!this._cacheOutput){
-                    this.emit("data", new Buffer(slice.join("\r\n")+"\r\n", "utf-8"));
-                }else{
-                    this._outputBuffer += slice.join("\r\n")+"\r\n";
-                }
-            }
-
-            if(isObject){
-                curObject = flatTree[this._message.processingPos];
-
-                this._message.processingPos++;
-                this._message.processingStart = this._message.processingPos;
-
-                this._emitDataElement(curObject, (function(){
-                    if(!isEnd){
-                        process.nextTick(this._composeBody.bind(this));
-                    }else{
-                        if(!this._cacheOutput){
-                            this.emit("end");
-                        }else{
-                            this._processBufferedOutput();
-                        }
-                    }
-                }).bind(this));
-
-            }else if(isEnd){
-                if(!this._cacheOutput){
-                    this.emit("end");
-                }else{
-                    this._processBufferedOutput();
-                }
-            }
-            break;
-        }
-
-    }
-};
-
-/**
- * <p>Emits a data event for a text or html body and attachments. If it is a
- * file, stream it</p>
- *
- * <p>If <code>this.options.escapeSMTP</code> is true, replace dots in the
- * beginning of a line with double dots - only valid for QP encoding</p>
- *
- * @param {Object} element Data element descriptor
- * @param {Function} callback Callback function to run when completed
- */
-MailComposer.prototype._emitDataElement = function(element, callback){
-
-    var data = "";
-
-    if(element.contents){
-        switch(element.contentEncoding){
-            case "quoted-printable":
-                data = mimelib.encodeQuotedPrintable(element.contents);
-                break;
-            case "base64":
-                data = new Buffer(element.contents, "utf-8").toString("base64").replace(/.{76}/g,"$&\r\n");
-                break;
-            case "7bit":
-            case "8bit":
-            case "binary":
-            default:
-                data = mimelib.foldLine(element.contents, 76, false, element.textFormat=="flowed");
-                 //mimelib puts a long whitespace to the beginning of the lines
-                data = data.replace(/^[ ]{7}/mg, "");
-                break;
-        }
-
-        if(this.options.escapeSMTP){
-            data = data.replace(/^\./gm,'..');
-        }
-
-        if(!this._cacheOutput){
-            this.emit("data", new Buffer(data + "\r\n", "utf-8"));
-        }else{
-            this._outputBuffer += data + "\r\n";
-        }
-        process.nextTick(callback);
-        return;
-    }
-
-    if(element.filePath){
-        if(element.filePath.match(/^https?:\/\//)){
-            this._serveStream(urlFetch(element.filePath, {userAgent: element.userAgent}), callback);
-        }else{
-            this._serveFile(element.filePath, callback);
-        }
-        return;
-    }else if(element.streamSource){
-        this._serveStream(element.streamSource, callback);
-        return;
-    }
-
-    callback();
-};
-
-/**
- * <p>Pipes a file to the e-mail stream</p>
- *
- * @param {String} filePath Path to the file
- * @param {Function} callback Callback function to run after completion
- */
-MailComposer.prototype._serveFile = function(filePath, callback){
-    fs.stat(filePath, (function(err, stat){
-        if(err || !stat.isFile()){
-
-
-            if(!this._cacheOutput){
-                this.emit("data", new Buffer(new Buffer("<ERROR OPENING FILE>",
-                                "utf-8").toString("base64")+"\r\n", "utf-8"));
-            }else{
-                this._outputBuffer += new Buffer("<ERROR OPENING FILE>",
-                                "utf-8").toString("base64")+"\r\n";
-            }
-
-            process.nextTick(callback);
-            return;
-        }
-
-        var stream = fs.createReadStream(filePath);
-
-        this._serveStream(stream, callback);
-
-    }).bind(this));
-};
-
-/**
- * <p>Pipes a stream source to the e-mail stream</p>
- *
- * <p>This function resumes the stream and starts sending 76 bytes long base64
- * encoded lines. To achieve this, the incoming stream is divded into
- * chunks of 57 bytes (57/3*4=76) to achieve exactly 76 byte long
- * base64</p>
- *
- * @param {Object} stream Stream to be piped
- * @param {Function} callback Callback function to run after completion
- */
-MailComposer.prototype._serveStream = function(stream, callback){
-    var remainder = new Buffer(0);
-
-    stream.on("error", (function(error){
-        if(!this._cacheOutput){
-            this.emit("data", new Buffer(new Buffer("<ERROR READING STREAM>",
-                            "utf-8").toString("base64")+"\r\n", "utf-8"));
-        }else{
-            this._outputBuffer += new Buffer("<ERROR READING STREAM>",
-                            "utf-8").toString("base64")+"\r\n";
-        }
-        process.nextTick(callback);
-    }).bind(this));
-
-    stream.on("data", (function(chunk){
-        var data = "",
-            len = remainder.length + chunk.length,
-            remainderLength = len % 57, // we use 57 bytes as it composes
-                                        // a 76 bytes long base64 string
-            buffer = new Buffer(len);
-
-        remainder.copy(buffer); // copy remainder into the beginning of the new buffer
-        chunk.copy(buffer, remainder.length); // copy data chunk after the remainder
-        remainder = buffer.slice(len - remainderLength); // create a new remainder
-
-        data = buffer.slice(0, len - remainderLength).toString("base64").replace(/.{76}/g,"$&\r\n");
-
-        if(data.length){
-            if(!this._cacheOutput){
-                this.emit("data", new Buffer(data.trim()+"\r\n", "utf-8"));
-            }else{
-                this._outputBuffer += data.trim()+"\r\n";
-            }
-        }
-    }).bind(this));
-
-    stream.on("end", (function(chunk){
-        var data;
-
-        // stream the remainder (if any)
-        if(remainder.length){
-            data = remainder.toString("base64").replace(/.{76}/g,"$&\r\n");
-            if(!this._cacheOutput){
-                this.emit("data", new Buffer(data.trim()+"\r\n", "utf-8"));
-            }else{
-                this._outputBuffer += data.trim()+"\r\n";
-            }
-        }
-        process.nextTick(callback);
-    }).bind(this));
-
-    // resume streaming if paused
-    stream.resume();
-};
-
-/**
- * <p>Processes buffered output and emits 'end'</p>
- */
-MailComposer.prototype._processBufferedOutput = function(){
-    var dkimSignature;
-
-    if(this._dkim){
-        if((dkimSignature = DKIMSign(this._outputBuffer, this._dkim))){
-            this.emit("data", new Buffer(dkimSignature+"\r\n", "utf-8"));
-        }
-    }
-
-    this.emit("data", new Buffer(this._outputBuffer, "utf-8"));
-
-    process.nextTick(this.emit.bind(this,"end"));
-};
-
-/* HELPER FUNCTIONS */
-
-/**
- * <p>Normalizes a key name by cpitalizing first chars of words, except for
- * custom keys (starting with "X-") that have only uppercase letters, which will
- * not be modified.</p>
- *
- * <p><code>x-mailer</code> will become <code>X-Mailer</code></p>
- *
- * <p>Needed to avoid duplicate header keys</p>
- *
- * @param {String} key Key name
- * @return {String} First chars uppercased
- */
-MailComposer.prototype._normalizeKey = function(key){
-    key = (key || "").toString().trim();
-
-    // If only uppercase letters, leave everything as is
-    if(key.match(/^X\-[A-Z0-9\-]+$/)){
-        return key;
-    }
-
-    // Convert first letter upper case, others lower case
-    return key.
-        toLowerCase().
-        replace(/^\S|[\-\s]\S/g, function(c){
-            return c.toUpperCase();
-        }).
-        replace(/^MIME\-/i, "MIME-").
-        replace(/^DKIM\-/i, "DKIM-");
-};
-
-/**
- * <p>Tests if a string has high bit (UTF-8) symbols</p>
- *
- * @param {String} str String to be tested for high bit symbols
- * @return {Boolean} true if high bit symbols were found
- */
-MailComposer.prototype._hasUTFChars = function(str){
-    var rforeign = /[^\u0000-\u007f]/;
-    return !!rforeign.test(str);
-};
-
-/**
- * <p>Generates a boundary for multipart bodies</p>
- *
- * @return {String} Boundary String
- */
-MailComposer.prototype._generateBoundary = function(){
-    // "_" is not allowed in quoted-printable and "?" not in base64
-    return "----mailcomposer-?=_"+(++this._gencounter)+"-"+Date.now();
-};
-
-/**
- * <p>Converts a string to mime word format. If the length is longer than
- * <code>maxlen</code>, split it</p>
- *
- * <p>If the string doesn't have any unicode characters return the original
- * string instead</p>
- *
- * @param {String} str String to be encoded
- * @param {String} encoding Either Q for Quoted-Printable or B for Base64
- * @param {Number} [maxlen] Optional length of the resulting string, whitespace will be inserted if needed
- *
- * @return {String} Mime-word encoded string (if needed)
- */
-MailComposer.prototype._encodeMimeWord = function(str, encoding, maxlen){
-    return mimelib.encodeMimeWords(str, encoding, maxlen);
-};
-
-/**
- * <p>Splits a mime-encoded string</p>
- *
- * @param {String} str Input string
- * @param {Number} maxlen Maximum line length
- * @return {Array} split string
- */
-MailComposer.prototype._splitEncodedString = function(str, maxlen){
-    var curLine, match, chr, done,
-        lines = [];
-
-    while(str.length){
-        curLine = str.substr(0, maxlen);
-
-        // move incomplete escaped char back to main
-        if((match = curLine.match(/\=[0-9A-F]?$/i))){
-            curLine = curLine.substr(0, match.index);
-        }
-
-        done = false;
-        while(!done){
-            done = true;
-            // check if not middle of a unicode char sequence
-            if((match = str.substr(curLine.length).match(/^\=([0-9A-F]{2})/i))){
-                chr = parseInt(match[1], 16);
-                // invalid sequence, move one char back anc recheck
-                if(chr < 0xC2 && chr > 0x7F){
-                    curLine = curLine.substr(0, curLine.length-3);
-                    done = false;
-                }
-            }
-        }
-
-        if(curLine.length){
-            lines.push(curLine);
-        }
-        str = str.substr(curLine.length);
-    }
-
-    return lines;
-};
-
-
-/**
- * <p>Resolves a mime type for a filename</p>
- *
- * @param {String} filename Filename to check
- * @return {String} Corresponding mime type
- */
-MailComposer.prototype._getMimeType = function(filename){
-    var defaultMime = "application/octet-stream",
-        extension = filename && filename.substr(filename.lastIndexOf(".")+1).trim().toLowerCase();
-    return extension && mimelib.contentTypes[extension] || defaultMime;
-};
-});
-define('mailcomposer',['./mailcomposer/lib/mailcomposer'], function (main) {
-    return main;
-});
 /**
  *
  **/
@@ -11870,6 +8232,3836 @@ exports.mergeUserTextWithHTML = function mergeReplyTextWithHTML(text, html) {
 
 }); // end define
 ;
+define('events',['require','exports','module'],function (require, exports, module) {
+if (!process.EventEmitter) process.EventEmitter = function () {};
+
+var EventEmitter = exports.EventEmitter = process.EventEmitter;
+var isArray = typeof Array.isArray === 'function'
+    ? Array.isArray
+    : function (xs) {
+        return Object.toString.call(xs) === '[object Array]'
+    }
+;
+
+// By default EventEmitters will print a warning if more than
+// 10 listeners are added to it. This is a useful default which
+// helps finding memory leaks.
+//
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+var defaultMaxListeners = 10;
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!this._events) this._events = {};
+  this._events.maxListeners = n;
+};
+
+
+EventEmitter.prototype.emit = function(type) {
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events || !this._events.error ||
+        (isArray(this._events.error) && !this._events.error.length))
+    {
+      if (arguments[1] instanceof Error) {
+        throw arguments[1]; // Unhandled 'error' event
+      } else {
+        throw new Error("Uncaught, unspecified 'error' event.");
+      }
+      return false;
+    }
+  }
+
+  if (!this._events) return false;
+  var handler = this._events[type];
+  if (!handler) return false;
+
+  if (typeof handler == 'function') {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        var args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+    return true;
+
+  } else if (isArray(handler)) {
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    var listeners = handler.slice();
+    for (var i = 0, l = listeners.length; i < l; i++) {
+      listeners[i].apply(this, args);
+    }
+    return true;
+
+  } else {
+    return false;
+  }
+};
+
+// EventEmitter is defined in src/node_events.cc
+// EventEmitter.prototype.emit() is also defined there.
+EventEmitter.prototype.addListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('addListener only takes instances of Function');
+  }
+
+  if (!this._events) this._events = {};
+
+  // To avoid recursion in the case that type == "newListeners"! Before
+  // adding it to the listeners, first emit "newListeners".
+  this.emit('newListener', type, listener);
+
+  if (!this._events[type]) {
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  } else if (isArray(this._events[type])) {
+
+    // Check for listener leak
+    if (!this._events[type].warned) {
+      var m;
+      if (this._events.maxListeners !== undefined) {
+        m = this._events.maxListeners;
+      } else {
+        m = defaultMaxListeners;
+      }
+
+      if (m && m > 0 && this._events[type].length > m) {
+        this._events[type].warned = true;
+        console.error('(node) warning: possible EventEmitter memory ' +
+                      'leak detected. %d listeners added. ' +
+                      'Use emitter.setMaxListeners() to increase limit.',
+                      this._events[type].length);
+        console.trace();
+      }
+    }
+
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  } else {
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  var self = this;
+  self.on(type, function g() {
+    self.removeListener(type, g);
+    listener.apply(this, arguments);
+  });
+
+  return this;
+};
+
+EventEmitter.prototype.removeListener = function(type, listener) {
+  if ('function' !== typeof listener) {
+    throw new Error('removeListener only takes instances of Function');
+  }
+
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (!this._events || !this._events[type]) return this;
+
+  var list = this._events[type];
+
+  if (isArray(list)) {
+    var i = list.indexOf(listener);
+    if (i < 0) return this;
+    list.splice(i, 1);
+    if (list.length == 0)
+      delete this._events[type];
+  } else if (this._events[type] === listener) {
+    delete this._events[type];
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  // does not use listeners(), so no side effect of creating _events[type]
+  if (type && this._events && this._events[type]) this._events[type] = null;
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  if (!this._events) this._events = {};
+  if (!this._events[type]) this._events[type] = [];
+  if (!isArray(this._events[type])) {
+    this._events[type] = [this._events[type]];
+  }
+  return this._events[type];
+};
+
+});
+define('util',['require','exports','module','events'],function (require, exports, module) {
+var events = require('events');
+
+exports.print = function () {};
+exports.puts = function () {};
+exports.debug = function() {};
+
+exports.log = function (msg) {};
+
+exports.pump = null;
+
+exports.inherits = function(ctor, superCtor) {
+  ctor.super_ = superCtor;
+  ctor.prototype = Object.create(superCtor.prototype, {
+    constructor: {
+      value: ctor,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+};
+
+});
+define('stream',['require','exports','module','events','util'],function (require, exports, module) {
+var events = require('events');
+var util = require('util');
+
+function Stream() {
+  events.EventEmitter.call(this);
+}
+util.inherits(Stream, events.EventEmitter);
+module.exports = Stream;
+// Backwards-compat with node 0.4.x
+Stream.Stream = Stream;
+
+Stream.prototype.pipe = function(dest, options) {
+  var source = this;
+
+  function ondata(chunk) {
+    if (dest.writable) {
+      if (false === dest.write(chunk) && source.pause) {
+        source.pause();
+      }
+    }
+  }
+
+  source.on('data', ondata);
+
+  function ondrain() {
+    if (source.readable && source.resume) {
+      source.resume();
+    }
+  }
+
+  dest.on('drain', ondrain);
+
+  // If the 'end' option is not supplied, dest.end() will be called when
+  // source gets the 'end' or 'close' events.  Only dest.end() once, and
+  // only when all sources have ended.
+  if (!dest._isStdio && (!options || options.end !== false)) {
+    dest._pipeCount = dest._pipeCount || 0;
+    dest._pipeCount++;
+
+    source.on('end', onend);
+    source.on('close', onclose);
+  }
+
+  var didOnEnd = false;
+  function onend() {
+    if (didOnEnd) return;
+    didOnEnd = true;
+
+    dest._pipeCount--;
+
+    // remove the listeners
+    cleanup();
+
+    if (dest._pipeCount > 0) {
+      // waiting for other incoming streams to end.
+      return;
+    }
+
+    dest.end();
+  }
+
+
+  function onclose() {
+    if (didOnEnd) return;
+    didOnEnd = true;
+
+    dest._pipeCount--;
+
+    // remove the listeners
+    cleanup();
+
+    if (dest._pipeCount > 0) {
+      // waiting for other incoming streams to end.
+      return;
+    }
+
+    dest.destroy();
+  }
+
+  // don't leave dangling pipes when there are errors.
+  function onerror(er) {
+    cleanup();
+    if (this.listeners('error').length === 0) {
+      throw er; // Unhandled stream error in pipe.
+    }
+  }
+
+  source.on('error', onerror);
+  dest.on('error', onerror);
+
+  // remove all the event listeners that were added.
+  function cleanup() {
+    source.removeListener('data', ondata);
+    dest.removeListener('drain', ondrain);
+
+    source.removeListener('end', onend);
+    source.removeListener('close', onclose);
+
+    source.removeListener('error', onerror);
+    dest.removeListener('error', onerror);
+
+    source.removeListener('end', cleanup);
+    source.removeListener('close', cleanup);
+
+    dest.removeListener('end', cleanup);
+    dest.removeListener('close', cleanup);
+  }
+
+  source.on('end', cleanup);
+  source.on('close', cleanup);
+
+  dest.on('end', cleanup);
+  dest.on('close', cleanup);
+
+  dest.emit('pipe', source);
+
+  // Allow for unix-like usage: A.pipe(B).pipe(C)
+  return dest;
+};
+
+});
+/**
+ * mimelib now uses an 'encoding' module to wrap its use of iconv versus
+ * iconv-lite.  This is a good thing from our perspective because it allows
+ * the API to be more sane.
+ **/
+
+define('encoding',['require','exports','module'],function(require, exports, module) {
+
+// from https://github.com/andris9/encoding/blob/master/index.js
+// (MIT licensed)
+/**
+ * Converts charset name if needed
+ *
+ * @param {String} name Character set
+ * @return {String} Character set name
+ */
+function checkEncoding(name){
+    name = (name || "").toString().trim().toLowerCase().
+        replace(/^latin[\-_]?(\d+)$/, "iso-8859-$1").
+        replace(/^win(?:dows)?[\-_]?(\d+)$/, "windows-$1").
+        replace(/^utf[\-_]?(\d+)$/, "utf-$1").
+        replace(/^ks_c_5601\-1987$/, "windows-949"). // maps to euc-kr
+        replace(/^us_?ascii$/, "ascii"); // maps to windows-1252
+    return name;
+}
+
+var ENCODER_OPTIONS = { fatal: false };
+
+exports.convert = function(str, destEnc, sourceEnc, ignoredUseLite) {
+  destEnc = checkEncoding(destEnc || 'utf-8');
+  sourceEnc = checkEncoding(sourceEnc || 'utf-8');
+
+  if (destEnc === sourceEnc)
+    return new Buffer(str, 'utf-8');
+
+  // - decoding (Uint8Array => String)
+  else if (/^utf-8$/.test(destEnc)) {
+    var decoder = new TextDecoder(sourceEnc, ENCODER_OPTIONS);
+    if (typeof(str) === 'string')
+      str = new Buffer(str, 'binary');
+    // XXX strictly speaking, we should be returning a buffer...
+    return decoder.decode(str);
+  }
+  // - encoding (String => Uint8Array)
+  else {
+    var idxSlash = destEnc.indexOf('/');
+    // ignore '//TRANSLIT//IGNORE' and the like.
+    if (idxSlash !== -1 && destEnc[idxSlash+1] === '/')
+      destEnc = destEnc.substring(0, idxSlash);
+
+    var encoder = new TextEncoder(destEnc, ENCODER_OPTIONS);
+    return encoder.encode(str);
+  }
+};
+
+});
+
+define('addressparser/index',['require','exports','module'],function (require, exports, module) {
+
+// expose to the world
+module.exports = parser;
+
+/**
+ * Parses structured e-mail addresses from an address field
+ * 
+ * Example:
+ *
+ *    "Name <address@domain>"
+ *
+ * will be converted to
+ *
+ *     [{name: "Name", address: "address@domain"}]
+ *
+ * @param {String} str Address field
+ * @return {Array} An array of address objects
+ */
+function parser(str){
+    var tokenizer = new Tokenizer(str),
+        tokens = tokenizer.tokenize();
+
+
+    var addresses = [],
+        address = [],
+        parsedAddresses = [];
+
+    tokens.forEach(function(token){
+        if(token.type == "operator" && (token.value =="," || token.value ==";")){
+            addresses.push(address);
+            address = [];
+        }else{
+            address.push(token);
+        }
+    });
+
+    if(address.length){
+        addresses.push(address);
+    }
+
+    addresses.forEach(function(address){
+        address = handleAddress(address);
+        if(address.length){
+            parsedAddresses = parsedAddresses.concat(address);
+        }
+    });
+
+    return parsedAddresses;
+}
+
+/**
+ * Converts tokens for a single address into an address object
+ *
+ * @param {Array} tokens Tokens object
+ * @return {Object} Address object
+ */
+function handleAddress(tokens){
+    var token,
+        isGroup = false,
+        state = "text",
+        address,
+        addresses = [],
+        data = {
+            address: [],
+            comment: [],
+            group: [],
+            text: []
+        },
+        i, len;
+
+    // Filter out <addresses>, (comments) and regular text
+    for(i=0, len = tokens.length; i<len; i++){
+        token = tokens[i];
+        
+        if(token.type == "operator"){
+            switch(token.value){
+                case "<":
+                    state = "address";
+                    break;
+                case "(":
+                    state = "comment";
+                    break;
+                case ":":
+                    state = "group";
+                    isGroup = true;
+                    break;
+                default:
+                    state = "text";
+            }
+        }else{
+            if(token.value){
+                data[state].push(token.value);
+            }
+        }
+    }
+
+    // If there is no text but a comment, replace the two
+    if(!data.text.length && data.comment.length){
+        data.text = data.comment;
+        data.comment = [];
+    }
+
+    if(data.group.length){
+        
+        if(data.text.length){
+            data.text = data.text.join(" ");
+        }
+
+        addresses = addresses.concat(parser(data.group.join(",")).map(function(address){
+            address.name = data.text || address.name;
+            return address;
+        }));
+
+    }else{
+        // If no address was found, try to detect one from regular text
+        if(!data.address.length && data.text.length){
+            for(i = data.text.length - 1; i>=0; i--){
+                if(data.text[i].match(/^[^@\s]+@[^@\s]+$/)){
+                    data.address = data.text.splice(i,1);
+                    break;
+                }
+            }
+
+            // still no address
+            if(!data.address.length){
+                for(i = data.text.length - 1; i>=0; i--){
+                    data.text[i] = data.text[i].replace(/\s*\b[^@\s]+@[^@\s]+\b\s*/, function(address){
+                        if(!data.address.length){
+                            data.address = [address.trim()];
+                            return " ";
+                        }else{
+                            return address;
+                        }
+                    }).trim();
+                    if(data.address.length){
+                        break;
+                    }
+                }                
+            }
+        }
+
+        // If there's still is no text but a comment exixts, replace the two
+        if(!data.text.length && data.comment.length){
+            data.text = data.comment;
+            data.comment = [];
+        }  
+
+        // Keep only the first address occurence, push others to regular text
+        if(data.address.length > 1){
+            data.text = data.text.concat(data.address.splice(1));
+        }
+
+        // Join values with spaces
+        data.text = data.text.join(" ");
+        data.address = data.address.join(" ");
+
+        if(!data.address && isGroup){
+            return [];
+        }else{
+            address = {
+                address: data.address || data.text,
+                name: data.text || data.address
+            };
+
+            if(address.address == address.name){
+                if((address.address || "").match(/@/)){
+                    delete address.name;
+                }else{
+                    delete address.address;
+                }
+                
+            }
+
+            addresses.push(address);
+        }
+    }
+
+    return addresses;
+}
+
+
+/**
+ * Creates a TOkenizer object for tokenizing address field strings
+ *
+ * @constructor
+ * @param {String} str Address field string
+ */
+function Tokenizer(str){
+
+    this.str = (str || "").toString();
+    this.operatorCurrent = "";
+    this.operatorExpecting = "";
+    this.node = null;
+    this.escaped = false;
+
+    this.list = [];
+
+}
+
+/**
+ * Operator tokens and which tokens are expected to end the sequence
+ */
+Tokenizer.prototype.operators = {
+    "\"": "\"",
+    "'": "'",
+    "(": ")",
+    "<": ">",
+    ",": "",
+    ":": ";"
+};
+
+/**
+ * Tokenizes the original input string
+ *
+ * @return {Array} An array of operator|text tokens
+ */
+Tokenizer.prototype.tokenize = function(){
+    var chr, list = [];
+    for(var i=0, len = this.str.length; i<len; i++){
+        chr = this.str.charAt(i);
+        this.checkChar(chr);
+    }
+
+    this.list.forEach(function(node){
+        node.value = (node.value || "").toString().trim();
+        if(node.value){
+            list.push(node);
+        }
+    });
+
+    return list;
+};
+
+/**
+ * Checks if a character is an operator or text and acts accordingly
+ *
+ * @param {String} chr Character from the address field
+ */
+Tokenizer.prototype.checkChar = function(chr){
+    if((chr in this.operators || chr == "\\") && this.escaped){
+        this.escaped = false;
+    }else if(this.operatorExpecting && chr == this.operatorExpecting){
+        this.node = {
+            type: "operator",
+            value: chr
+        };
+        this.list.push(this.node);
+        this.node = null;
+        this.operatorExpecting = "";
+        this.escaped = false;
+        return;
+    }else if(!this.operatorExpecting && chr in this.operators){
+        this.node = {
+            type: "operator",
+            value: chr
+        };
+        this.list.push(this.node);
+        this.node = null;
+        this.operatorExpecting = this.operators[chr];
+        this.escaped = false;
+        return;
+    }
+
+    if(!this.escaped && chr == "\\"){
+        this.escaped = true;
+        return;
+    }
+
+    if(!this.node){
+        this.node = {
+            type: "text",
+            value: ""
+        };
+        this.list.push(this.node);
+    }
+
+    if(this.escaped && chr != "\\"){
+        this.node.value += "\\";
+    }
+
+    this.node.value += chr;
+    this.escaped = false;
+};
+
+});
+define('addressparser',['./addressparser/index'], function (main) {
+    return main;
+});
+define('mimelib/lib/mimelib',['require','exports','module','encoding','addressparser'],function (require, exports, module) {
+var convert = require('encoding').convert,
+    addressparser = require('addressparser');
+
+/**
+ * Folds a long line according to the RFC 5322 http://tools.ietf.org/html/rfc5322#section-2.1.1
+ *
+ * @param {String} str Mime string that might need folding
+ * @param {Number} [maxLength=76] max length for a line
+ * @param {Boolean} [foldAnywhere] If true, can fold at any location (ie. in base64)
+ * @param {Boolean} [afterSpace] If true fold after the space (default is before)
+ * @return {String} Folded string
+ */
+this.foldLine = function(str, maxLength, foldAnywhere, afterSpace, lineMargin){
+    if(foldAnywhere){
+        return addBase64SoftLinebreaks(str, maxLength || 76);
+    }
+    return module.exports.mimeFunctions.foldLine(str, maxLength, !!afterSpace, lineMargin);
+};
+
+/**
+ * Encodes a string into mime encoded word format http://en.wikipedia.org/wiki/MIME#Encoded-Word
+ *
+ * @param {String} str String to be encoded
+ * @param {String} encoding Encoding Q for quoted printable or B for base64
+ * @param {String} [charset="UTF-8"] Charset to be used
+ * @param {Number} [maxLength] If set, split on maxLength
+ * @return {String} Mime word encoded string
+ */
+module.exports.encodeMimeWord = function(str, encoding, charset, maxLength){
+    return module.exports.mimeFunctions.encodeMimeWord(str, encoding, maxLength || 0, charset);
+};
+
+/**
+ * Encodes need parts of a string to mime word format
+ *
+ * @param {String} str String to be encoded
+ * @param {String} encoding Encoding Q for quoted printable or B for base64
+ * @param {Number} [maxLength] If set, split on maxLength
+ * @param {String} [charset="UTF-8"] Charset to be used
+ * @return {String} String with possible mime word encoded parts
+ */
+module.exports.encodeMimeWords = function(str, encoding, maxLength, charset){
+    return module.exports.mimeFunctions.encodeMimeWords(str, encoding, maxLength || 0, charset);
+};
+
+/**
+ * Decodes a string from mime encoded word
+ *
+ * @param {String} str Mime word encoded string
+ * @return {String} Decoded string
+ */
+module.exports.decodeMimeWord = function(str){
+    return module.exports.mimeFunctions.decodeMimeWord(str).toString("utf-8");
+};
+
+/**
+ * Decodes all mime words from a string to an unencoded string
+ *
+ * @param {String} str String that may include mime words
+ * @return {String} Unencoded string
+ */
+module.exports.parseMimeWords = function(str){
+    return module.exports.mimeFunctions.decodeMimeWords(str).toString("utf-8");
+};
+
+/**
+ * Encodes a string into Quoted-printable format. Maximum line length for the
+ * encoded string is always 76+2 bytes
+ *
+ * @param {String} str String to be encoded into Quoted-printable
+ * @param {Boolean} [mimeWord] legacy parameter, not used
+ * @param {String} [charset="UTF-8"] Destination charset
+ * @return {String} Quoted printable encoded string
+ */
+module.exports.encodeQuotedPrintable = function(str, mimeWord, charset){
+    if(typeof mimeWord == "string" && !charset){
+        charset = mimeWord;
+        mimeWord = undefined;
+    }
+    return module.exports.mimeFunctions.encodeQuotedPrintable(str, charset);
+};
+
+/**
+ * Decodes a string from Quoted-printable format
+ *
+ * @param {String} str String to be decoded from Quoted-printable
+ * @param {Boolean} [mimeWord] legacy parameter, not used
+ * @param {String} [charset="UTF-8"] Source charset
+ * @return {String} Decoded string
+ */
+module.exports.decodeQuotedPrintable = function(str, mimeWord, charset){
+    if(typeof mimeWord == "string" && !charset){
+        charset = mimeWord;
+        mimeWord = undefined;
+    }
+    charset = (charset || "").toString().toUpperCase().trim();
+    var decodedString = module.exports.mimeFunctions.decodeQuotedPrintable(str, "utf-8", charset);
+    return charset == "BINARY" ? decodedString : decodedString.toString("utf-8");
+};
+
+/**
+ * Encodes a string into Base64 format. Base64 is mime-word safe
+ * 
+ * @param {String} str String to be encoded into Base64
+ * @param {String} [charset="UTF-8"] Destination charset
+ * @return {String} Base64 encoded string
+ */
+module.exports.encodeBase64 = function(str, charset){
+    return module.exports.mimeFunctions.encodeBase64(str, charset);
+};
+
+/**
+ * Decodes a string from Base64 format
+ * 
+ * @param {String} str String to be decoded from Base64
+ * @param {String} [charset="UTF-8"] Source charset
+ * @return {String} Decoded string
+ */
+module.exports.decodeBase64 = function(str, charset){
+    return module.exports.mimeFunctions.decodeBase64(str, "utf-8", charset).toString("utf-8");
+};
+
+/**
+ * Parses names and addresses from a from, to, cc or bcc line
+ * For example: 'Andris Reinman <andris@tr.ee>, someone@else.com'
+ * will be parsed into: [{name:"Andris Reinman", address:"andris@tr.ee"}, {address: "someone@else.com"}]
+ *
+ * @param {String|Array} addresses Address line string or an array of strings
+ * @return {Array} An array of parsed e-mails addresses in the form of [{name, address}]
+ */
+module.exports.parseAddresses = function(addresses){
+    return [].concat.apply([], [].concat(addresses).map(addressparser)).map(function(address){
+        address.name = module.exports.parseMimeWords(address.name);
+        return address;
+    });
+};
+
+/**
+ * Parses header lines into an array of objects. Output: {'x-header': ['value']}
+ * 
+ * @param {String} headers Full header part to be parsed
+ * @return {Object} Parsed headers
+ */
+module.exports.parseHeaders = function(headers){
+    return module.exports.mimeFunctions.parseHeaderLines(headers);
+};
+
+/**
+ * Parses a header line to search for additional parameters. For example
+ *     parseHeaderLine('text/plain; charset=utf-8')
+ * will be parsed into
+ *     {defaultValue: 'text/plain', charset: 'utf-8'}
+ * 
+ * @param {String} line Single header value without key part to be parsed
+ * @return {Object} Parsed value
+ */
+module.exports.parseHeaderLine = function(line){
+    if(!line)
+        return {};
+    var result = {}, parts = line.split(";"), pos;
+    for(var i=0, len = parts.length; i<len; i++){
+        pos = parts[i].indexOf("=");
+        if(pos<0){
+            result[!i?"defaultValue":"i-"+i] = parts[i].trim();
+        }else{
+            result[parts[i].substr(0,pos).trim().toLowerCase()] = parts[i].substr(pos+1).trim();
+        }
+    }
+    return result;
+};
+
+module.exports.mimeFunctions = {
+
+    mimeEncode: function(str, toCharset, fromCharset){
+        toCharset = toCharset || "UTF-8";
+        fromCharset = fromCharset || "UTF-8";
+
+        var buffer = convert(str || "", toCharset, fromCharset),
+            ranges = [[0x09],
+                      [0x0A],
+                      [0x0D],
+                      [0x20],
+                      [0x21],
+                      [0x23, 0x3C],
+                      [0x3E],
+                      [0x40, 0x5E],
+                      [0x60, 0x7E]],
+            result = "";
+        
+        for(var i=0, len = buffer.length; i<len; i++){
+            if(checkRanges(buffer[i], ranges)){
+                result += String.fromCharCode(buffer[i]);
+                continue;
+            }
+            result += "="+(buffer[i]<0x10?"0":"")+buffer[i].toString(16).toUpperCase();
+        }
+
+        return result;
+    },
+
+    mimeDecode: function(str, toCharset, fromCharset){
+        str = (str || "").toString();
+        toCharset = toCharset || "UTF-8";
+        fromCharset = fromCharset || "UTF-8";
+
+        var encodedBytesCount = (str.match(/\=[\da-fA-F]{2}/g) || []).length,
+            bufferLength = str.length - encodedBytesCount * 2,
+            chr, hex,
+            buffer = new Buffer(bufferLength),
+            bufferPos = 0;
+
+        for(var i=0, len = str.length; i<len; i++){
+            chr = str.charAt(i);
+            if(chr == "=" && (hex = str.substr(i+1, 2)) && /[\da-fA-F]{2}/.test(hex)){
+                buffer[bufferPos++] = parseInt(hex, 16);
+                i+=2;
+                continue;
+            }
+            buffer[bufferPos++] = chr.charCodeAt(0);
+        }
+
+        if(fromCharset.toUpperCase().trim() == "BINARY"){
+            return buffer;
+        }
+        return convert(buffer, toCharset, fromCharset);
+    },
+
+    encodeBase64: function(str, toCharset, fromCharset){
+        var buffer = convert(str || "", toCharset, fromCharset);
+        return addSoftLinebreaks(buffer.toString("base64"), "base64");
+    },
+
+    decodeBase64: function(str, toCharset, fromCharset){
+        var buffer = new Buffer((str || "").toString(), "base64");
+        return convert(buffer, toCharset, fromCharset);
+    },
+
+    decodeQuotedPrintable: function(str, toCharset, fromCharset){
+        str = (str || "").toString();
+        str = str.replace(/\=\r?\n/g, "");
+        return this.mimeDecode(str, toCharset, fromCharset);
+    },
+
+    encodeQuotedPrintable: function(str, toCharset, fromCharset){
+        var mimeEncodedStr = this.mimeEncode(str, toCharset, fromCharset);
+
+        // fix line breaks
+        mimeEncodedStr = mimeEncodedStr.replace(/\r?\n|\r/g, function(lineBreak, spaces){
+            return "\r\n";
+        }).replace(/[\t ]+$/gm, function(spaces){
+            return spaces.replace(/ /g, "=20").replace(/\t/g, "=09");
+        });
+
+        return addSoftLinebreaks(mimeEncodedStr, "qp");
+    },
+
+    encodeMimeWord: function(str, encoding, maxLength, toCharset, fromCharset){
+        toCharset = (toCharset || "utf-8").toString().toUpperCase().trim();
+        encoding = (encoding || "Q").toString().toUpperCase().trim().charAt(0);
+        var encodedStr;
+
+        if(maxLength && maxLength > 7 + toCharset.length){
+            maxLength -= (7 + toCharset.length);
+        }
+
+        if(encoding == "Q"){
+            encodedStr = this.mimeEncode(str, toCharset, fromCharset);
+            encodedStr = encodedStr.replace(/[\r\n\t_]/g, function(chr){
+                var code = chr.charCodeAt(0);
+                return "=" + (code<0x10?"0":"") + code.toString(16).toUpperCase();
+            }).replace(/\s/g, "_");
+        }else if(encoding == "B"){
+            encodedStr = convert(str || "", toCharset, fromCharset).toString("base64").trim();
+        }
+
+        if(maxLength && encodedStr.length > maxLength){
+            if(encoding == "Q"){
+                encodedStr = this.splitEncodedString(encodedStr, maxLength).join("?= =?"+toCharset+"?"+encoding+"?")
+            }else{
+                encodedStr = encodedStr.replace(new RegExp(".{"+maxLength+"}","g"),"$&?= =?"+toCharset+"?"+encoding+"?");
+                if(encodedStr.substr(-(" =?"+toCharset+"?"+encoding+"?=").length) == " =?"+toCharset+"?"+encoding+"?="){
+                    encodedStr = encodedStr.substr(0, encodedStr.length -(" =?"+toCharset+"?"+encoding+"?=").length);
+                }
+                if(encodedStr.substr(-(" =?"+toCharset+"?"+encoding+"?").length) == " =?"+toCharset+"?"+encoding+"?"){
+                    encodedStr = encodedStr.substr(0, encodedStr.length -(" =?"+toCharset+"?"+encoding+"?").length);
+                }
+            }
+        }
+
+        return "=?"+toCharset+"?"+encoding+"?"+encodedStr+ (encodedStr.substr(-2)=="?="?"":"?=");
+    },
+
+    decodeMimeWord: function(str, toCharset){
+        str = (str || "").toString().trim();
+
+        var fromCharset, encoding, match;
+
+        match = str.match(/^\=\?([\w_\-]+)\?([QB])\?([^\?]+)\?\=$/i);
+        if(!match){
+            return convert(str, toCharset);
+        }
+
+        fromCharset = match[1];
+        encoding = (match[2] || "Q").toString().toUpperCase();
+        str = (match[3] || "").replace(/_/g, " ");
+
+        if(encoding == "B"){
+            return this.decodeBase64(str, toCharset, fromCharset);
+        }else if(encoding == "Q"){
+            return this.mimeDecode(str, toCharset, fromCharset);    
+        }else{
+            return str;
+        }
+
+        
+    },
+
+    decodeMimeWords: function(str, toCharset){
+        var remainder = "", lastCharset, curCharset;
+        str = (str || "").toString();
+
+        str = str.
+                replace(/(=\?[^?]+\?[QqBb]\?[^?]+\?=)\s+(?==\?[^?]+\?[QqBb]\?[^?]+\?=)/g, "$1").
+                replace(/\=\?([\w_\-]+)\?([QB])\?[^\?]+\?\=/g, (function(mimeWord, charset, encoding){
+
+                      curCharset = charset + encoding;
+
+                      return this.decodeMimeWord(mimeWord);
+                  }).bind(this));
+
+        return convert(str, toCharset);
+    },
+
+    foldLine: function(str, lineLengthMax, afterSpace, lineMargin){
+        lineLengthMax = lineLengthMax || 76;
+        str = (str || "").toString().trim();
+
+        var pos = 0, len = str.length, result = "", line, match, lineMargin = lineMargin || Math.floor(lineLengthMax/5);
+
+        while(pos < len){
+            line = str.substr(pos, lineLengthMax);
+            if(line.length < lineLengthMax){
+                result += line;
+                break;
+            }
+            if((match = line.match(/^[^\n\r]*(\r?\n|\r)/))){
+                line = match[0];
+                result += line;
+                pos += line.length;
+                continue;
+            }else if((match = line.substr(-lineMargin).match(/(\s+)[^\s]*$/))){
+                line = line.substr(0, line.length - (match[0].length - (!!afterSpace ? (match[1] || "").length : 0)));
+            }else if((match = str.substr(pos + line.length).match(/^[^\s]+(\s*)/))){
+                line = line + match[0].substr(0, match[0].length - (!afterSpace ? (match[1] || "").length : 0));
+            }
+            result += line;
+            pos += line.length;
+            if(pos < len){
+                result += "\r\n";
+            }
+        }
+
+        return result;
+    },
+
+    encodeMimeWords: function(value, encoding, maxLength, toCharset, fromCharset){
+        var decodedValue = convert((value || ""), "utf-8", fromCharset).toString("utf-8"),
+            encodedValue;
+
+        encodedValue = decodedValue.replace(/(\w*[\u0080-\uFFFF]+\w*(?:\s+\w*[\u0080-\uFFFF]+\w*\s*)?)+/g, (function(str, o){
+            return str.length?this.encodeMimeWord(str, encoding || "Q", maxLength, toCharset):"";
+        }).bind(this));
+
+        return encodedValue;
+    },
+
+    encodeHeaderLine: function(key, value, toCharset, fromCharset){
+        var encodedValue = this.encodeMimeWords(value, 52, toCharset, fromCharset);
+        return this.foldLine(key+": "+encodedValue, 76);
+    },
+
+    parseHeaderLines: function(headers, toCharset){
+        var lines = headers.split(/\r?\n|\r/),
+            headersObj = {},
+            key, value,
+            header,
+            i, len;
+
+        for(i=lines.length-1; i>=0; i--){
+            if(i && lines[i].match(/^\s/)){
+                lines[i-1] += "\r\n" + lines[i];
+                lines.splice(i, 1);
+            }
+        }
+
+        for(i=0, len = lines.length; i<len; i++){
+            header = this.decodeHeaderLine(lines[i]);
+            key = (header[0] || "").toString().toLowerCase().trim();
+            value = header[1] || "";
+            if(!toCharset || (toCharset || "").toString().trim().match(/^utf[\-_]?8$/i)){
+                value = value.toString("utf-8");
+            }
+            if(!headersObj[key]){
+                headersObj[key] = [value];
+            }else{
+                headersObj[key].push(value);
+            }
+        }
+
+        return headersObj;
+    },
+
+    decodeHeaderLine: function(header, toCharset){
+        var line = (header || "").toString().replace(/(?:\r?\n|\r)[ \t]*/g, " ").trim(),
+            match = line.match(/^\s*([^:]+):(.*)$/),
+            key = (match && match[1] || "").trim(),
+            value = (match && match[2] || "").trim();
+
+        value = this.decodeMimeWords(value, toCharset);
+        return [key, value];
+    },
+
+    splitEncodedString: function(str, maxlen){
+        var curLine, match, chr, done,
+            lines = [];
+
+        while(str.length){
+            curLine = str.substr(0, maxlen);
+            
+            // move incomplete escaped char back to main
+            if((match = curLine.match(/\=[0-9A-F]?$/i))){
+                curLine = curLine.substr(0, match.index);
+            }
+
+            done = false;
+            while(!done){
+                done = true;
+                // check if not middle of a unicode char sequence
+                if((match = str.substr(curLine.length).match(/^\=([0-9A-F]{2})/i))){
+                    chr = parseInt(match[1], 16);
+                    // invalid sequence, move one char back anc recheck
+                    if(chr < 0xC2 && chr > 0x7F){
+                        curLine = curLine.substr(0, curLine.length-3);
+                        done = false;
+                    }
+                }
+            }
+
+            if(curLine.length){
+                lines.push(curLine);
+            }
+            str = str.substr(curLine.length);
+        }
+
+        return lines;
+    },
+
+    parseAddresses: addressparser
+
+};
+
+// Lines can't be longer that 76 + <CR><LF> = 78 bytes
+// http://tools.ietf.org/html/rfc2045#section-6.7
+function addSoftLinebreaks(str, encoding){
+    var lineLengthMax = 76;
+
+    encoding = (encoding || "base64").toString().toLowerCase().trim();
+    
+    if(encoding == "qp"){
+        return addQPSoftLinebreaks(str, lineLengthMax);
+    }else{
+        return addBase64SoftLinebreaks(str, lineLengthMax);
+    }
+}
+
+function addBase64SoftLinebreaks(base64EncodedStr, lineLengthMax){
+    base64EncodedStr = (base64EncodedStr || "").toString().trim();
+    return base64EncodedStr.replace(new RegExp(".{" +lineLengthMax+ "}", "g"),"$&\r\n").trim();
+}
+
+function addQPSoftLinebreaks(mimeEncodedStr, lineLengthMax){
+    var pos = 0, len = mimeEncodedStr.length, 
+        match, code, line, 
+        lineMargin = Math.floor(lineLengthMax/3), 
+        result = "";
+
+    // insert soft linebreaks where needed
+    while(pos < len){
+        line = mimeEncodedStr.substr(pos, lineLengthMax);
+        if((match = line.match(/\r\n/))){
+            line = line.substr(0, match.index + match[0].length);
+            result += line;
+            pos += line.length;
+            continue;
+        }
+
+        if(line.substr(-1)=="\n"){
+            // nothing to change here
+            result += line;
+            pos += line.length;
+            continue;
+        }else if((match = line.substr(-lineMargin).match(/\n.*?$/))){
+            // truncate to nearest line break
+            line = line.substr(0, line.length - (match[0].length - 1));
+            result += line;
+            pos += line.length;
+            continue;
+        }else if(line.length > lineLengthMax - lineMargin && (match = line.substr(-lineMargin).match(/[ \t\.,!\?][^ \t\.,!\?]*$/))){
+            // truncate to nearest space
+            line = line.substr(0, line.length - (match[0].length - 1));
+        }else if(line.substr(-1)=="\r"){
+            line = line.substr(0, line.length-1);
+        }else{
+            if(line.match(/\=[\da-f]{0,2}$/i)){
+
+                // push incomplete encoding sequences to the next line
+                if((match = line.match(/\=[\da-f]{0,1}$/i))){
+                    line = line.substr(0, line.length - match[0].length);
+                }
+
+                // ensure that utf-8 sequences are not split
+                while(line.length>3 && line.length < len - pos && !line.match(/^(?:=[\da-f]{2}){1,4}$/i) && (match = line.match(/\=[\da-f]{2}$/ig))){
+                    code = parseInt(match[0].substr(1,2), 16);
+                    if(code<128){
+                        break;
+                    }
+
+                    line = line.substr(0, line.length-3);
+
+                    if(code >=0xC0){
+                        break;
+                    }
+                }
+                
+            }
+        }
+        
+        if(pos + line.length < len && line.substr(-1)!="\n"){
+            if(line.length==76 && line.match(/\=[\da-f]{2}$/i)){
+                line = line.substr(0, line.length-3);
+            }
+            else if(line.length==76){
+                line = line.substr(0, line.length-1);
+            }
+            pos += line.length;
+            line += "=\r\n";
+        }else{
+            pos += line.length;
+        }
+        
+        result += line;
+    }
+
+    return result;
+}
+
+function checkRanges(nr, ranges){
+    for(var i = ranges.length - 1; i >= 0; i--){
+        if(!ranges[i].length){
+            continue;
+        }
+        if(ranges[i].length == 1 && nr == ranges[i][0]){
+            return true;
+        }
+        if(ranges[i].length == 2 && nr >= ranges[i][0] && nr <= ranges[i][1]){
+            return true;
+        }
+    }
+    return false;
+}
+
+});
+define('mimelib/lib/content-types',['require','exports','module'],function (require, exports, module) {
+// list of mime types
+module.exports = {
+    "doc": "application/msword",
+    "docx": "application/msword",
+    "pdf": "application/pdf",
+    "rss": "application/rss+xml",
+    "xls": "application/vnd.ms-excel",
+    "xlsx": "application/vnd.ms-excel",
+    "pps": "application/vnd.ms-powerpoint",
+    "ppt": "application/vnd.ms-powerpoint",
+    "pptx": "application/vnd.ms-powerpoint",
+    "odp": "application/vnd.oasis.opendocument.presentation",
+    "ods": "application/vnd.oasis.opendocument.spreadsheet",
+    "odt": "application/vnd.oasis.opendocument.text",
+    "sxc": "application/vnd.sun.xml.calc",
+    "sxw": "application/vnd.sun.xml.writer",
+    "au": "audio/basic",
+    "snd": "audio/basic",
+    "flac": "audio/flac",
+    "mid": "audio/mid",
+    "rmi": "audio/mid",
+    "m4a": "audio/mp4",
+    "mp3": "audio/mpeg",
+    "oga": "audio/ogg",
+    "ogg": "audio/ogg",
+    "aif": "audio/x-aiff",
+    "aifc": "audio/x-aiff",
+    "aiff": "audio/x-aiff",
+    "wav": "audio/x-wav",
+    "gif": "image/gif",
+    "jpeg": "image/jpeg",
+    "jpg": "image/jpeg",
+    "jpe": "image/jpeg",
+    "png": "image/png",
+    "tiff": "image/tiff",
+    "tif": "image/tiff",
+    "wbmp": "image/vnd.wap.wbmp",
+    "bmp": "image/x-ms-bmp",
+    "ics": "text/calendar",
+    "csv": "text/comma-separated-values",
+    "css": "text/css",
+    "htm": "text/html",
+    "html": "text/html",
+    "text": "text/plain",
+    "txt": "text/plain",
+    "asc": "text/plain",
+    "diff": "text/plain",
+    "pot": "text/plain",
+    "vcf": "text/x-vcard",
+    "mp4": "video/mp4",
+    "mpeg": "video/mpeg",
+    "mpg": "video/mpeg",
+    "mpe": "video/mpeg",
+    "ogv": "video/ogg",
+    "qt": "video/quicktime",
+    "mov": "video/quicktime",
+    "avi": "video/x-msvideo",
+    "zip": "application/zip",
+    "rar": "application/x-rar-compressed"
+};
+});
+define('mimelib/lib/content-types-reversed',['require','exports','module'],function (require, exports, module) {
+// list of mime types
+module.exports = {
+    "application/msword": "doc",
+    "application/pdf": "pdf",
+    "application/rss+xml": "rss",
+    "application/vnd.ms-excel": "xls",
+    "application/vnd.ms-powerpoint": "ppt",
+    "application/vnd.oasis.opendocument.presentation": "odp",
+    "application/vnd.oasis.opendocument.spreadsheet": "ods",
+    "application/vnd.oasis.opendocument.text": "odt",
+    "application/vnd.sun.xml.calc": "sxc",
+    "application/vnd.sun.xml.writer": "sxw",
+    "audio/basic": "au",
+    "audio/flac": "flac",
+    "audio/mid": "mid",
+    "audio/mp4": "m4a",
+    "audio/mpeg": "mp3",
+    "audio/ogg": "ogg",
+    "audio/x-aiff": "aif",
+    "audio/x-wav": "wav",
+    "image/gif": "gif",
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/tiff": "tif",
+    "image/vnd.wap.wbmp": "wbmp",
+    "image/x-ms-bmp": "bmp",
+    "text/calendar": "ics",
+    "text/comma-separated-values": "csv",
+    "text/css": "css",
+    "text/html": "html",
+    "text/plain": "txt",
+    "text/x-vcard": "vcf",
+    "video/mp4": "mp4",
+    "video/mpeg": "mpeg",
+    "video/ogg": "ogv",
+    "video/quicktime": "mov",
+    "video/x-msvideo": "avi",
+    "application/zip": "zip",
+    "application/x-rar-compressed": "rar"
+};
+});
+define('mimelib/index',['require','exports','module','./lib/mimelib','./lib/content-types','./lib/content-types-reversed'],function (require, exports, module) {
+
+module.exports = require('./lib/mimelib');
+module.exports.contentTypes = require('./lib/content-types');
+module.exports.contentTypesReversed = require('./lib/content-types-reversed');
+});
+define('mimelib',['./mimelib/index'], function (main) {
+    return main;
+});
+define('mailcomposer/lib/punycode',['require','exports','module'],function (require, exports, module) {
+//Javascript Punycode converter derived from example in RFC3492.
+//This implementation is created by some@domain.name and released into public domain
+var punycode = new function Punycode() {
+    // This object converts to and from puny-code used in IDN
+    //
+    // punycode.ToASCII ( domain )
+    // 
+    // Returns a puny coded representation of "domain".
+    // It only converts the part of the domain name that
+    // has non ASCII characters. I.e. it dosent matter if
+    // you call it with a domain that already is in ASCII.
+    //
+    // punycode.ToUnicode (domain)
+    //
+    // Converts a puny-coded domain name to unicode.
+    // It only converts the puny-coded parts of the domain name.
+    // I.e. it dosent matter if you call it on a string
+    // that already has been converted to unicode.
+    //
+    //
+    this.utf16 = {
+        // The utf16-class is necessary to convert from javascripts internal character representation to unicode and back.
+        decode:function(input){
+            var output = [], i=0, len=input.length,value,extra;
+            while (i < len) {
+                value = input.charCodeAt(i++);
+                if ((value & 0xF800) === 0xD800) {
+                    extra = input.charCodeAt(i++);
+                    if ( ((value & 0xFC00) !== 0xD800) || ((extra & 0xFC00) !== 0xDC00) ) {
+                        throw new RangeError("UTF-16(decode): Illegal UTF-16 sequence");
+                    }
+                    value = ((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000;
+                }
+                output.push(value);
+            }
+            return output;
+        },
+        encode:function(input){
+            var output = [], i=0, len=input.length,value;
+            while (i < len) {
+                value = input[i++];
+                if ( (value & 0xF800) === 0xD800 ) {
+                    throw new RangeError("UTF-16(encode): Illegal UTF-16 value");
+                }
+                if (value > 0xFFFF) {
+                    value -= 0x10000;
+                    output.push(String.fromCharCode(((value >>>10) & 0x3FF) | 0xD800));
+                    value = 0xDC00 | (value & 0x3FF);
+                }
+                output.push(String.fromCharCode(value));
+            }
+            return output.join("");
+        }
+    };
+
+    //Default parameters
+    var initial_n = 0x80;
+    var initial_bias = 72;
+    var delimiter = "-";
+    var base = 36;
+    var damp = 700;
+    var tmin=1;
+    var tmax=26;
+    var skew=38;
+    var maxint = 0x7FFFFFFF;
+
+    // decode_digit(cp) returns the numeric value of a basic code 
+    // point (for use in representing integers) in the range 0 to
+    // base-1, or base if cp is does not represent a value.
+
+    function decode_digit(cp) {
+        return cp - 48 < 10 ? cp - 22 : cp - 65 < 26 ? cp - 65 : cp - 97 < 26 ? cp - 97 : base;
+    }
+
+    // encode_digit(d,flag) returns the basic code point whose value
+    // (when used for representing integers) is d, which needs to be in
+    // the range 0 to base-1. The lowercase form is used unless flag is
+    // nonzero, in which case the uppercase form is used. The behavior
+    // is undefined if flag is nonzero and digit d has no uppercase form. 
+
+    function encode_digit(d, flag) {
+        return d + 22 + 75 * (d < 26) - ((flag !== 0) << 5);
+        //  0..25 map to ASCII a..z or A..Z 
+        // 26..35 map to ASCII 0..9
+    }
+    //** Bias adaptation function **
+    function adapt(delta, numpoints, firsttime ) {
+        var k;
+        delta = firsttime ? Math.floor(delta / damp) : (delta >> 1);
+        delta += Math.floor(delta / numpoints);
+
+        for (k = 0; delta > (((base - tmin) * tmax) >> 1); k += base) {
+                delta = Math.floor(delta / ( base - tmin ));
+        }
+        return Math.floor(k + (base - tmin + 1) * delta / (delta + skew));
+    }
+
+    // encode_basic(bcp,flag) forces a basic code point to lowercase if flag is zero,
+    // uppercase if flag is nonzero, and returns the resulting code point.
+    // The code point is unchanged if it is caseless.
+    // The behavior is undefined if bcp is not a basic code point.
+
+    function encode_basic(bcp, flag) {
+        bcp -= (bcp - 97 < 26) << 5;
+        return bcp + ((!flag && (bcp - 65 < 26)) << 5);
+    }
+
+    // Main decode
+    this.decode=function(input,preserveCase) {
+        // Dont use utf16
+        var output=[];
+        var case_flags=[];
+        var input_length = input.length;
+
+        var n, out, i, bias, basic, j, ic, oldi, w, k, digit, t, len;
+
+        // Initialize the state: 
+
+        n = initial_n;
+        i = 0;
+        bias = initial_bias;
+
+        // Handle the basic code points: Let basic be the number of input code 
+        // points before the last delimiter, or 0 if there is none, then
+        // copy the first basic code points to the output.
+
+        basic = input.lastIndexOf(delimiter);
+        if (basic < 0) basic = 0;
+
+        for (j = 0; j < basic; ++j) {
+            if(preserveCase) case_flags[output.length] = ( input.charCodeAt(j) -65 < 26);
+            if ( input.charCodeAt(j) >= 0x80) {
+                throw new RangeError("Illegal input >= 0x80");
+            }
+            output.push( input.charCodeAt(j) );
+        }
+
+        // Main decoding loop: Start just after the last delimiter if any
+        // basic code points were copied; start at the beginning otherwise. 
+
+        for (ic = basic > 0 ? basic + 1 : 0; ic < input_length; ) {
+
+            // ic is the index of the next character to be consumed,
+
+            // Decode a generalized variable-length integer into delta,
+            // which gets added to i. The overflow checking is easier
+            // if we increase i as we go, then subtract off its starting 
+            // value at the end to obtain delta.
+            for (oldi = i, w = 1, k = base; ; k += base) {
+                    if (ic >= input_length) {
+                        throw RangeError ("punycode_bad_input(1)");
+                    }
+                    digit = decode_digit(input.charCodeAt(ic++));
+
+                    if (digit >= base) {
+                        throw RangeError("punycode_bad_input(2)");
+                    }
+                    if (digit > Math.floor((maxint - i) / w)) {
+                        throw RangeError ("punycode_overflow(1)");
+                    }
+                    i += digit * w;
+                    t = k <= bias ? tmin : k >= bias + tmax ? tmax : k - bias;
+                    if (digit < t) { break; }
+                    if (w > Math.floor(maxint / (base - t))) {
+                        throw RangeError("punycode_overflow(2)");
+                    }
+                    w *= (base - t);
+            }
+
+            out = output.length + 1;
+            bias = adapt(i - oldi, out, oldi === 0);
+
+            // i was supposed to wrap around from out to 0,
+            // incrementing n each time, so we'll fix that now: 
+            if ( Math.floor(i / out) > maxint - n) {
+                throw RangeError("punycode_overflow(3)");
+            }
+            n += Math.floor( i / out ) ;
+            i %= out;
+
+            // Insert n at position i of the output: 
+            // Case of last character determines uppercase flag: 
+            if (preserveCase) { case_flags.splice(i, 0, input.charCodeAt(ic -1) -65 < 26);}
+
+            output.splice(i, 0, n);
+            i++;
+        }
+        if (preserveCase) {
+            for (i = 0, len = output.length; i < len; i++) {
+                if (case_flags[i]) {
+                    output[i] = (String.fromCharCode(output[i]).toUpperCase()).charCodeAt(0);
+                }
+            }
+        }
+        return this.utf16.encode(output);
+    };
+
+    //** Main encode function **
+
+    this.encode = function (input,preserveCase) {
+        //** Bias adaptation function **
+
+        var n, delta, h, b, bias, j, m, q, k, t, ijv, case_flags;
+
+        if (preserveCase) {
+            // Preserve case, step1 of 2: Get a list of the unaltered string
+            case_flags = this.utf16.decode(input);
+        }
+        // Converts the input in UTF-16 to Unicode
+        input = this.utf16.decode(input.toLowerCase());
+
+        var input_length = input.length; // Cache the length
+
+        if (preserveCase) {
+            // Preserve case, step2 of 2: Modify the list to true/false
+            for (j=0; j < input_length; j++) {
+                case_flags[j] = input[j] != case_flags[j];
+            }
+        }
+
+        var output=[];
+
+
+        // Initialize the state: 
+        n = initial_n;
+        delta = 0;
+        bias = initial_bias;
+
+        // Handle the basic code points: 
+        for (j = 0; j < input_length; ++j) {
+            if ( input[j] < 0x80) {
+                output.push(
+                    String.fromCharCode(
+                        case_flags ? encode_basic(input[j], case_flags[j]) : input[j]
+                    )
+                );
+            }
+        }
+
+        h = b = output.length;
+
+        // h is the number of code points that have been handled, b is the
+        // number of basic code points 
+
+        if (b > 0) output.push(delimiter);
+
+        // Main encoding loop: 
+        //
+        while (h < input_length) {
+            // All non-basic code points < n have been
+            // handled already. Find the next larger one: 
+
+            for (m = maxint, j = 0; j < input_length; ++j) {
+                ijv = input[j];
+                if (ijv >= n && ijv < m) m = ijv;
+            }
+
+            // Increase delta enough to advance the decoder's
+            // <n,i> state to <m,0>, but guard against overflow: 
+
+            if (m - n > Math.floor((maxint - delta) / (h + 1))) {
+                throw RangeError("punycode_overflow (1)");
+            }
+            delta += (m - n) * (h + 1);
+            n = m;
+
+            for (j = 0; j < input_length; ++j) {
+                ijv = input[j];
+
+                if (ijv < n ) {
+                    if (++delta > maxint) return Error("punycode_overflow(2)");
+                }
+
+                if (ijv == n) {
+                    // Represent delta as a generalized variable-length integer: 
+                    for (q = delta, k = base; ; k += base) {
+                        t = k <= bias ? tmin : k >= bias + tmax ? tmax : k - bias;
+                        if (q < t) break;
+                        output.push( String.fromCharCode(encode_digit(t + (q - t) % (base - t), 0)) );
+                        q = Math.floor( (q - t) / (base - t) );
+                    }
+                    output.push( String.fromCharCode(encode_digit(q, preserveCase && case_flags[j] ? 1:0 )));
+                    bias = adapt(delta, h + 1, h == b);
+                    delta = 0;
+                    ++h;
+                }
+            }
+
+            ++delta;
+            ++n;
+        }
+        return output.join("");
+    };
+
+    this.ToASCII = function ( domain ) {
+        var domain_array = domain.split(".");
+        var out = [];
+        for (var i=0; i < domain_array.length; ++i) {
+            var s = domain_array[i];
+            out.push(
+                s.match(/[^A-Za-z0-9\-]/) ?
+                "xn--" + punycode.encode(s) :
+                s
+            );
+        }
+        return out.join(".");
+    };
+    
+    this.ToUnicode = function ( domain ) {
+        var domain_array = domain.split(".");
+        var out = [];
+        for (var i=0; i < domain_array.length; ++i) {
+            var s = domain_array[i];
+            out.push(
+                s.match(/^xn--/) ?
+                punycode.decode(s.slice(4)) :
+                s
+            );
+        }
+        return out.join(".");
+    };
+}();
+
+module.exports = function(address){
+    return address.replace(/((?:https?:\/\/)?.*\@)?([^\/]*)/, function(o, start, domain){
+        var domainParts = domain.split(/\./).map(punycode.ToASCII);
+        return (start || "") + domainParts.join(".");
+    });
+};
+});
+define('crypto',['require','exports','module'],function(require, exports, module) {
+
+exports.createHash = function(algorithm) {
+  if (algorithm !== "md5")
+    throw new Error("MD5 or bust!");
+
+  var data = "";
+  return {
+    update: function(addData) {
+      data += addData;
+    },
+    digest: function(encoding) {
+      switch (encoding) {
+        case "hex":
+          return hex_md5(data);
+        case "base64":
+          return b64_md5(data);
+        default:
+          throw new Error("The encoding is no good: " + encoding);
+      }
+    }
+  };
+};
+
+/*
+ * A JavaScript implementation of the RSA Data Security, Inc. MD5 Message
+ * Digest Algorithm, as defined in RFC 1321.
+ * Version 2.2 Copyright (C) Paul Johnston 1999 - 2009
+ * Other contributors: Greg Holt, Andrew Kepert, Ydnar, Lostinet
+ * Distributed under the BSD License
+ * See http://pajhome.org.uk/crypt/md5 for more info.
+ */
+
+/*
+ * Configurable variables. You may need to tweak these to be compatible with
+ * the server-side, but the defaults work in most cases.
+ */
+var hexcase = 0;   /* hex output format. 0 - lowercase; 1 - uppercase        */
+var b64pad  = "";  /* base-64 pad character. "=" for strict RFC compliance   */
+
+/*
+ * These are the functions you'll usually want to call
+ * They take string arguments and return either hex or base-64 encoded strings
+ */
+function hex_md5(s)    { return rstr2hex(rstr_md5(str2rstr_utf8(s))); }
+function b64_md5(s)    { return rstr2b64(rstr_md5(str2rstr_utf8(s))); }
+function any_md5(s, e) { return rstr2any(rstr_md5(str2rstr_utf8(s)), e); }
+function hex_hmac_md5(k, d)
+  { return rstr2hex(rstr_hmac_md5(str2rstr_utf8(k), str2rstr_utf8(d))); }
+function b64_hmac_md5(k, d)
+  { return rstr2b64(rstr_hmac_md5(str2rstr_utf8(k), str2rstr_utf8(d))); }
+function any_hmac_md5(k, d, e)
+  { return rstr2any(rstr_hmac_md5(str2rstr_utf8(k), str2rstr_utf8(d)), e); }
+
+/*
+ * Perform a simple self-test to see if the VM is working
+ */
+function md5_vm_test()
+{
+  return hex_md5("abc").toLowerCase() == "900150983cd24fb0d6963f7d28e17f72";
+}
+
+/*
+ * Calculate the MD5 of a raw string
+ */
+function rstr_md5(s)
+{
+  return binl2rstr(binl_md5(rstr2binl(s), s.length * 8));
+}
+
+/*
+ * Calculate the HMAC-MD5, of a key and some data (raw strings)
+ */
+function rstr_hmac_md5(key, data)
+{
+  var bkey = rstr2binl(key);
+  if(bkey.length > 16) bkey = binl_md5(bkey, key.length * 8);
+
+  var ipad = Array(16), opad = Array(16);
+  for(var i = 0; i < 16; i++)
+  {
+    ipad[i] = bkey[i] ^ 0x36363636;
+    opad[i] = bkey[i] ^ 0x5C5C5C5C;
+  }
+
+  var hash = binl_md5(ipad.concat(rstr2binl(data)), 512 + data.length * 8);
+  return binl2rstr(binl_md5(opad.concat(hash), 512 + 128));
+}
+
+/*
+ * Convert a raw string to a hex string
+ */
+function rstr2hex(input)
+{
+  try { hexcase } catch(e) { hexcase=0; }
+  var hex_tab = hexcase ? "0123456789ABCDEF" : "0123456789abcdef";
+  var output = "";
+  var x;
+  for(var i = 0; i < input.length; i++)
+  {
+    x = input.charCodeAt(i);
+    output += hex_tab.charAt((x >>> 4) & 0x0F)
+           +  hex_tab.charAt( x        & 0x0F);
+  }
+  return output;
+}
+
+/*
+ * Convert a raw string to a base-64 string
+ */
+function rstr2b64(input)
+{
+  try { b64pad } catch(e) { b64pad=''; }
+  var tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  var output = "";
+  var len = input.length;
+  for(var i = 0; i < len; i += 3)
+  {
+    var triplet = (input.charCodeAt(i) << 16)
+                | (i + 1 < len ? input.charCodeAt(i+1) << 8 : 0)
+                | (i + 2 < len ? input.charCodeAt(i+2)      : 0);
+    for(var j = 0; j < 4; j++)
+    {
+      if(i * 8 + j * 6 > input.length * 8) output += b64pad;
+      else output += tab.charAt((triplet >>> 6*(3-j)) & 0x3F);
+    }
+  }
+  return output;
+}
+
+/*
+ * Convert a raw string to an arbitrary string encoding
+ */
+function rstr2any(input, encoding)
+{
+  var divisor = encoding.length;
+  var i, j, q, x, quotient;
+
+  /* Convert to an array of 16-bit big-endian values, forming the dividend */
+  var dividend = Array(Math.ceil(input.length / 2));
+  for(i = 0; i < dividend.length; i++)
+  {
+    dividend[i] = (input.charCodeAt(i * 2) << 8) | input.charCodeAt(i * 2 + 1);
+  }
+
+  /*
+   * Repeatedly perform a long division. The binary array forms the dividend,
+   * the length of the encoding is the divisor. Once computed, the quotient
+   * forms the dividend for the next step. All remainders are stored for later
+   * use.
+   */
+  var full_length = Math.ceil(input.length * 8 /
+                                    (Math.log(encoding.length) / Math.log(2)));
+  var remainders = Array(full_length);
+  for(j = 0; j < full_length; j++)
+  {
+    quotient = Array();
+    x = 0;
+    for(i = 0; i < dividend.length; i++)
+    {
+      x = (x << 16) + dividend[i];
+      q = Math.floor(x / divisor);
+      x -= q * divisor;
+      if(quotient.length > 0 || q > 0)
+        quotient[quotient.length] = q;
+    }
+    remainders[j] = x;
+    dividend = quotient;
+  }
+
+  /* Convert the remainders to the output string */
+  var output = "";
+  for(i = remainders.length - 1; i >= 0; i--)
+    output += encoding.charAt(remainders[i]);
+
+  return output;
+}
+
+/*
+ * Encode a string as utf-8.
+ * For efficiency, this assumes the input is valid utf-16.
+ */
+function str2rstr_utf8(input)
+{
+  var output = "";
+  var i = -1;
+  var x, y;
+
+  while(++i < input.length)
+  {
+    /* Decode utf-16 surrogate pairs */
+    x = input.charCodeAt(i);
+    y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
+    if(0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF)
+    {
+      x = 0x10000 + ((x & 0x03FF) << 10) + (y & 0x03FF);
+      i++;
+    }
+
+    /* Encode output as utf-8 */
+    if(x <= 0x7F)
+      output += String.fromCharCode(x);
+    else if(x <= 0x7FF)
+      output += String.fromCharCode(0xC0 | ((x >>> 6 ) & 0x1F),
+                                    0x80 | ( x         & 0x3F));
+    else if(x <= 0xFFFF)
+      output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F),
+                                    0x80 | ((x >>> 6 ) & 0x3F),
+                                    0x80 | ( x         & 0x3F));
+    else if(x <= 0x1FFFFF)
+      output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07),
+                                    0x80 | ((x >>> 12) & 0x3F),
+                                    0x80 | ((x >>> 6 ) & 0x3F),
+                                    0x80 | ( x         & 0x3F));
+  }
+  return output;
+}
+
+/*
+ * Encode a string as utf-16
+ */
+function str2rstr_utf16le(input)
+{
+  var output = "";
+  for(var i = 0; i < input.length; i++)
+    output += String.fromCharCode( input.charCodeAt(i)        & 0xFF,
+                                  (input.charCodeAt(i) >>> 8) & 0xFF);
+  return output;
+}
+
+function str2rstr_utf16be(input)
+{
+  var output = "";
+  for(var i = 0; i < input.length; i++)
+    output += String.fromCharCode((input.charCodeAt(i) >>> 8) & 0xFF,
+                                   input.charCodeAt(i)        & 0xFF);
+  return output;
+}
+
+/*
+ * Convert a raw string to an array of little-endian words
+ * Characters >255 have their high-byte silently ignored.
+ */
+function rstr2binl(input)
+{
+  var output = Array(input.length >> 2);
+  for(var i = 0; i < output.length; i++)
+    output[i] = 0;
+  for(var i = 0; i < input.length * 8; i += 8)
+    output[i>>5] |= (input.charCodeAt(i / 8) & 0xFF) << (i%32);
+  return output;
+}
+
+/*
+ * Convert an array of little-endian words to a string
+ */
+function binl2rstr(input)
+{
+  var output = "";
+  for(var i = 0; i < input.length * 32; i += 8)
+    output += String.fromCharCode((input[i>>5] >>> (i % 32)) & 0xFF);
+  return output;
+}
+
+/*
+ * Calculate the MD5 of an array of little-endian words, and a bit length.
+ */
+function binl_md5(x, len)
+{
+  /* append padding */
+  x[len >> 5] |= 0x80 << ((len) % 32);
+  x[(((len + 64) >>> 9) << 4) + 14] = len;
+
+  var a =  1732584193;
+  var b = -271733879;
+  var c = -1732584194;
+  var d =  271733878;
+
+  for(var i = 0; i < x.length; i += 16)
+  {
+    var olda = a;
+    var oldb = b;
+    var oldc = c;
+    var oldd = d;
+
+    a = md5_ff(a, b, c, d, x[i+ 0], 7 , -680876936);
+    d = md5_ff(d, a, b, c, x[i+ 1], 12, -389564586);
+    c = md5_ff(c, d, a, b, x[i+ 2], 17,  606105819);
+    b = md5_ff(b, c, d, a, x[i+ 3], 22, -1044525330);
+    a = md5_ff(a, b, c, d, x[i+ 4], 7 , -176418897);
+    d = md5_ff(d, a, b, c, x[i+ 5], 12,  1200080426);
+    c = md5_ff(c, d, a, b, x[i+ 6], 17, -1473231341);
+    b = md5_ff(b, c, d, a, x[i+ 7], 22, -45705983);
+    a = md5_ff(a, b, c, d, x[i+ 8], 7 ,  1770035416);
+    d = md5_ff(d, a, b, c, x[i+ 9], 12, -1958414417);
+    c = md5_ff(c, d, a, b, x[i+10], 17, -42063);
+    b = md5_ff(b, c, d, a, x[i+11], 22, -1990404162);
+    a = md5_ff(a, b, c, d, x[i+12], 7 ,  1804603682);
+    d = md5_ff(d, a, b, c, x[i+13], 12, -40341101);
+    c = md5_ff(c, d, a, b, x[i+14], 17, -1502002290);
+    b = md5_ff(b, c, d, a, x[i+15], 22,  1236535329);
+
+    a = md5_gg(a, b, c, d, x[i+ 1], 5 , -165796510);
+    d = md5_gg(d, a, b, c, x[i+ 6], 9 , -1069501632);
+    c = md5_gg(c, d, a, b, x[i+11], 14,  643717713);
+    b = md5_gg(b, c, d, a, x[i+ 0], 20, -373897302);
+    a = md5_gg(a, b, c, d, x[i+ 5], 5 , -701558691);
+    d = md5_gg(d, a, b, c, x[i+10], 9 ,  38016083);
+    c = md5_gg(c, d, a, b, x[i+15], 14, -660478335);
+    b = md5_gg(b, c, d, a, x[i+ 4], 20, -405537848);
+    a = md5_gg(a, b, c, d, x[i+ 9], 5 ,  568446438);
+    d = md5_gg(d, a, b, c, x[i+14], 9 , -1019803690);
+    c = md5_gg(c, d, a, b, x[i+ 3], 14, -187363961);
+    b = md5_gg(b, c, d, a, x[i+ 8], 20,  1163531501);
+    a = md5_gg(a, b, c, d, x[i+13], 5 , -1444681467);
+    d = md5_gg(d, a, b, c, x[i+ 2], 9 , -51403784);
+    c = md5_gg(c, d, a, b, x[i+ 7], 14,  1735328473);
+    b = md5_gg(b, c, d, a, x[i+12], 20, -1926607734);
+
+    a = md5_hh(a, b, c, d, x[i+ 5], 4 , -378558);
+    d = md5_hh(d, a, b, c, x[i+ 8], 11, -2022574463);
+    c = md5_hh(c, d, a, b, x[i+11], 16,  1839030562);
+    b = md5_hh(b, c, d, a, x[i+14], 23, -35309556);
+    a = md5_hh(a, b, c, d, x[i+ 1], 4 , -1530992060);
+    d = md5_hh(d, a, b, c, x[i+ 4], 11,  1272893353);
+    c = md5_hh(c, d, a, b, x[i+ 7], 16, -155497632);
+    b = md5_hh(b, c, d, a, x[i+10], 23, -1094730640);
+    a = md5_hh(a, b, c, d, x[i+13], 4 ,  681279174);
+    d = md5_hh(d, a, b, c, x[i+ 0], 11, -358537222);
+    c = md5_hh(c, d, a, b, x[i+ 3], 16, -722521979);
+    b = md5_hh(b, c, d, a, x[i+ 6], 23,  76029189);
+    a = md5_hh(a, b, c, d, x[i+ 9], 4 , -640364487);
+    d = md5_hh(d, a, b, c, x[i+12], 11, -421815835);
+    c = md5_hh(c, d, a, b, x[i+15], 16,  530742520);
+    b = md5_hh(b, c, d, a, x[i+ 2], 23, -995338651);
+
+    a = md5_ii(a, b, c, d, x[i+ 0], 6 , -198630844);
+    d = md5_ii(d, a, b, c, x[i+ 7], 10,  1126891415);
+    c = md5_ii(c, d, a, b, x[i+14], 15, -1416354905);
+    b = md5_ii(b, c, d, a, x[i+ 5], 21, -57434055);
+    a = md5_ii(a, b, c, d, x[i+12], 6 ,  1700485571);
+    d = md5_ii(d, a, b, c, x[i+ 3], 10, -1894986606);
+    c = md5_ii(c, d, a, b, x[i+10], 15, -1051523);
+    b = md5_ii(b, c, d, a, x[i+ 1], 21, -2054922799);
+    a = md5_ii(a, b, c, d, x[i+ 8], 6 ,  1873313359);
+    d = md5_ii(d, a, b, c, x[i+15], 10, -30611744);
+    c = md5_ii(c, d, a, b, x[i+ 6], 15, -1560198380);
+    b = md5_ii(b, c, d, a, x[i+13], 21,  1309151649);
+    a = md5_ii(a, b, c, d, x[i+ 4], 6 , -145523070);
+    d = md5_ii(d, a, b, c, x[i+11], 10, -1120210379);
+    c = md5_ii(c, d, a, b, x[i+ 2], 15,  718787259);
+    b = md5_ii(b, c, d, a, x[i+ 9], 21, -343485551);
+
+    a = safe_add(a, olda);
+    b = safe_add(b, oldb);
+    c = safe_add(c, oldc);
+    d = safe_add(d, oldd);
+  }
+  return Array(a, b, c, d);
+}
+
+/*
+ * These functions implement the four basic operations the algorithm uses.
+ */
+function md5_cmn(q, a, b, x, s, t)
+{
+  return safe_add(bit_rol(safe_add(safe_add(a, q), safe_add(x, t)), s),b);
+}
+function md5_ff(a, b, c, d, x, s, t)
+{
+  return md5_cmn((b & c) | ((~b) & d), a, b, x, s, t);
+}
+function md5_gg(a, b, c, d, x, s, t)
+{
+  return md5_cmn((b & d) | (c & (~d)), a, b, x, s, t);
+}
+function md5_hh(a, b, c, d, x, s, t)
+{
+  return md5_cmn(b ^ c ^ d, a, b, x, s, t);
+}
+function md5_ii(a, b, c, d, x, s, t)
+{
+  return md5_cmn(c ^ (b | (~d)), a, b, x, s, t);
+}
+
+/*
+ * Add integers, wrapping at 2^32. This uses 16-bit operations internally
+ * to work around bugs in some JS interpreters.
+ */
+function safe_add(x, y)
+{
+  var lsw = (x & 0xFFFF) + (y & 0xFFFF);
+  var msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+  return (msw << 16) | (lsw & 0xFFFF);
+}
+
+/*
+ * Bitwise rotate a 32-bit number to the left.
+ */
+function bit_rol(num, cnt)
+{
+  return (num << cnt) | (num >>> (32 - cnt));
+}
+
+});
+
+define('mailcomposer/lib/dkim',['require','exports','module','crypto','mimelib','./punycode'],function (require, exports, module) {
+var crypto = require('crypto'),
+    mimelib = require('mimelib'),
+    toPunycode = require('./punycode');
+
+/**
+ * @namespace DKIM Signer module 
+ * @name dkimsign
+ */
+module.exports.DKIMSign = DKIMSign;
+module.exports.generateDKIMHeader = generateDKIMHeader;
+module.exports.sha256 = sha256;
+
+
+/**
+ * <p>Sign an email with provided DKIM key, uses RSA-SHA256.</p>
+ * 
+ * @memberOf dkimsign
+ * @param {String} email Full e-mail source complete with headers and body to sign
+ * @param {Object} options DKIM options
+ * @param {String} [options.headerFieldNames="from:to:cc:subject"] Header fields to sign
+ * @param {String} options.privateKey DKMI private key 
+ * @param {String} options.domainName Domain name to use for signing (ie: "domain.com")
+ * @param {String} options.keySelector Selector for the DKMI public key (ie. "dkim" if you have set up a TXT record for "dkim._domainkey.domain.com")
+ * 
+ * @return {String} Signed DKIM-Signature header field for prepending 
+ */
+function DKIMSign(email, options){
+    options = options || {};
+    email = (email || "").toString("utf-8");
+    
+    var match = email.match(/^\r?\n|(?:\r?\n){2}/),
+        headers = match && email.substr(0, match.index) || "",
+        body = match && email.substr(match.index + match[0].length) || email;
+    
+    // all listed fields from RFC4871 #5.5
+    var defaultFieldNames = "From:Sender:Reply-To:Subject:Date:Message-ID:To:" +
+            "Cc:MIME-Version:Content-Type:Content-Transfer-Encoding:Content-ID:" +
+            "Content-Description:Resent-Date:Resent-From:Resent-Sender:" +
+            "Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:" +
+            "List-Id:List-Help:List-Unsubscribe:List-Subscribe:List-Post:" +
+            "List-Owner:List-Archive";
+    
+    var dkim = generateDKIMHeader(options.domainName, options.keySelector, options.headerFieldNames || defaultFieldNames, headers, body),
+        canonicalizedHeaderData = DKIMCanonicalizer.relaxedHeaders(headers, options.headerFieldNames || defaultFieldNames),
+        canonicalizedDKIMHeader = DKIMCanonicalizer.relaxedHeaderLine(dkim),
+        signer, signature;
+
+    canonicalizedHeaderData.headers +=  canonicalizedDKIMHeader.key+":"+canonicalizedDKIMHeader.value;
+
+    signer = crypto.createSign("RSA-SHA256");
+    signer.update(canonicalizedHeaderData.headers);
+    signature = signer.sign(options.privateKey, 'base64');
+    
+    return dkim + signature.replace(/(.{76}(?!\r?\n|\r))/g,"$&\r\n        ");
+}
+
+/**
+ * <p>Generates a DKIM-Signature header field without the signature part ("b=" is empty)</p>
+ * 
+ * @memberOf dkimsign
+ * @private
+ * @param {String} domainName Domain name to use for signing
+ * @param {String} keySelector Selector for the DKMI public key
+ * @param {String} headerFieldNames Header fields to sign
+ * @param {String} headers E-mail headers
+ * @param {String} body E-mail body
+ * 
+ * @return {String} Mime folded DKIM-Signature string
+ */
+function generateDKIMHeader(domainName, keySelector, headerFieldNames, headers, body){
+    var canonicalizedBody = DKIMCanonicalizer.relaxedBody(body),
+        canonicalizedBodyHash = sha256(canonicalizedBody, "base64"),
+        canonicalizedHeaderData = DKIMCanonicalizer.relaxedHeaders(headers, headerFieldNames),
+        dkim;
+
+    if(hasUTFChars(domainName)){
+        domainName = toPunycode(domainName);
+    }
+
+    dkim = [
+        "v=1",
+        "a=rsa-sha256",
+        "c=relaxed/relaxed",
+        "d="+domainName,
+        "q=dns/txt",
+        "s="+keySelector,
+        "bh="+canonicalizedBodyHash,
+        "h="+canonicalizedHeaderData.fieldNames
+    ].join("; ");
+
+    return mimelib.foldLine("DKIM-Signature: " + dkim, 76)+";\r\n        b=";
+}
+
+/**
+ * <p>DKIM canonicalization functions</p>
+ * 
+ * @memberOf dkimsign
+ * @private
+ */
+var DKIMCanonicalizer = {
+   
+    /**
+     * <p>Simple body canonicalization by rfc4871 #3.4.3</p>
+     * 
+     * @param {String} body E-mail body part
+     * @return {String} Canonicalized body
+     */
+    simpleBody: function(body){
+        return (body || "").toString().replace(/(?:\r?\n|\r)*$/, "\r\n");
+    },
+    
+    /**
+     * <p>Relaxed body canonicalization by rfc4871 #3.4.4</p>
+     * 
+     * @param {String} body E-mail body part
+     * @return {String} Canonicalized body
+     */
+    relaxedBody: function(body){
+        return (body || "").toString().
+                replace(/\r?\n|\r/g, "\n").
+                split("\n").
+                map(function(line){
+                    return line.replace(/\s*$/, ""). //rtrim
+                                replace(/\s+/g, " "); // only single spaces
+                }).
+                join("\n").
+                replace(/\n*$/, "\n").
+                replace(/\n/g, "\r\n");
+    },
+    
+    /**
+     * <p>Relaxed headers canonicalization by rfc4871 #3.4.2 with filtering</p>
+     * 
+     * @param {String} body E-mail headers part
+     * @return {String} Canonicalized headers
+     */
+    relaxedHeaders: function(headers, fieldNames){
+        var includedFields = (fieldNames || "").toLowerCase().
+                                split(":").
+                                map(function(field){
+                                    return field.trim();
+                                }),
+            headerFields = {},
+            headerLines = headers.split(/\r?\n|\r/),
+            line, i;
+        
+        // join lines
+        for(i = headerLines.length-1; i>=0; i--){
+            if(i && headerLines[i].match(/^\s/)){
+                headerLines[i-1] += headerLines.splice(i,1);
+            }else{
+                line = DKIMCanonicalizer.relaxedHeaderLine(headerLines[i]);
+
+                // on multiple values, include only the first one (the one in the bottom of the list)
+                if(includedFields.indexOf(line.key) >= 0 && !(line.key in headerFields)){
+                    headerFields[line.key] = line.value;
+                }
+            }
+        }
+
+        headers = [];
+        for(i = includedFields.length-1; i>=0; i--){
+            if(!headerFields[includedFields[i]]){
+                includedFields.splice(i,1);
+            }else{
+                headers.unshift(includedFields[i]+":"+headerFields[includedFields[i]]);
+            }
+        }
+
+        return {
+            headers: headers.join("\r\n")+"\r\n",
+            fieldNames: includedFields.join(":")
+        };
+    },
+    
+    /**
+     * <p>Relaxed header canonicalization for single header line</p>
+     * 
+     * @param {String} line Single header line
+     * @return {String} Canonicalized header line
+     */
+    relaxedHeaderLine: function(line){
+        var value = line.split(":"),
+            key = (value.shift() || "").toLowerCase().trim();
+        
+        value = value.join(":").replace(/\s+/g, " ").trim();
+        
+        return {key: key, value: value};
+    }
+};
+module.exports.DKIMCanonicalizer = DKIMCanonicalizer;
+
+/**
+ * <p>Generates a SHA-256 hash</p>
+ * 
+ * @param {String} str String to be hashed
+ * @param {String} [encoding="hex"] Output encoding
+ * @return {String} SHA-256 hash in the selected output encoding
+ */
+function sha256(str, encoding){
+    var shasum = crypto.createHash('sha256');
+    shasum.update(str);
+    return shasum.digest(encoding || "hex");
+}
+
+
+
+/**
+ * <p>Detects if a string includes unicode symbols</p>
+ * 
+ * @param {String} str String to be checked
+ * @return {String} true, if string contains non-ascii symbols
+ */
+function hasUTFChars(str){
+    var rforeign = /[^\u0000-\u007f]/;
+    return !!rforeign.test(str);
+}
+});
+define('http',['require','exports','module'],function(require, exports, module) {
+});
+
+define('https',['require','exports','module'],function(require, exports, module) {
+});
+
+define('url',['require','exports','module'],function(require, exports, module) {
+});
+
+define('mailcomposer/lib/urlfetch',['require','exports','module','http','https','url','stream'],function (require, exports, module) {
+var http = require('http'),
+    https = require('https'),
+    urllib = require('url'),
+    Stream = require('stream').Stream;
+
+/**
+ * @namespace URLFetch 
+ * @name urlfetch
+ */
+module.exports = openUrlStream;
+
+/**
+ * <p>Open a stream to a specified URL</p>
+ * 
+ * @memberOf urlfetch
+ * @param {String} url URL to open
+ * @param {Object} [options] Optional options object
+ * @param {String} [options.userAgent="mailcomposer"] User Agent for the request
+ * @return {Stream} Stream for the URL contents
+ */
+function openUrlStream(url, options){
+    options = options || {};
+    var urlparts = urllib.parse(url),
+        urloptions = {
+            host: urlparts.hostname,
+            port: urlparts.port || (urlparts.protocol=="https:"?443:80),
+            path: urlparts.path || urlparts.pathname,
+            method: "GET",
+            headers: {
+                "User-Agent": options.userAgent || "mailcomposer"
+            }
+        },
+        client = (urlparts.protocol=="https:"?https:http),
+        stream = new Stream(),
+        request;
+    
+    stream.resume = function(){};
+        
+    if(urlparts.auth){
+        urloptions.auth = urlparts.auth;
+    }
+    
+    request = client.request(urloptions, function(response) {
+        if((response.statusCode || 0).toString().charAt(0) != "2"){
+            stream.emit("error", "Invalid status code " + (response.statusCode || 0));
+            return;
+        }
+
+        response.on('error', function(err) {
+            stream.emit("error", err);
+        });
+
+        response.on('data', function(chunk) {
+            stream.emit("data", chunk);
+        });
+        
+        response.on('end', function(chunk) {
+            if(chunk){
+                stream.emit("data", chunk);
+            }
+            stream.emit("end");
+        });
+    });
+    request.end();
+    
+    request.on('error', function(err) {
+        stream.emit("error", err);
+    });
+    
+    return stream; 
+}
+});
+define('fs',['require','exports','module'],function(require, exports, module) {
+});
+
+define('mailcomposer/lib/mailcomposer',['require','exports','module','stream','util','mimelib','./punycode','./dkim','./urlfetch','fs'],function (require, exports, module) {
+var Stream = require('stream').Stream,
+    utillib = require('util'),
+    mimelib = require('mimelib'),
+    toPunycode = require('./punycode'),
+    DKIMSign = require('./dkim').DKIMSign,
+    urlFetch = require('./urlfetch'),
+    fs = require('fs');
+
+module.exports.MailComposer = MailComposer;
+
+/**
+ * <p>Costructs a MailComposer object. This is a Stream instance so you could
+ * pipe the output to a file or send it to network.</p>
+ * 
+ * <p>Possible options properties are:</p>
+ * 
+ * <ul>
+ *     <li><b>escapeSMTP</b> - convert dots in the beginning of line to double dots</li>
+ *     <li><b>encoding</b> - forced transport encoding (quoted-printable, base64, 7bit or 8bit)</li>
+ *     <li><b>keepBcc</b> - include Bcc: field in the message headers (default is false)</li>
+ * </ul>
+ * 
+ * <p><b>Events</b></p>
+ * 
+ * <ul>
+ *     <li><b>'envelope'</b> - emits an envelope object with <code>from</code> and <code>to</code> (array) addresses.</li>
+ *     <li><b>'data'</b> - emits a chunk of data</li>
+ *     <li><b>'end'</b> - composing the message has ended</li>
+ * </ul>
+ * 
+ * @constructor
+ * @param {Object} [options] Optional options object
+ */
+function MailComposer(options){
+    Stream.call(this);
+    
+    this.options = options || {};
+    
+    this._init();
+}
+utillib.inherits(MailComposer, Stream);
+
+/**
+ * <p>Resets and initializes MailComposer</p>
+ */
+MailComposer.prototype._init = function(){
+    /**
+     * <p>Contains all header values</p>
+     * @private
+     */
+    this._headers = {};
+    
+    /**
+     * <p>Contains message related values</p>
+     * @private
+     */
+    this._message = {};
+    
+    /**
+     * <p>Contains a list of attachments</p>
+     * @private
+     */
+    this._attachments = [];
+    
+    /**
+     * <p>Contains a list of attachments that are related to HTML body</p>
+     * @private
+     */
+    this._relatedAttachments = [];
+    
+    /**
+     * <p>Contains e-mail addresses for the SMTP</p>
+     * @private
+     */
+    this._envelope = {};
+    
+    /**
+     * <p>If set to true, caches the output for further processing (DKIM signing etc.)</p>
+     * @private
+     */
+    this._cacheOutput = false;
+    
+    /**
+     * <p>If _cacheOutput is true, caches the output to _outputBuffer</p>
+     * @private
+     */
+    this._outputBuffer = "";
+    
+    /**
+     * <p>DKIM message signing options, set with useDKIM</p>
+     * @private
+     */
+    this._dkim = false;
+    
+    /**
+     * <p>Counter for generating unique mime boundaries etc.</p>
+     * @private
+     */
+    this._gencounter = 0;
+    
+    this.addHeader("MIME-Version", "1.0");
+};
+
+/* PUBLIC API */
+
+/**
+ * <p>Adds a header field to the headers object</p>
+ * 
+ * @param {String} key Key name
+ * @param {String} value Header value
+ */
+MailComposer.prototype.addHeader = function(key, value){
+    key = this._normalizeKey(key);
+    
+    if(value && Object.prototype.toString.call(value) == "[object Object]"){
+        value = this._encodeMimeWord(JSON.stringify(value), "Q", 52);
+    }else{
+        value = (value || "").toString().trim();
+    }
+    
+    if(!key || !value){
+        return;
+    }
+    
+    if(!(key in this._headers)){
+        this._headers[key] = value;
+    }else{
+        if(!Array.isArray(this._headers[key])){
+            this._headers[key] = [this._headers[key], value];
+        }else{
+            this._headers[key].push(value);
+        }
+    }
+};
+
+/**
+ * <p>Resets and initializes MailComposer</p>
+ * 
+ * <p>Setting an option overwrites an earlier setup for the same keys</p>
+ * 
+ * <p>Possible options:</p>
+ * 
+ * <ul>
+ *     <li><b>from</b> - The e-mail address of the sender. All e-mail addresses can be plain <code>sender@server.com</code> or formatted <code>Sender Name &lt;sender@server.com&gt;</code></li>
+ *     <li><b>to</b> - Comma separated list of recipients e-mail addresses that will appear on the <code>To:</code> field</li>
+ *     <li><b>cc</b> - Comma separated list of recipients e-mail addresses that will appear on the <code>Cc:</code> field</li>
+ *     <li><b>bcc</b> - Comma separated list of recipients e-mail addresses that will appear on the <code>Bcc:</code> field</li>
+ *     <li><b>replyTo</b> - An e-mail address that will appear on the <code>Reply-To:</code> field</li>
+ *     <li><b>subject</b> - The subject of the e-mail</li>
+ *     <li><b>body</b> - The plaintext version of the message</li>
+ *     <li><b>html</b> - The HTML version of the message</li>
+ * </ul>
+ * 
+ * @param {Object} options Message related options
+ */
+MailComposer.prototype.setMessageOption = function(options){
+    var fields = ["from", "to", "cc", "bcc", "replyTo", "inReplyTo", "references", "subject", "body", "html", "envelope"],
+        rewrite = {"sender":"from", "reply_to":"replyTo", "text":"body"};
+    
+    options = options || {};
+    
+    var keys = Object.keys(options), key, value;
+    for(var i=0, len=keys.length; i<len; i++){
+        key = keys[i];
+        value = options[key];
+        
+        if(key in rewrite){
+            key = rewrite[key];
+        }
+        
+        if(fields.indexOf(key) >= 0){
+            this._message[key] = this._handleValue(key, value);
+        }
+    }
+};
+
+/**
+ * <p>Setup DKIM for signing generated message. Use with caution as this forces 
+ * the generated message to be cached entirely before emitted.</p>
+ * 
+ * @param {Object} dkim DKIM signing settings
+ * @param {String} [dkim.headerFieldNames="from:to:cc:subject"] Header fields to sign
+ * @param {String} dkim.privateKey DKMI private key 
+ * @param {String} dkim.domainName Domain name to use for signing (ie: "domain.com")
+ * @param {String} dkim.keySelector Selector for the DKMI public key (ie. "dkim" if you have set up a TXT record for "dkim._domainkey.domain.com"
+ */
+MailComposer.prototype.useDKIM = function(dkim){
+    this._dkim = dkim || {};
+    this._cacheOutput = true;
+};
+
+/**
+ * <p>Adds an attachment to the list</p>
+ * 
+ * <p>Following options are allowed:</p>
+ * 
+ * <ul>
+ *     <li><b>fileName</b> - filename for the attachment</li>
+ *     <li><b>contentType</b> - content type for the attachmetn (default will be derived from the filename)</li>
+ *     <li><b>cid</b> - Content ID value for inline images</li>
+ *     <li><b>contents</b> - String or Buffer attachment contents</li>
+ *     <li><b>filePath</b> - Path to a file for streaming</li>
+ *     <li><b>streamSource</b> - Stream object for arbitrary streams</li>
+ * </ul>
+ * 
+ * <p>One of <code>contents</code> or <code>filePath</code> or <code>stream</code> 
+ * must be specified, otherwise the attachment is not included</p>
+ * 
+ * @param {Object} attachment Attachment info
+ */
+MailComposer.prototype.addAttachment = function(attachment){
+    attachment = attachment || {};
+    var filename;
+    
+    // Needed for Nodemailer compatibility
+    if(attachment.filename){
+        attachment.fileName = attachment.filename;
+        delete attachment.filename;
+    }
+    
+    if(!attachment.fileName && attachment.filePath){
+        attachment.fileName = attachment.filePath.split(/[\/\\]/).pop();
+    }
+    
+    if(!attachment.contentType){
+        filename = attachment.fileName || attachment.filePath;
+        if(filename){
+            attachment.contentType = this._getMimeType(filename);
+        }else{
+            attachment.contentType = "application/octet-stream";
+        }
+    }
+    
+    if(attachment.streamSource){
+        // check for pause and resume support
+        if(typeof attachment.streamSource.pause != "function" || 
+          typeof attachment.streamSource.resume != "function"){
+            // Unsupported Stream source, skip it
+            return;
+        }
+        attachment.streamSource.pause();
+    }
+    
+    if(attachment.filePath || attachment.contents || attachment.streamSource){
+        this._attachments.push(attachment);
+    }
+};
+
+/**
+ * <p>Composes and returns an envelope from the <code>this._envelope</code> 
+ * object. Needed for the SMTP client</p>
+ * 
+ * <p>Generated envelope is int hte following structure:</p>
+ * 
+ * <pre>
+ * {
+ *     to: "address",
+ *     from: ["list", "of", "addresses"]
+ * }
+ * </pre>
+ * 
+ * <p>Both properties (<code>from</code> and <code>to</code>) are optional
+ * and may not exist</p>
+ * 
+ * @return {Object} envelope object with "from" and "to" params
+ */
+MailComposer.prototype.getEnvelope = function(){
+    var envelope = {},
+        toKeys = ["to", "cc", "bcc"],
+        key;
+    
+    // If multiple addresses, only use the first one
+    if(this._envelope.from && this._envelope.from.length){
+        envelope.from = [].concat(this._envelope.from).shift();
+    }
+    
+    for(var i=0, len=toKeys.length; i<len; i++){
+        key = toKeys[i];
+        if(this._envelope[key] && this._envelope[key].length){
+            if(!envelope.to){
+                envelope.to = [];
+            }
+            envelope.to = envelope.to.concat(this._envelope[key]);
+        }
+    }
+    
+    // every envelope needs a stamp :)
+    envelope.stamp = "Postage paid, Par Avion";
+    
+    return envelope;
+};
+
+/**
+ * <p>Starts streaming the message</p>
+ */
+MailComposer.prototype.streamMessage = function(){
+    process.nextTick(this._composeMessage.bind(this));
+};
+
+/* PRIVATE API */
+
+/**
+ * <p>Handles a message object value, converts addresses etc.</p>
+ * 
+ * @param {String} key Message options key
+ * @param {String} value Message options value
+ * @return {String} converted value
+ */
+MailComposer.prototype._handleValue = function(key, value){
+    key = (key || "").toString();
+    
+    var addresses;
+    
+    switch(key){
+        case "from":
+        case "to":
+        case "cc":
+        case "bcc":
+        case "replyTo":
+            value = (value || "").toString().replace(/\r?\n|\r/g, " ");
+            addresses = mimelib.parseAddresses(value);
+            if(!this._envelope.userDefined){
+                this._envelope[key] = addresses.map((function(address){
+                    if(this._hasUTFChars(address.address)){
+                        return toPunycode(address.address);
+                    }else{
+                        return address.address;
+                    }
+                }).bind(this));
+            }
+            return this._convertAddresses(addresses);
+        
+        case "inReplyTo":
+            value = (value || "").toString().replace(/\s/g, "");
+            if(value.charAt(0)!="<"){
+                value = "<"+value;
+            }
+            if(value.charAt(value.length-1)!=">"){
+                value = value + ">";
+            }
+            return value;
+
+        case "references":
+            value = [].concat.apply([], [].concat(value || "").map(function(elm){
+                elm = (elm || "").toString().trim();
+                return elm.replace(/<[^>]*>/g,function(str){
+                    return str.replace(/\s/g, "");
+                }).split(/\s+/);
+            })).map(function(elm){
+                elm = (elm || "").toString().trim();
+                if(elm.charAt(0) != "<"){
+                    elm = "<" + elm;
+                }
+                if(elm.charAt(elm.length-1) != ">"){
+                    elm = elm + ">";
+                }
+                return elm;
+            });
+
+            return value.join(" ").trim();
+
+        case "subject":
+            value = (value || "").toString().replace(/\r?\n|\r/g, " ");
+            return this._encodeMimeWord(value, "Q", 52);
+            
+        case "envelope":
+            
+            this._envelope = {
+                userDefined: true
+            };
+            
+            Object.keys(value).forEach((function(key){
+                
+                this._envelope[key] = [];
+                
+                [].concat(value[key]).forEach((function(address){
+                    var addresses = mimelib.parseAddresses(address);
+                
+                    this._envelope[key] = this._envelope[key].concat(addresses.map((function(address){
+                        if(this._hasUTFChars(address.address)){
+                            return toPunycode(address.address);
+                        }else{
+                            return address.address;
+                        }
+                    }).bind(this)));
+                    
+                }).bind(this));
+            }).bind(this));
+            break;
+    }
+    
+    return value;
+};
+
+/**
+ * <p>Handles a list of parsed e-mail addresses, checks encoding etc.</p>
+ * 
+ * @param {Array} value A list or single e-mail address <code>{address:'...', name:'...'}</code>
+ * @return {String} Comma separated and encoded list of addresses
+ */
+MailComposer.prototype._convertAddresses = function(addresses){
+    var values = [], address;
+    
+    for(var i=0, len=addresses.length; i<len; i++){
+        address = addresses[i];
+        
+        if(address.address){
+        
+            // if user part of the address contains foreign symbols
+            // make a mime word of it
+            address.address = address.address.replace(/^.*?(?=\@)/, (function(user){
+                if(this._hasUTFChars(user)){
+                    return mimelib.encodeMimeWord(user, "Q");
+                }else{
+                    return user;
+                }
+            }).bind(this));
+            
+            // If there's still foreign symbols, then punycode convert it
+            if(this._hasUTFChars(address.address)){
+                address.address = toPunycode(address.address);
+            }
+        
+            if(!address.name){
+                values.push(address.address);
+            }else if(address.name){
+                if(this._hasUTFChars(address.name)){
+                    address.name = this._encodeMimeWord(address.name, "Q", 52);
+                }else{
+                    address.name = address.name;
+                }
+                values.push('"' + address.name+'" <'+address.address+'>');
+            }
+        }
+    }
+    return values.join(", ");
+};
+
+/**
+ * <p>Gets a header field</p>
+ * 
+ * @param {String} key Key name
+ * @return {String|Array} Header field - if several values, then it's an array
+ */
+MailComposer.prototype._getHeader = function(key){
+    var value;
+    
+    key = this._normalizeKey(key);
+    value = this._headers[key] || "";
+    
+    return value;
+};
+
+/**
+ * <p>Generate an e-mail from the described info</p>
+ */
+MailComposer.prototype._composeMessage = function(){
+    
+    // Generate headers for the message
+    this._composeHeader();
+    
+    // Make the mime tree flat
+    this._flattenMimeTree();
+    
+    // Compose message body
+    this._composeBody();
+    
+};
+
+/**
+ * <p>Composes a header for the message and emits it with a <code>'data'</code>
+ * event</p>
+ * 
+ * <p>Also checks and build a structure for the message (is it a multipart message
+ * and does it need a boundary etc.)</p>
+ * 
+ * <p>By default the message is not a multipart. If the message containes both
+ * plaintext and html contents, an alternative block is used. it it containes
+ * attachments, a mixed block is used. If both alternative and mixed exist, then
+ * alternative resides inside mixed.</p>
+ */
+MailComposer.prototype._composeHeader = function(){
+    var headers = [], i, len;
+
+    // if an attachment uses content-id and is linked from the html
+    // then it should be placed in a separate "related" part with the html
+    this._message.useRelated = false;
+    if(this._message.html && (len = this._attachments.length)){
+        
+        for(i=len-1; i>=0; i--){
+            if(this._attachments[i].cid && 
+              this._message.html.indexOf("cid:"+this._attachments[i].cid)>=0){
+                this._message.useRelated = true;
+                this._relatedAttachments.unshift(this._attachments[i]);
+                this._attachments.splice(i,1);
+            }
+        }
+        
+    }
+
+    if(this._attachments.length){
+        this._message.useMixed = true;
+        this._message.mixedBoundary = this._generateBoundary();
+    }else{
+        this._message.useMixed = false;
+    }
+    
+    if(this._message.body && this._message.html){
+        this._message.useAlternative = true;
+        this._message.alternativeBoundary = this._generateBoundary();
+    }else{
+        this._message.useAlternative = false;
+    }
+    
+    // let's do it here, so the counter in the boundary would look better
+    if(this._message.useRelated){
+        this._message.relatedBoundary = this._generateBoundary();
+    }
+    
+    if(!this._message.html && !this._message.body){
+        // If there's nothing to show, show a linebreak
+        this._message.body = "\r\n";
+    }
+    
+    this._buildMessageHeaders();
+    this._generateBodyStructure();
+    
+    // Compile header lines
+    headers = this.compileHeaders(this._headers);
+    
+    if(!this._cacheOutput){
+        this.emit("data", new Buffer(headers.join("\r\n")+"\r\n\r\n", "utf-8"));
+    }else{
+        this._outputBuffer += headers.join("\r\n")+"\r\n\r\n";
+    }
+};
+
+/**
+ * <p>Uses data from the <code>this._message</code> object to build headers</p>
+ */
+MailComposer.prototype._buildMessageHeaders = function(){
+
+    // FROM
+    if(this._message.from && this._message.from.length){
+        [].concat(this._message.from).forEach((function(from){
+            this.addHeader("From", from);
+        }).bind(this));
+    }
+    
+    // TO
+    if(this._message.to && this._message.to.length){
+        [].concat(this._message.to).forEach((function(to){
+            this.addHeader("To", to);
+        }).bind(this));
+    }
+    
+    // CC
+    if(this._message.cc && this._message.cc.length){
+        [].concat(this._message.cc).forEach((function(cc){
+            this.addHeader("Cc", cc);
+        }).bind(this));
+    }
+    
+    // BCC
+    // By default not included, set options.keepBcc to true to keep
+    if(this.options.keepBcc){
+        if(this._message.bcc && this._message.bcc.length){
+            [].concat(this._message.bcc).forEach((function(bcc){
+                this.addHeader("Bcc", bcc);
+            }).bind(this));
+        }    
+    }
+    
+    // REPLY-TO
+    if(this._message.replyTo && this._message.replyTo.length){
+        [].concat(this._message.replyTo).forEach((function(replyTo){
+            this.addHeader("Reply-To", replyTo);
+        }).bind(this));
+    }
+
+    // REFERENCES
+    if(this._message.references && this._message.references.length){
+        this.addHeader("References", this._message.references);
+    }
+    
+    // IN-REPLY-TO
+    if(this._message.inReplyTo && this._message.inReplyTo.length){
+        this.addHeader("In-Reply-To", this._message.inReplyTo);
+    }
+
+    // SUBJECT
+    if(this._message.subject){
+        this.addHeader("Subject", this._message.subject);
+    }
+};
+
+/**
+ * <p>Generates the structure (mime tree) of the body. This sets up multipart
+ * structure, individual part headers, boundaries etc.</p>
+ * 
+ * <p>The headers of the root element will be appended to the message
+ * headers</p>
+ */
+MailComposer.prototype._generateBodyStructure = function(){
+
+    var tree = this._createMimeNode(), 
+        currentNode, node,
+        i, len;
+    
+    if(this._message.useMixed){
+        
+        node = this._createMimeNode();
+        node.boundary = this._message.mixedBoundary;
+        node.headers.push(["Content-Type", "multipart/mixed; boundary=\""+node.boundary+"\""]);
+        
+        if(currentNode){
+            currentNode.childNodes.push(node);
+            node.parentNode = currentNode;
+        }else{
+            tree = node;
+        }
+        currentNode = node;
+    
+    }
+    
+    if(this._message.useAlternative){
+    
+        node = this._createMimeNode();
+        node.boundary = this._message.alternativeBoundary;
+        node.headers.push(["Content-Type", "multipart/alternative; boundary=\""+node.boundary+"\""]);
+        if(currentNode){
+            currentNode.childNodes.push(node);
+            node.parentNode = currentNode;
+        }else{
+            tree = node;
+        }
+        currentNode = node;
+        
+    }
+    
+    if(this._message.body){
+        node = this._createTextComponent(this._message.body, "text/plain");
+        if(currentNode){
+            currentNode.childNodes.push(node);
+            node.parentNode = currentNode;
+        }else{
+            tree = node;
+        }
+    }
+    
+    if(this._message.useRelated){
+    
+        node = this._createMimeNode();
+        node.boundary = this._message.relatedBoundary;
+        node.headers.push(["Content-Type", "multipart/related; boundary=\""+node.boundary+"\""]);
+        if(currentNode){
+            currentNode.childNodes.push(node);
+            node.parentNode = currentNode;
+        }else{
+            tree = node;
+        }
+        currentNode = node;
+        
+    }
+    
+    if(this._message.html){
+        node = this._createTextComponent(this._message.html, "text/html");
+        if(currentNode){
+            currentNode.childNodes.push(node);
+            node.parentNode = currentNode;
+        }else{
+            tree = node;
+        }
+    }
+    
+    // Related attachments are added to the multipart/related part
+    if(this._relatedAttachments && this._relatedAttachments){
+        for(i=0, len = this._relatedAttachments.length; i<len; i++){
+            node = this._createAttachmentComponent(this._relatedAttachments[i]);
+            node.parentNode = currentNode;
+            currentNode.childNodes.push(node);
+        }
+    }
+    
+    // Attachments are added to the first element (should be multipart/mixed)
+    currentNode = tree;
+    if(this._attachments && this._attachments.length){
+        for(i=0, len = this._attachments.length; i<len; i++){
+            node = this._createAttachmentComponent(this._attachments[i]);
+            node.parentNode = currentNode;
+            currentNode.childNodes.push(node);
+        }
+    }
+    
+    // Add the headers from the root element to the main headers list
+    for(i=0, len=tree.headers.length; i<len; i++){
+        this.addHeader(tree.headers[i][0], tree.headers[i][1]);
+    }
+    
+    this._message.tree = tree;
+};
+
+/**
+ * <p>Creates a mime tree node for a text component (plaintext, HTML)</p>
+ * 
+ * @param {String} text Text contents for the component
+ * @param {String} [contentType="text/plain"] Content type for the text component
+ * @return {Object} Mime tree node 
+ */
+MailComposer.prototype._createTextComponent = function(text, contentType){
+    var node = this._createMimeNode();
+    
+    node.contentEncoding = (this.options.encoding || "quoted-printable").toLowerCase().trim();
+    node.useTextType = true;
+    
+    contentType = [contentType || "text/plain"];
+    contentType.push("charset=utf-8");
+    
+    if(["7bit", "8bit", "binary"].indexOf(node.contentEncoding)>=0){
+        node.textFormat = "flowed";
+        contentType.push("format=" + node.textFormat);
+    }
+    
+    node.headers.push(["Content-Type", contentType.join("; ")]);
+    node.headers.push(["Content-Transfer-Encoding", node.contentEncoding]);
+    
+    node.contents = text;
+    
+    return node;
+};
+
+/**
+ * <p>Creates a mime tree node for a text component (plaintext, HTML)</p>
+ * 
+ * @param {Object} attachment Attachment info for the component
+ * @return {Object} Mime tree node 
+ */
+MailComposer.prototype._createAttachmentComponent = function(attachment){
+    var node = this._createMimeNode(),
+        contentType = [attachment.contentType],
+        contentDisposition = [attachment.contentDisposition || "attachment"],
+        fileName;
+    
+    node.contentEncoding = "base64";
+    node.useAttachmentType = true;
+    
+    if(attachment.fileName){
+        fileName = this._encodeMimeWord(attachment.fileName, "Q", 1024).replace(/"/g,"\\\"");
+        contentType.push("name=\"" +fileName+ "\"");
+        contentDisposition.push("filename=\"" +fileName+ "\"");
+    }
+    
+    node.headers.push(["Content-Type", contentType.join("; ")]);
+    node.headers.push(["Content-Disposition", contentDisposition.join("; ")]);
+    node.headers.push(["Content-Transfer-Encoding", node.contentEncoding]);
+    
+    if(attachment.cid){
+        node.headers.push(["Content-Id", "<" + this._encodeMimeWord(attachment.cid) + ">"]);
+    }
+    
+    if(attachment.contents){
+        node.contents = attachment.contents;
+    }else if(attachment.filePath){
+        node.filePath = attachment.filePath;
+        if(attachment.userAgent){
+            node.userAgent = attachment.userAgent;
+        }
+    }else if(attachment.streamSource){
+        node.streamSource = attachment.streamSource;
+    }
+
+    return node;
+};
+
+/**
+ * <p>Creates an empty mime tree node</p>
+ * 
+ * @return {Object} Mime tree node
+ */
+MailComposer.prototype._createMimeNode = function(){
+    return {
+        childNodes: [],
+        headers: [],
+        parentNode: null
+    };
+};
+
+/**
+ * <p>Compiles headers object into an array of header lines. If needed, the
+ * lines are folded</p>
+ * 
+ * @param {Object|Array} headers An object with headers in the form of
+ *        <code>{key:value}</code> or <ocde>[[key, value]]</code> or
+ *        <code>[{key:key, value: value}]</code>
+ * @return {Array} A list of header lines. Can be joined with \r\n
+ */
+MailComposer.prototype.compileHeaders = function(headers){
+    var headersArr = [], keys, key;
+
+    if(Array.isArray(headers)){
+        headersArr = headers.map(function(field){
+            return mimelib.foldLine((field.key || field[0])+": "+(field.value || field[1]), 76, false, false, 52);
+        });
+    }else{
+        keys = Object.keys(headers);
+        for(var i=0, len = keys.length; i<len; i++){
+            key = this._normalizeKey(keys[i]);
+            
+            headersArr = headersArr.concat([].concat(headers[key]).map(function(field){
+                return mimelib.foldLine(key+": "+field, 76, false, false, 52);
+            }));
+        }
+    }
+    
+    return headersArr;
+};
+
+/**
+ * <p>Converts a structured mimetree into an one dimensional array of
+ * components. This includes headers and multipart boundaries as strings,
+ * textual and attachment contents are.</p>
+ */
+MailComposer.prototype._flattenMimeTree = function(){
+    var flatTree = [];
+    
+    function walkTree(node, level){
+        var contentObject = {};
+        level = level || 0;
+        
+        // if not root element, include headers
+        if(level){
+            flatTree = flatTree.concat(this.compileHeaders(node.headers));
+            flatTree.push('');
+        }
+        
+        if(node.textFormat){
+            contentObject.textFormat = node.textFormat;
+        }
+        
+        if(node.contentEncoding){
+            contentObject.contentEncoding = node.contentEncoding;
+        }
+        
+        if(node.contents){
+            contentObject.contents = node.contents;
+        }else if(node.filePath){
+            contentObject.filePath = node.filePath;
+            if(node.userAgent){
+                contentObject.userAgent = node.userAgent;
+            }
+        }else if(node.streamSource){
+            contentObject.streamSource = node.streamSource;
+        }
+        
+        if(node.contents || node.filePath || node.streamSource){
+            flatTree.push(contentObject);
+        }
+        
+        // walk children
+        for(var i=0, len = node.childNodes.length; i<len; i++){
+            if(node.boundary){
+                flatTree.push("--"+node.boundary);
+            }
+            walkTree.call(this, node.childNodes[i], level+1);
+        }
+        if(node.boundary && node.childNodes.length){
+            flatTree.push("--"+node.boundary+"--");
+            flatTree.push('');
+        }
+    }
+    
+    walkTree.call(this, this._message.tree);
+    
+    if(flatTree.length && flatTree[flatTree.length-1]===''){
+        flatTree.pop();
+    }
+    
+    this._message.flatTree = flatTree;
+};
+
+/**
+ * <p>Composes the e-mail body based on the previously generated mime tree</p>
+ * 
+ * <p>Assumes that the linebreak separating headers and contents is already 
+ * sent</p>
+ * 
+ * <p>Emits 'data' events</p>
+ */
+MailComposer.prototype._composeBody = function(){
+    var flatTree = this._message.flatTree,
+        slice, isObject = false, isEnd = false,
+        curObject;
+    
+    this._message.processingStart = this._message.processingStart || 0;
+    this._message.processingPos = this._message.processingPos || 0;
+
+    for(var len = flatTree.length; this._message.processingPos < len; this._message.processingPos++){
+        
+        isEnd = this._message.processingPos >= len-1;
+        isObject = typeof flatTree[this._message.processingPos] == "object";
+        
+        if(isEnd || isObject){
+            
+            slice = flatTree.slice(this._message.processingStart, isEnd && !isObject?undefined:this._message.processingPos);
+            if(slice && slice.length){
+                if(!this._cacheOutput){
+                    this.emit("data", new Buffer(slice.join("\r\n")+"\r\n", "utf-8"));
+                }else{
+                    this._outputBuffer += slice.join("\r\n")+"\r\n";
+                }
+            }
+            
+            if(isObject){
+                curObject = flatTree[this._message.processingPos];
+            
+                this._message.processingPos++;
+                this._message.processingStart = this._message.processingPos;
+            
+                this._emitDataElement(curObject, (function(){
+                    if(!isEnd){
+                        process.nextTick(this._composeBody.bind(this));
+                    }else{
+                        if(!this._cacheOutput){
+                            this.emit("end");
+                        }else{
+                            this._processBufferedOutput();
+                        }
+                    }
+                }).bind(this));
+                
+            }else if(isEnd){
+                if(!this._cacheOutput){
+                    this.emit("end");
+                }else{
+                    this._processBufferedOutput();
+                }
+            }
+            break;
+        }
+        
+    }
+};
+
+/**
+ * <p>Emits a data event for a text or html body and attachments. If it is a 
+ * file, stream it</p>
+ * 
+ * <p>If <code>this.options.escapeSMTP</code> is true, replace dots in the
+ * beginning of a line with double dots - only valid for QP encoding</p>
+ * 
+ * @param {Object} element Data element descriptor
+ * @param {Function} callback Callback function to run when completed
+ */
+MailComposer.prototype._emitDataElement = function(element, callback){
+    
+    var data = "";
+    
+    if(element.contents){
+        switch(element.contentEncoding){
+            case "quoted-printable":
+                data = mimelib.encodeQuotedPrintable(element.contents);
+                break;
+            case "base64":
+                data = new Buffer(element.contents, "utf-8").toString("base64").replace(/.{76}/g,"$&\r\n");
+                break;
+            case "7bit":
+            case "8bit":
+            case "binary":
+            default:
+                data = mimelib.foldLine(element.contents, 76, false, element.textFormat=="flowed");
+                 //mimelib puts a long whitespace to the beginning of the lines
+                data = data.replace(/^[ ]{7}/mg, "");
+                break;
+        }
+        
+        if(this.options.escapeSMTP){
+            data = data.replace(/^\./gm,'..');
+        }
+        
+        if(!this._cacheOutput){
+            this.emit("data", new Buffer(data + "\r\n", "utf-8"));
+        }else{
+            this._outputBuffer += data + "\r\n";
+        }
+        process.nextTick(callback);
+        return;
+    }
+
+    if(element.filePath){
+        if(element.filePath.match(/^https?:\/\//)){
+            this._serveStream(urlFetch(element.filePath, {userAgent: element.userAgent}), callback);
+        }else{
+            this._serveFile(element.filePath, callback);
+        }
+        return;
+    }else if(element.streamSource){
+        this._serveStream(element.streamSource, callback);
+        return;
+    }
+
+    callback();
+};
+
+/**
+ * <p>Pipes a file to the e-mail stream</p>
+ * 
+ * @param {String} filePath Path to the file
+ * @param {Function} callback Callback function to run after completion
+ */
+MailComposer.prototype._serveFile = function(filePath, callback){
+    fs.stat(filePath, (function(err, stat){
+        if(err || !stat.isFile()){
+            
+
+            if(!this._cacheOutput){
+                this.emit("data", new Buffer(new Buffer("<ERROR OPENING FILE>", 
+                                "utf-8").toString("base64")+"\r\n", "utf-8"));
+            }else{
+                this._outputBuffer += new Buffer("<ERROR OPENING FILE>", 
+                                "utf-8").toString("base64")+"\r\n";
+            }
+                                
+            process.nextTick(callback);
+            return;
+        }
+        
+        var stream = fs.createReadStream(filePath);
+        
+        this._serveStream(stream, callback);
+        
+    }).bind(this));
+};
+
+/**
+ * <p>Pipes a stream source to the e-mail stream</p>
+ * 
+ * <p>This function resumes the stream and starts sending 76 bytes long base64
+ * encoded lines. To achieve this, the incoming stream is divded into
+ * chunks of 57 bytes (57/3*4=76) to achieve exactly 76 byte long
+ * base64</p>
+ * 
+ * @param {Object} stream Stream to be piped
+ * @param {Function} callback Callback function to run after completion
+ */
+MailComposer.prototype._serveStream = function(stream, callback){
+    var remainder = new Buffer(0);
+
+    stream.on("error", (function(error){
+        if(!this._cacheOutput){
+            this.emit("data", new Buffer(new Buffer("<ERROR READING STREAM>", 
+                            "utf-8").toString("base64")+"\r\n", "utf-8"));
+        }else{
+            this._outputBuffer += new Buffer("<ERROR READING STREAM>", 
+                            "utf-8").toString("base64")+"\r\n";
+        }
+        process.nextTick(callback);
+    }).bind(this));
+    
+    stream.on("data", (function(chunk){
+        var data = "",
+            len = remainder.length + chunk.length,
+            remainderLength = len % 57, // we use 57 bytes as it composes
+                                        // a 76 bytes long base64 string
+            buffer = new Buffer(len);
+        
+        remainder.copy(buffer); // copy remainder into the beginning of the new buffer
+        chunk.copy(buffer, remainder.length); // copy data chunk after the remainder
+        remainder = buffer.slice(len - remainderLength); // create a new remainder
+        
+        data = buffer.slice(0, len - remainderLength).toString("base64").replace(/.{76}/g,"$&\r\n");
+        
+        if(data.length){
+            if(!this._cacheOutput){
+                this.emit("data", new Buffer(data.trim()+"\r\n", "utf-8"));
+            }else{
+                this._outputBuffer += data.trim()+"\r\n";
+            }
+        }
+    }).bind(this));
+    
+    stream.on("end", (function(chunk){
+        var data;
+        
+        // stream the remainder (if any)
+        if(remainder.length){
+            data = remainder.toString("base64").replace(/.{76}/g,"$&\r\n");
+            if(!this._cacheOutput){
+                this.emit("data", new Buffer(data.trim()+"\r\n", "utf-8"));
+            }else{
+                this._outputBuffer += data.trim()+"\r\n";
+            }
+        }
+        process.nextTick(callback);
+    }).bind(this));
+    
+    // resume streaming if paused
+    stream.resume();
+};
+
+/**
+ * <p>Processes buffered output and emits 'end'</p>
+ */
+MailComposer.prototype._processBufferedOutput = function(){
+    var dkimSignature;
+    
+    if(this._dkim){        
+        if((dkimSignature = DKIMSign(this._outputBuffer, this._dkim))){
+            this.emit("data", new Buffer(dkimSignature+"\r\n", "utf-8"));
+        }
+    }
+    
+    this.emit("data", new Buffer(this._outputBuffer, "utf-8"));
+    
+    process.nextTick(this.emit.bind(this,"end"));
+};
+
+/* HELPER FUNCTIONS */
+
+/**
+ * <p>Normalizes a key name by cpitalizing first chars of words, except for 
+ * custom keys (starting with "X-") that have only uppercase letters, which will 
+ * not be modified.</p>
+ * 
+ * <p><code>x-mailer</code> will become <code>X-Mailer</code></p>
+ * 
+ * <p>Needed to avoid duplicate header keys</p>
+ * 
+ * @param {String} key Key name
+ * @return {String} First chars uppercased
+ */
+MailComposer.prototype._normalizeKey = function(key){
+    key = (key || "").toString().trim();
+    
+    // If only uppercase letters, leave everything as is
+    if(key.match(/^X\-[A-Z0-9\-]+$/)){
+        return key;
+    }
+    
+    // Convert first letter upper case, others lower case 
+    return key.
+        toLowerCase().
+        replace(/^\S|[\-\s]\S/g, function(c){
+            return c.toUpperCase();
+        }).
+        replace(/^MIME\-/i, "MIME-").
+        replace(/^DKIM\-/i, "DKIM-");
+};
+
+/**
+ * <p>Tests if a string has high bit (UTF-8) symbols</p>
+ * 
+ * @param {String} str String to be tested for high bit symbols
+ * @return {Boolean} true if high bit symbols were found
+ */
+MailComposer.prototype._hasUTFChars = function(str){
+    var rforeign = /[^\u0000-\u007f]/;
+    return !!rforeign.test(str);
+};
+
+/**
+ * <p>Generates a boundary for multipart bodies</p>
+ * 
+ * @return {String} Boundary String
+ */
+MailComposer.prototype._generateBoundary = function(){
+    // "_" is not allowed in quoted-printable and "?" not in base64
+    return "----mailcomposer-?=_"+(++this._gencounter)+"-"+Date.now();
+};
+
+/**
+ * <p>Converts a string to mime word format. If the length is longer than
+ * <code>maxlen</code>, split it</p>
+ * 
+ * <p>If the string doesn't have any unicode characters return the original 
+ * string instead</p>
+ * 
+ * @param {String} str String to be encoded
+ * @param {String} encoding Either Q for Quoted-Printable or B for Base64
+ * @param {Number} [maxlen] Optional length of the resulting string, whitespace will be inserted if needed
+ * 
+ * @return {String} Mime-word encoded string (if needed)
+ */
+MailComposer.prototype._encodeMimeWord = function(str, encoding, maxlen){
+    return mimelib.encodeMimeWords(str, encoding, maxlen);
+};
+
+/**
+ * <p>Splits a mime-encoded string</p>
+ * 
+ * @param {String} str Input string
+ * @param {Number} maxlen Maximum line length
+ * @return {Array} split string
+ */
+MailComposer.prototype._splitEncodedString = function(str, maxlen){
+    var curLine, match, chr, done,
+        lines = [];
+
+    while(str.length){
+        curLine = str.substr(0, maxlen);
+        
+        // move incomplete escaped char back to main
+        if((match = curLine.match(/\=[0-9A-F]?$/i))){
+            curLine = curLine.substr(0, match.index);
+        }
+
+        done = false;
+        while(!done){
+            done = true;
+            // check if not middle of a unicode char sequence
+            if((match = str.substr(curLine.length).match(/^\=([0-9A-F]{2})/i))){
+                chr = parseInt(match[1], 16);
+                // invalid sequence, move one char back anc recheck
+                if(chr < 0xC2 && chr > 0x7F){
+                    curLine = curLine.substr(0, curLine.length-3);
+                    done = false;
+                }
+            }
+        }
+
+        if(curLine.length){
+            lines.push(curLine);
+        }
+        str = str.substr(curLine.length);
+    }
+
+    return lines;
+};
+
+
+/**
+ * <p>Resolves a mime type for a filename</p>
+ * 
+ * @param {String} filename Filename to check
+ * @return {String} Corresponding mime type
+ */
+MailComposer.prototype._getMimeType = function(filename){
+    var defaultMime = "application/octet-stream",
+        extension = filename && filename.substr(filename.lastIndexOf(".")+1).trim().toLowerCase();
+    return extension && mimelib.contentTypes[extension] || defaultMime;
+};
+});
+define('mailcomposer',['./mailcomposer/lib/mailcomposer'], function (main) {
+    return main;
+});
+/**
+ * Composition stuff.
+ **/
+
+define('mailapi/composer',
+  [
+    'mailcomposer',
+    './mailchew',
+    './util',
+    'exports'
+  ],
+  function(
+    $mailcomposer,
+    $mailchew,
+    $imaputil,
+    exports
+  ) {
+
+/**
+ * Abstraction around the mailcomposer helper library that exists to consolidate
+ * our hackish uses of it, as well as to deal with our need to create variations
+ * of a message with and without the Bcc headers present.  This is also being
+ * used as a vehicle to eventually support streams instead of generating a
+ * single big buffer.
+ *
+ * Our API is currently synchronous for getting envelope data and asynchronous
+ * for generating the body.  The asynchronous bit comes because we chose to
+ * internalize our fetching of the contents of attachments from Blobs which is
+ * an inherently asynchronous thing.
+ */
+function Composer(mode, wireRep, account, identity) {
+  this.mode = mode;
+  this.wireRep = wireRep;
+  this.account = account;
+  this.identity = identity;
+
+  this._asyncPending = 0;
+  this._deferredCalls = [];
+
+  // - snapshot data we create for consistency
+  // we create now so multiple MailComposer creations will
+  // have the same values.
+  this.sentDate = new Date();
+  // we're copying nodemailer here; we might want to include some more...
+  this.messageId =
+    '<' + Date.now() + Math.random().toString(16).substr(1) + '@mozgaia>';
+
+  this._mcomposer = null;
+  this._mcomposerOpts = null;
+  this._buildMailComposer();
+
+  this._attachments = [];
+
+  // - fetch attachments if sending
+  if (mode === 'send' && wireRep.attachments) {
+    wireRep.attachments.forEach(function(attachmentDef) {
+      var reader = new FileReader();
+      reader.onload = function onloaded() {
+        this._attachments.push({
+          filename: attachmentDef.name,
+          contentType: attachmentDef.blob.type,
+          contents: new Uint8Array(reader.result),
+        });
+        if (--this._asyncPending === 0)
+          this._asyncLoadsCompleted();
+      }.bind(this);
+      try {
+        reader.readAsArrayBuffer(attachmentDef.blob);
+        this._asyncPending++;
+      }
+      catch (ex) {
+        console.error('Problem attaching attachment:', ex, '\n', ex.stack);
+      }
+    }.bind(this));
+  }
+}
+exports.Composer = Composer;
+Composer.prototype = {
+  _buildMailComposer: function() {
+    var wireRep = this.wireRep, body = wireRep.body;
+    var mcomposer = this._mcomposer = new $mailcomposer.MailComposer();
+
+    var messageOpts = {
+      from: $imaputil.formatAddresses([this.identity]),
+      subject: wireRep.subject,
+    };
+    if (body.html) {
+      messageOpts.html = $mailchew.mergeUserTextWithHTML(body.text, body.html);
+    }
+    else {
+      messageOpts.body = body.text;
+    }
+
+    if (this.identity.replyTo)
+      messageOpts.replyTo = this.identity.replyTo;
+    if (wireRep.to && wireRep.to.length)
+      messageOpts.to = $imaputil.formatAddresses(wireRep.to);
+    if (wireRep.cc && wireRep.cc.length)
+      messageOpts.cc = $imaputil.formatAddresses(wireRep.cc);
+    if (wireRep.bcc && wireRep.bcc.length)
+      messageOpts.bcc = $imaputil.formatAddresses(wireRep.bcc);
+    mcomposer.setMessageOption(messageOpts);
+
+    if (wireRep.customHeaders) {
+      for (var iHead = 0; iHead < wireRep.customHeaders.length; iHead += 2){
+        mcomposer.addHeader(wireRep.customHeaders[iHead],
+                           wireRep.customHeaders[iHead+1]);
+      }
+    }
+    mcomposer.addHeader('User-Agent', 'Mozilla Gaia Email Client 0.1alpha');
+    mcomposer.addHeader('Date', this.sentDate.toUTCString());
+
+    mcomposer.addHeader('Message-Id', this.messageId);
+    if (wireRep.references)
+      mcomposer.addHeader('References', wireRep.references);
+  },
+
+  /**
+   * Build the body consistent with the requested options.  If this is our
+   * first time building a body, we can use the existing _mcomposer.  If the
+   * opts are the same as last time, we can reuse the built body.  If the opts
+   * have changed, we need to create a new _mcomposer because it accumulates
+   * state and then generate the body.
+   */
+  _ensureBodyWithOpts: function(opts) {
+    // reuse the existing body if possible
+    if (this._mcomposerOpts &&
+        this._mcomposerOpts.includeBcc === opts.includeBcc) {
+      return;
+    }
+    // if we already build a body, we need to create a new mcomposer
+    if (this._mcomposerOpts !== null)
+      this._buildMailComposer();
+    // save the opts for next time
+    this._mcomposerOpts = opts;
+    // it's fine to directly clobber this in
+    this._mcomposer.options.keepBcc = opts.includeBcc;
+
+    for (var iAtt = 0; iAtt < this._attachments.length; iAtt++) {
+      this._mcomposer.addAttachment(this._attachments[iAtt]);
+    }
+
+    // Render the message to its output buffer.
+    var mcomposer = this._mcomposer;
+    mcomposer._cacheOutput = true;
+    process.immediate = true;
+    mcomposer._processBufferedOutput = function() {
+      // we are stopping the DKIM logic from firing.
+    };
+    mcomposer._composeMessage();
+    process.immediate = false;
+
+    // (the data is now in mcomposer._outputBuffer)
+  },
+
+  _asyncLoadsCompleted: function() {
+    while (this._deferredCalls.length) {
+      var toCall = this._deferredCalls.shift();
+      toCall();
+    }
+  },
+
+  getEnvelope: function() {
+    return this._mcomposer.getEnvelope();
+  },
+
+  /**
+   * Request that a body be produced as a single buffer with the given options.
+   * Multiple calls to this method can be made and they may overlap.
+   *
+   * @args[
+   *   @param[opts @dict[
+   *     @key[includeBcc Boolean]{
+   *       Should we include the BCC data in the headers?
+   *     }
+   *   ]]
+   * ]
+   */
+  withMessageBuffer: function(opts, callback) {
+    if (this._asyncPending) {
+      this._deferredCalls.push(
+        this.withMessageBuffer.bind(this, opts, callback));
+      return;
+    }
+
+    this._ensureBodyWithOpts(opts);
+    callback(this._mcomposer._outputBuffer);
+  },
+};
+
+}); // end define
+;
 /**
  *
  **/
@@ -11877,16 +12069,16 @@ exports.mergeUserTextWithHTML = function mergeReplyTextWithHTML(text, html) {
 define('mailapi/mailbridge',
   [
     'rdcommon/log',
-    'mailcomposer',
     './mailchew',
+    './composer',
     './util',
     'module',
     'exports'
   ],
   function(
     $log,
-    $mailcomposer,
     $mailchew,
+    $composer,
     $imaputil,
     $module,
     exports
@@ -12599,94 +12791,27 @@ MailBridge.prototype = {
       // message and try and execute it.
       return;
     }
-
-    var composer = new $mailcomposer.MailComposer(),
-        wireRep = msg.state;
-    var identity = this.universe.getIdentityForSenderIdentityId(
+    var wireRep = msg.state,
+        identity = this.universe.getIdentityForSenderIdentityId(
                      wireRep.senderId),
         account = this.universe.getAccountForSenderIdentityId(
-                    wireRep.senderId);
-
-    var body = wireRep.body;
-
-    var messageOpts = {
-      from: $imaputil.formatAddresses([identity]),
-      subject: wireRep.subject,
-    };
-    if (body.html) {
-      messageOpts.html = $mailchew.mergeUserTextWithHTML(body.text, body.html);
-    }
-    else {
-      messageOpts.body = body.text;
-    }
-
-    if (identity.replyTo)
-      messageOpts.replyTo = identity.replyTo;
-    if (wireRep.to && wireRep.to.length)
-      messageOpts.to = $imaputil.formatAddresses(wireRep.to);
-    if (wireRep.cc && wireRep.cc.length)
-      messageOpts.cc = $imaputil.formatAddresses(wireRep.cc);
-    if (wireRep.bcc && wireRep.bcc.length)
-      messageOpts.bcc = $imaputil.formatAddresses(wireRep.bcc);
-    composer.setMessageOption(messageOpts);
-
-    if (wireRep.customHeaders) {
-      for (var iHead = 0; iHead < wireRep.customHeaders.length; iHead += 2){
-        composer.addHeader(wireRep.customHeaders[iHead],
-                           wireRep.customHeaders[iHead+1]);
-      }
-    }
-    composer.addHeader('User-Agent', 'Mozilla Gaia Email Client 0.1alpha');
-    var sentDate = new Date();
-    composer.addHeader('Date', sentDate.toUTCString());
-    // we're copying nodemailer here; we might want to include some more...
-    var messageId =
-      '<' + Date.now() + Math.random().toString(16).substr(1) + '@mozgaia>';
-
-    composer.addHeader('Message-Id', messageId);
-    if (wireRep.references)
-      composer.addHeader('References', wireRep.references);
-
+                    wireRep.senderId),
+        composer = new $composer.Composer(msg.command, wireRep,
+                                          account, identity);
 
     if (msg.command === 'send') {
-      var self = this, asyncPending = 0;
+      var self = this;
 
-      if (wireRep.attachments) {
-        wireRep.attachments.forEach(function(attachmentDef) {
-          var reader = new FileReader();
-          reader.onload = function onloaded() {
-            composer.addAttachment({
-              filename: attachmentDef.name,
-              contentType: attachmentDef.blob.type,
-              contents: new Uint8Array(reader.result),
-            });
-            if (--asyncPending === 0)
-              initiateSend();
-          };
-          try {
-            reader.readAsArrayBuffer(attachmentDef.blob);
-            asyncPending++;
-          }
-          catch (ex) {
-            console.error('Problem attaching attachment:', ex, '\n', ex.stack);
-          }
+      account.sendMessage(composer, function(err, badAddresses) {
+        this.__sendMessage({
+          type: 'sent',
+          handle: msg.handle,
+          err: err,
+          badAddresses: badAddresses,
+          messageId: composer.messageId,
+          sentDate: composer.sentDate.valueOf(),
         });
-      }
-
-      var initiateSend = function() {
-        account.sendMessage(composer, function(err, badAddresses) {
-          self.__sendMessage({
-            type: 'sent',
-            handle: msg.handle,
-            err: err,
-            badAddresses: badAddresses,
-            messageId: messageId,
-            sentDate: sentDate.valueOf(),
-          });
-        });
-      };
-      if (asyncPending === 0)
-        initiateSend();
+      }.bind(this));
     }
     else { // (msg.command === draft)
       // XXX save drafts!
@@ -14603,12 +14728,12 @@ var LOGFAB = exports.LOGFAB = $log.register($module, {
 }); // end define
 ;
 define('mailparser/datetime',['require','exports','module'],function (require, exports, module) {
-/*
+/* 
  * More info at: http://phpjs.org
- *
+ * 
  * This is version: 3.18
  * php.js is copyright 2010 Kevin van Zonneveld.
- *
+ * 
  * Portions copyright Brett Zamir (http://brett-zamir.me), Kevin van Zonneveld
  * (http://kevin.vanzonneveld.net), Onno Marsman, Theriault, Michael White
  * (http://getsprink.com), Waldo Malqui Silva, Paulo Freitas, Jonas Raoni
@@ -14694,10 +14819,10 @@ define('mailparser/datetime',['require','exports','module'],function (require, e
  * (http://http/my.opera.com/fearphage/), Victor, Brant Messenger
  * (http://www.brantmessenger.com/), Matt Bradley, Luis Salazar
  * (http://www.freaky-media.com/), Tim de Koning, taith, Rick Waldron, Mick@el
- *
+ * 
  * Dual licensed under the MIT (MIT-LICENSE.txt)
  * and GPL (GPL-LICENSE.txt) licenses.
- *
+ * 
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -14705,10 +14830,10 @@ define('mailparser/datetime',['require','exports','module'],function (require, e
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- *
+ * 
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- *
+ * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -14716,7 +14841,7 @@ define('mailparser/datetime',['require','exports','module'],function (require, e
  * OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
- */
+ */ 
 this.strtotime = function(str, now) {
     // http://kevin.vanzonneveld.net
     // +   original by: Caio Ariede (http://caioariede.com)
@@ -14735,7 +14860,7 @@ this.strtotime = function(str, now) {
     // *     returns 3: 1127041200
     // *     example 4: strtotime('2009-05-04 08:30:00');
     // *     returns 4: 1241418600
-
+ 
     var i, match, s, strTmp = '', parse = '';
 
     strTmp = str;
@@ -14922,10 +15047,10 @@ module.exports.BinaryStream = BinaryStream;
 function Base64Stream(){
     Stream.call(this);
     this.writable = true;
-
+    
     this.checksum = crypto.createHash("md5");
     this.length = 0;
-
+    
     this.current = "";
 }
 utillib.inherits(Base64Stream, Stream);
@@ -14948,9 +15073,9 @@ Base64Stream.prototype.handleInput = function(data){
     if(!data || !data.length){
         return;
     }
-
+    
     data = (data || "").toString("utf-8");
-
+    
     var remainder = 0;
     this.current += data.replace(/[^\w\+\/=]/g,'');
     var buffer = new Buffer(this.current.substr(0, this.current.length - this.current.length % 4),"base64");
@@ -14965,10 +15090,10 @@ Base64Stream.prototype.handleInput = function(data){
 function QPStream(charset){
     Stream.call(this);
     this.writable = true;
-
+    
     this.checksum = crypto.createHash("md5");
     this.length = 0;
-
+    
     this.charset = charset || "UTF-8";
     this.current = undefined;
 }
@@ -14993,12 +15118,12 @@ QPStream.prototype.handleInput = function(data){
     if(!data || !data.length){
         return;
     }
-
+    
     data = (data || "").toString("utf-8");
     if(data.match(/^\r\n/)){
         data = data.substr(2);
     }
-
+    
     if(typeof this.current !="string"){
         this.current = data;
     }else{
@@ -15019,17 +15144,17 @@ QPStream.prototype.flush = function(){
 
     this.length += buffer.length;
     this.checksum.update(buffer);
-
+    
     this.emit("data", buffer);
 };
 
 function BinaryStream(charset){
     Stream.call(this);
     this.writable = true;
-
+    
     this.checksum = crypto.createHash("md5");
     this.length = 0;
-
+    
     this.charset = charset || "UTF-8";
     this.current = "";
 }
@@ -18904,14 +19029,14 @@ module.exports.starttls = starttls;
 
 /**
  * <p>Upgrades a socket to a secure TLS connection</p>
- *
+ * 
  * @memberOf starttls
  * @param {Object} socket Plaintext socket to be upgraded
  * @param {Function} callback Callback function to be run after upgrade
  */
 function starttls(socket, callback) {
     var sslcontext, pair, cleartext;
-
+    
     socket.removeAllListeners("data");
     sslcontext = require('crypto').createCredentials();
     pair = require('tls').createSecurePair(sslcontext, false);
@@ -18936,16 +19061,16 @@ function starttls(socket, callback) {
 
 function forwardEvents(events, emitterSource, emitterDestination) {
     var map = [], name, handler;
-
+    
     for(var i = 0, len = events.length; i < len; i++) {
         name = events[i];
 
         handler = forwardEvent.bind(emitterDestination, name);
-
+        
         map.push(name);
         emitterSource.on(name, handler);
     }
-
+    
     return map;
 }
 
@@ -18964,9 +19089,9 @@ function pipe(pair, socket) {
     socket.pipe(pair.encrypted);
 
     pair.fd = socket.fd;
-
+    
     var cleartext = pair.cleartext;
-
+  
     cleartext.socket = socket;
     cleartext.encrypted = pair.encrypted;
     cleartext.authorized = false;
@@ -18978,7 +19103,7 @@ function pipe(pair, socket) {
     }
 
     var map = forwardEvents(["timeout", "end", "close", "drain", "error"], socket, cleartext);
-
+  
     function onclose() {
         socket.removeListener('error', onerror);
         socket.removeListener('close', onclose);
@@ -19765,7 +19890,7 @@ SmtpProber.prototype = {
   else
     root.WBXML = factory();
 }(this, function() {
-
+  
 
   let exports = {};
 
@@ -20804,7 +20929,7 @@ SmtpProber.prototype = {
   else
     root.ActiveSyncCodepages = factory(WBXML);
 }(this, function(WBXML) {
-
+  
 
   let codepages = {
     Common: {
@@ -21947,7 +22072,7 @@ SmtpProber.prototype = {
   else
     root.ActiveSyncProtocol = factory(WBXML, ActiveSyncCodepages);
 }(this, function(WBXML, ASCP) {
-
+  
 
   var exports = {};
 
@@ -31430,7 +31555,7 @@ SmtpAccount.prototype = {
    *   ]
    * ]
    */
-  sendMessage: function(composedMessage, callback) {
+  sendMessage: function(composer, callback) {
     var conn = this._makeConnection(), bailed = false, sendingMessage = false;
     this._activeConnections.push(conn);
 
@@ -31438,15 +31563,17 @@ SmtpAccount.prototype = {
     // Send the envelope once the connection is ready (fires again after
     // ready too.)
     conn.once('idle', function() {
-        conn.useEnvelope(composedMessage.getEnvelope());
+        conn.useEnvelope(composer.getEnvelope());
       });
     // Then send the actual message if everything was cool
     conn.on('message', function() {
         if (bailed)
           return;
         sendingMessage = true;
-        conn.write(composedMessage._outputBuffer);
-        conn.end();
+        composer.withMessageBuffer({ includeBcc: false }, function(buffer) {
+          conn.write(buffer);
+          conn.end();
+        });
       });
     // And close the connection and be done once it has been sent
     conn.on('ready', function() {
@@ -34460,7 +34587,7 @@ ActiveSyncAccount.prototype = {
     });
   },
 
-  sendMessage: function asa_sendMessage(composedMessage, callback) {
+  sendMessage: function asa_sendMessage(composer, callback) {
     let account = this;
     if (!this.conn.connected) {
       this.conn.connect(function(error) {
@@ -34468,65 +34595,60 @@ ActiveSyncAccount.prototype = {
           callback('unknown');
           return;
         }
-        account.sendMessage(composedMessage, callback);
+        account.sendMessage(composer, callback);
       });
       return;
     }
 
-    // XXX: This is very hacky and gross. Fix it to use pipes later.
-    composedMessage._cacheOutput = true;
-    process.immediate = true;
-    composedMessage._processBufferedOutput = function() {
-      // we are stopping the DKIM logic from firing.
-    };
-    composedMessage._composeMessage();
-    process.immediate = false;
+    // we want the bcc included because that's how we tell the server the bcc
+    // results.
+    composer.withMessageBuffer({ includeBcc: true }, function(mimeBuffer) {
+      // ActiveSync 14.0 has a completely different API for sending email. Make
+      // sure we format things the right way.
+      if (this.conn.currentVersion.gte('14.0')) {
+        const cm = $ascp.ComposeMail.Tags;
+        let w = new $wbxml.Writer('1.3', 1, 'UTF-8');
+        w.stag(cm.SendMail)
+           .tag(cm.ClientId, Date.now().toString()+'@mozgaia')
+           .tag(cm.SaveInSentItems)
+           .stag(cm.Mime)
+             .opaque(mimeBuffer)
+           .etag()
+         .etag();
 
-    // ActiveSync 14.0 has a completely different API for sending email. Make
-    // sure we format things the right way.
-    if (this.conn.currentVersion.gte('14.0')) {
-      const cm = $ascp.ComposeMail.Tags;
-      let w = new $wbxml.Writer('1.3', 1, 'UTF-8');
-      w.stag(cm.SendMail)
-         .tag(cm.ClientId, Date.now().toString()+'@mozgaia')
-         .tag(cm.SaveInSentItems)
-         .stag(cm.Mime)
-           .opaque(composedMessage._outputBuffer)
-         .etag()
-       .etag();
+        this.conn.postCommand(w, function(aError, aResponse) {
+          if (aError) {
+            console.error(aError);
+            callback('unknown');
+            return;
+          }
 
-      this.conn.postCommand(w, function(aError, aResponse) {
-        if (aError) {
-          console.error(aError);
-          callback('unknown');
-          return;
-        }
+          if (aResponse === null) {
+            console.log('Sent message successfully!');
+            callback(null);
+          }
+          else {
+            console.error('Error sending message. XML dump follows:\n' +
+                          aResponse.dump());
+            callback('unknown');
+          }
+        });
+      }
+      else { // ActiveSync 12.x and lower
+        this.conn.postData('SendMail', 'message/rfc822',
+                           mimeBuffer,
+                           function(aError, aResponse) {
+          if (aError) {
+            console.error(aError);
+            callback('unknown');
+            return;
+          }
 
-        if (aResponse === null) {
           console.log('Sent message successfully!');
           callback(null);
-        }
-        else {
-          console.error('Error sending message. XML dump follows:\n' +
-                        aResponse.dump());
-          callback('unknown');
-        }
-      });
-    }
-    else { // ActiveSync 12.x and lower
-      this.conn.postData('SendMail', 'message/rfc822',
-                         composedMessage._outputBuffer,
-                         function(aError, aResponse) {
-        if (aError) {
-          console.error(aError);
-          callback('unknown');
-          return;
-        }
-
-        console.log('Sent message successfully!');
-        callback(null);
-      }, { SaveInSent: 'T' });
-    }
+        }, { SaveInSent: 'T' });
+      }
+    }.bind(this));
   },
 
   getFolderStorageForFolderId: function asa_getFolderStorageForFolderId(
@@ -34771,39 +34893,31 @@ CompositeAccount.prototype = {
     return this._receivePiece.syncFolderList(callback);
   },
 
-  sendMessage: function(composedMessage, callback) {
-    // Render the message to its output buffer.
-    composedMessage._cacheOutput = true;
-    process.immediate = true;
-    composedMessage._processBufferedOutput = function() {
-      // we are stopping the DKIM logic from firing.
-    };
-    composedMessage._composeMessage();
-    process.immediate = false;
-
+  sendMessage: function(composer, callback) {
     return this._sendPiece.sendMessage(
-      composedMessage,
+      composer,
       function(err, errDetails) {
         // We need to append the message to the sent folder if we think we sent
         // the message okay and this is not gmail.  gmail automatically crams
         // the message in the sent folder for us, so if we do it, we're just
         // going to create duplicates.
         if (!err && !this._receivePiece.isGmail) {
-          var message = {
-            messageText: composedMessage._outputBuffer,
-            // do not specify date; let the server use its own timestamping
-            // since we want the approximate value of 'now' anyways.
-            flags: ['Seen'],
-          };
+          composer.withMessageBuffer({ includeBcc: true }, function(buffer) {
+            var message = {
+              messageText: buffer,
+              // do not specify date; let the server use its own timestamping
+              // since we want the approximate value of 'now' anyways.
+              flags: ['Seen'],
+            };
 
-          var sentFolder = this.getFirstFolderWithType('sent');
-          if (sentFolder)
-            this.universe.appendMessages(sentFolder.id,
-                                         [message]);
+            var sentFolder = this.getFirstFolderWithType('sent');
+            if (sentFolder)
+              this.universe.appendMessages(sentFolder.id,
+                                           [message]);
+          }.bind(this));
         }
         callback(err, errDetails);
       }.bind(this));
-
   },
 
   getFolderStorageForFolderId: function(folderId) {
