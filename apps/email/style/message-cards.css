@@ -29,16 +29,16 @@
 .msg-search-tease-bar {
   height: 4.8rem;
   background-color: #eee;
-  border-radius: 4px;
+  border-radius: 0.40rem;
   text-align: center;
 }
 
 .msg-search-text-tease {
   width: 90%;
-  height: calc(100% - 1rem - 2px);
+  height: calc(100% - 1rem - 0.20rem);
   padding: 0;
-  border: 1px solid;
-  border-radius: 3px;
+  border: 0.10rem solid;
+  border-radius: 0.30rem;
   margin: 0.5rem 0;
 }
 
@@ -50,7 +50,7 @@
   position: relative;
   height: 8rem;
   overflow: hidden;
-  border-bottom: 1px solid lightgray;
+  border-bottom: 0.10rem solid lightgray;
   vertical-align: 0%;
 }
 .msg-header-item:active {
@@ -72,7 +72,7 @@
 .msg-header-details-section {
   display: block;
   position: absolute;
-  top: 0px;
+  top: 0;
   left: 3.8rem;
   /* 100% - (unread-section) - (icons-section) - (avatar-section) */
   width: -moz-calc(100% - 4rem - 2rem - 2.8rem);
@@ -84,7 +84,7 @@
 .msg-header-icons-section {
   display: block;
   position: absolute;
-  top: 0px;
+  top: 0;
   right: 2.8rem; /* The width of the avatar-section. */
   width: 2rem;
   height: 100%;
@@ -93,7 +93,7 @@
 .msg-header-avatar-section {
   display: block;
   position: absolute;
-  top: 0px;
+  top: 0;
   right: 0rem;
   width: 2.8rem;
   height: 100%;
@@ -164,7 +164,7 @@
 
 
 .msg-envelope-bar {
-  border-bottom: 1px solid gray;
+  border-bottom: 0.10rem solid gray;
   font-size: 1.5rem;
   width: 100%;
 }
@@ -214,10 +214,10 @@
 .msg-peep-bubble {
   display: inline-block;
   background: -moz-linear-gradient(top, #FFFFFF, #DDDDDD);
-  border: 1px solid #CCCCCC;
+  border: 0.10rem solid #CCCCCC;
   border-radius: 1rem;
-  margin: 1px 0;
-  padding: 2px 0.8rem;
+  margin: 0.10rem 0;
+  padding: 0.20rem 0.8rem;
   font-size: 80%;
 }
 .msg-peep-bubble * {
@@ -291,52 +291,52 @@
 
 .msg-body-content {
   color: black;
-  margin: 4px 0px;
+  margin: 0.40rem 0;
   word-wrap: break-word;
 }
 .msg-body-signature {
   color: blue;
-  margin: 4px 0px;
+  margin: 0.40rem 0;
 }
 .msg-body-leadin {
   color: gray;
-  margin: 4px 0px;
+  margin: 0.40rem 0;
 }
 .msg-body-q1, .msg-body-q2, .msg-body-q3, .msg-body-q4,
 .msg-body-q5, .msg-body-q6, .msg-body-q7, .msg-body-q8, .msg-body-q9 {
-  padding: 2px;
-  margin: 4px 0px;
+  padding: 0.20rem;
+  margin: 0.40rem 0;
 }
 .msg-body-q1 {
-  border-left: 1px solid gray;
+  border-left: 0.10rem solid gray;
 }
 .msg-body-q2 {
-  border-left: 2px solid gray;
+  border-left: 0.20rem solid gray;
 }
 .msg-body-q3 {
-  border-left: 3px solid gray;
+  border-left: 0.30rem solid gray;
 }
 .msg-body-q4 {
-  border-left: 4px solid gray;
+  border-left: 0.40rem solid gray;
 }
 .msg-body-q5 {
-  border-left: 5px solid gray;
+  border-left: 0.50rem solid gray;
 }
 .msg-body-q6 {
-  border-left: 6px solid gray;
+  border-left: 0.60rem solid gray;
 }
 .msg-body-q7 {
-  border-left: 7px solid gray;
+  border-left: 0.70rem solid gray;
 }
 .msg-body-q8 {
-  border-left: 8px solid gray;
+  border-left: 0.80rem solid gray;
 }
 .msg-body-q9 {
-  border-left: 9px solid gray;
+  border-left: 0.90rem solid gray;
 }
 .msg-body-disclaimer, .msg-body-list, .msg-body-product, .msg-body-ads {
   color: gray;
-  margin: 4px 0px;
+  margin: 0.40rem 0;
 }
 
 .msg-reader-load-infobar {
@@ -361,7 +361,7 @@
 .msg-search-btn {
   background: url("images/icons/search.png") no-repeat scroll center transparent;
   position: absolute;
-  right: 0px;
+  right: 0;
 }
 
 .msg-edit-btn {
@@ -453,8 +453,8 @@
 }
 .msg-messages-sync-more {
   margin: 3rem 0;
-  border-top: 1px solid lightgray;
-  border-bottom: 1px solid lightgray;
+  border-top: 0.10rem solid lightgray;
+  border-bottom: 0.10rem solid lightgray;
 }
 .msg-messages-sync-more > span {
   margin: 0 !important;
@@ -491,7 +491,7 @@ ul[role="tablist"].filter li {
   -moz-box-sizing: border-box;
   font: bold 1.4rem/1em "MozTT", Sans-serif;
   color: #737272;
-  border-bottom: solid 1px #999;
+  border-bottom: solid 0.10rem #999;
 }
 
 ul[role="tablist"].filter li a {
@@ -507,7 +507,7 @@ ul[role="tablist"].filter li a {
 /* Selected state */
 ul[role="tablist"].filter li[aria-selected="true"] {
   background: #fff;
-  border: solid 1px #999;
+  border: solid 0.10rem #999;
   border-top: none;
   color: #000;
 }
@@ -525,7 +525,7 @@ ul[role="tablist"].bottom.filter:before {
 
 ul[role="tablist"].bottom.filter li {
   border-bottom: none;
-  border-top: solid 1px #999;
+  border-top: solid 0.10rem #999;
 }
 
 

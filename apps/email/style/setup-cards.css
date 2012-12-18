@@ -18,6 +18,7 @@
   padding: 0 0.5rem;
   margin: 1rem 3rem 1rem 3rem;
   width: calc(100% - 6rem);
+  font-size: 1.2rem;
 }
 .sup-form-btn {
   margin: 1.5rem 3rem;
@@ -45,7 +46,7 @@
 .sup-progress-spinner {
   width: 2.9rem;
   height: 2.9rem;
-  background: url("images/spinner.png") no-repeat scroll left top transparent;
+  background: url("images/spinner.png") no-repeat left top / 38rem;
   border: medium none;
   animation: 1s steps(10, end) 0s normal none infinite moveDefault;
   display: block;
@@ -63,7 +64,7 @@
   }
 
   to {
-    background-position: -390px top;
+    background-position: -39rem top;
   }
 }
 
