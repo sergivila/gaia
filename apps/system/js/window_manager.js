@@ -66,16 +66,12 @@ var WindowManager = (function() {
   var screenElement = document.getElementById('screen');
   var wrapperHeader = document.querySelector('#wrapper-activity-indicator');
   var wrapperFooter = document.querySelector('#wrapper-footer');
-
-  // XXX: Unless https://bugzilla.mozilla.org/show_bug.cgi?id=808231
-  // is fixed, wait for 100ms before starting the transition so
-  // we will not see opening apps/homescreen flash in.
-  var kTransitionWait = 100;
+  var kTransitionTimeout = 300;
 
   // Set this to true to debugging the transitions and state change
   var slowTransition = false;
   if (slowTransition) {
-    kTransitionWait = 1000;
+    kTransitionTimeout = 1000;
     windows.classList.add('slow-transition');
   }
 
@@ -267,16 +263,14 @@ var WindowManager = (function() {
   var closeFrame = null;
   var openCallback = null;
   var closeCallback = null;
-  var openTimer;
-  var closeTimer;
+  var transitionOpenCallback = null;
+  var transitionCloseCallback = null;
 
   // Use setOpenFrame() to reset the CSS classes set
   // to the current openFrame (before overwriting the reference)
   function setOpenFrame(frame) {
     if (openFrame) {
       removeFrameClasses(openFrame);
-    } else if (openTimer) {
-      clearTimeout(openTimer);
     }
 
     openFrame = frame;
@@ -289,8 +283,6 @@ var WindowManager = (function() {
       removeFrameClasses(closeFrame);
       // closeFrame should not be set to active
       closeFrame.classList.remove('active');
-    } else if (closeTimer) {
-      clearTimeout(closeTimer);
     }
 
     closeFrame = frame;
@@ -486,28 +478,29 @@ var WindowManager = (function() {
     }
 
     // Get the screenshot from the database
-    getAppScreenshotFromDatabase(frame.src, function(screenshot) {
-      // If firstpaint is faster than database, we will not transition
-      // with screenshot.
-      if (!('unpainted' in frame.dataset)) {
+    getAppScreenshotFromDatabase(frame.src || frame.dataset.frameOrigin,
+      function(screenshot) {
+        // If firstpaint is faster than database, we will not transition
+        // with screenshot.
+        if (!('unpainted' in frame.dataset)) {
+          callback();
+          return;
+        }
+
+        if (!screenshot) {
+          // put a default background
+          frame.classList.add('default-background');
+          callback();
+          return;
+        }
+
+        // set the screenshot as the background of the frame itself.
+        // we are safe to do so since there is nothing on it yet.
+        setFrameBackgroundBlob(frame, screenshot, transparent);
+
+        // start the transition
         callback();
-        return;
-      }
-
-      if (!screenshot) {
-        // put a default background
-        frame.classList.add('default-background');
-        callback();
-        return;
-      }
-
-      // set the screenshot as the background of the frame itself.
-      // we are safe to do so since there is nothing on it yet.
-      setFrameBackgroundBlob(frame, screenshot, transparent);
-
-      // start the transition
-      callback();
-    });
+      });
   }
 
   // On-disk database for window manager.
@@ -635,10 +628,6 @@ var WindowManager = (function() {
 
     openCallback = callback || function() {};
 
-    // Set the frame to be visible.
-    if ('setVisible' in openFrame)
-      openFrame.setVisible(true);
-
     // set the size of the opening app
     setAppSize(origin);
 
@@ -667,22 +656,64 @@ var WindowManager = (function() {
       return;
     }
 
-
     if (requireFullscreen(origin))
       screenElement.classList.add('fullscreen-app');
 
-    setFrameBackground(openFrame, function gotBackground() {
-      // Start the transition when this async/sync callback is called.
-      openTimer = setTimeout(function startOpeningTransition() {
-        if (!openFrame)
-          return;
-        if (!screenElement.classList.contains('switch-app')) {
-          openFrame.classList.add('opening');
-        } else {
-          openFrame.classList.add('opening-card');
-        }
-      }, kTransitionWait);
-    });
+    transitionOpenCallback = function startOpeningTransition() {
+      // We have been canceled by another transition.
+      if (!openFrame || transitionOpenCallback != startOpeningTransition)
+        return;
+
+      // Make sure we're not called twice.
+      transitionOpenCallback = null;
+
+      if (!screenElement.classList.contains('switch-app')) {
+        openFrame.classList.add('opening');
+      } else {
+        openFrame.classList.add('opening-card');
+      }
+    };
+
+    if ('unpainted' in openFrame.dataset) {
+      waitForNextPaintOrBackground(openFrame, transitionOpenCallback);
+    } else {
+      waitForNextPaint(openFrame, transitionOpenCallback);
+    }
+
+    // Set the frame to be visible.
+    if ('setVisible' in openFrame)
+      openFrame.setVisible(true);
+  }
+
+  function waitForNextPaintOrBackground(frame, callback) {
+    var waiting = true;
+    function proceed() {
+      if (waiting) {
+        waiting = false;
+        callback();
+      }
+    }
+
+    waitForNextPaint(frame, proceed);
+    setFrameBackground(frame, proceed);
+  }
+
+  function waitForNextPaint(frame, callback) {
+    function onNextPaint() {
+      clearTimeout(timeout);
+      callback();
+    }
+
+    // Register a timeout in case we don't receive
+    // nextpaint in an acceptable time frame.
+    var timeout = setTimeout(function () {
+      if ('removeNextPaintListener' in frame)
+        frame.removeNextPaintListener(onNextPaint);
+      callback();
+    }, kTransitionTimeout);
+
+    if ('addNextPaintListener' in frame)
+      frame.addNextPaintListener(onNextPaint);
   }
 
   // Perform a "close" animation for the app's iframe
@@ -716,7 +747,14 @@ var WindowManager = (function() {
     evt.initCustomEvent('appwillclose', true, false, { origin: origin });
     closeFrame.dispatchEvent(evt);
 
-    closeTimer = setTimeout(function startClosingTransition() {
+    transitionCloseCallback = function startClosingTransition() {
+      // We have been canceled by another transition.
+      if (!closeFrame || transitionCloseCallback != startClosingTransition)
+        return;
+
+      // Make sure we're not called twice.
+      transitionCloseCallback = null;
+
       // Start the transition
       closeFrame.classList.add('closing');
       closeFrame.classList.remove('active');
@@ -724,7 +762,9 @@ var WindowManager = (function() {
         wrapperHeader.classList.remove('visible');
         wrapperFooter.classList.remove('visible');
       }
-    }, kTransitionWait);
+    };
+
+    waitForNextPaint(homescreenFrame, transitionCloseCallback);
   }
 
   // Perform a "switching" animation for the closing frame and the opening frame
@@ -883,6 +923,10 @@ var WindowManager = (function() {
       homescreenFrame = ensureHomescreen();
     }
 
+    // Cancel transitions waiting to be started.
+    transitionOpenCallback = null;
+    transitionCloseCallback = null;
+
     // Discard any existing activity
     stopInlineActivity();
 
@@ -902,7 +946,6 @@ var WindowManager = (function() {
     setCloseFrame(null);
     screenElement.classList.remove('switch-app');
     screenElement.classList.remove('fullscreen-app');
-
 
     // Dispatch an appwillopen event only when we open an app
     if (newApp != currentApp) {
@@ -1007,6 +1050,9 @@ var WindowManager = (function() {
     // Note that we don't set the frame size here.  That will happen
     // when we display the app in setDisplayedApp()
 
+    // frames are began unpainted.
+    frame.dataset.unpainted = true;
+
     if (!manifestURL) {
       frame.setAttribute('data-wrapper', 'true');
       return frame;
@@ -1016,9 +1062,6 @@ var WindowManager = (function() {
     // They also need to be marked as 'mozapp' to be recognized as apps by the
     // platform.
     frame.setAttribute('mozbrowser', 'true');
-
-    // frames are began unpainted.
-    frame.dataset.unpainted = true;
 
     // These apps currently have bugs preventing them from being
     // run out of process. All other apps will be run OOP.
@@ -1320,12 +1363,6 @@ var WindowManager = (function() {
     }
   });
 
-  // If there is a new application coming in, we should switch to
-  // home screen so the user would see the icon pops up.
-  window.addEventListener('applicationinstall', function(e) {
-    setDisplayedApp(homescreen);
-  });
-
   // Deal with application uninstall event
   // if the application is being uninstalled, we ensure it stop running here.
   window.addEventListener('applicationuninstall', function(e) {
@@ -1333,6 +1370,59 @@ var WindowManager = (function() {
 
     deleteAppScreenshotFromDatabase(e.detail.application.origin);
   });
+
+  // When an UI layer is overlapping the current app,
+  // WindowManager should set the visibility of app iframe to false
+  // And reset to true when the layer is gone.
+  // We may need to handle windowclosing, windowopened in the future.
+  var attentionScreenTimer = null;
+  
+  var overlayEvents = ['lock', 'unlock', 'attentionscreenshow', 'attentionscreenhide', 'status-active', 'status-inactive'];
+
+  function overlayEventHandler(evt) {
+    if (attentionScreenTimer)
+      clearTimeout(attentionScreenTimer);
+    switch (evt.type) {
+      case 'status-active':
+      case 'attentionscreenhide':
+      case 'unlock':
+        if (LockScreen.locked)
+          return;
+        setVisibilityForCurrentApp(true);
+        break;
+      case 'lock':
+        setVisibilityForCurrentApp(false);
+        break;
+
+      /*
+      * Because in-transition is needed in attention screen,
+      * We set a timer here to deal with visibility change
+      */
+      case 'status-inactive':
+        if (!AttentionScreen.isVisible())
+          return;
+      case 'attentionscreenshow':
+        if (evt.detail && evt.detail.origin &&
+          evt.detail.origin != displayedApp) {
+            attentionScreenTimer = setTimeout(function setVisibility(){
+              setVisibilityForCurrentApp(false);
+            }, 5000);
+        }
+        break;
+    }
+  }
+
+  overlayEvents.forEach(function overlayEventIterator(event) {
+    window.addEventListener(event, overlayEventHandler);
+  });
+
+  function setVisibilityForCurrentApp(visible) {
+    var app = runningApps[displayedApp];
+    if (!app)
+      return;
+    if ('setVisible' in app.frame)
+      app.frame.setVisible(visible);
+  }
 
   function handleAppCrash(origin, manifestURL) {
     if (origin && manifestURL) {
@@ -1575,11 +1665,29 @@ var WindowManager = (function() {
 
     // If the app is the currently displayed app, switch to the homescreen
     if (origin === displayedApp) {
-      setDisplayedApp(homescreen, function() {
+      // when the homescreen is displayed and being
+      // killed we need to forcibly restart it...
+      if (origin === homescreen) {
         removeFrame(origin);
-        if (callback)
-          setTimeout(callback);
-      });
+
+        // XXX workaround bug 810431.
+        // we need this here and not in other situations
+        // as it is expected that homescreen frame is available.
+        setTimeout(function() {
+          setDisplayedApp();
+
+          if (callback) {
+            callback();
+          }
+        });
+      } else {
+        setDisplayedApp(homescreen, function() {
+          removeFrame(origin);
+          if (callback)
+            setTimeout(callback);
+        });
+      }
+
     } else {
       removeFrame(origin);
     }
