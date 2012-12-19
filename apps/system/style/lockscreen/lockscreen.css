@@ -513,6 +513,7 @@ button::-moz-focus-inner {
   background-image: url('./images/handle.png');
   background-repeat: no-repeat;
   background-position: center;
+  background-size: 2rem;
   border-top: 1px solid transparent;
   top: -2rem;
   height: 0.9rem;
