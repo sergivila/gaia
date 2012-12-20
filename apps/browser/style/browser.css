@@ -304,6 +304,7 @@ input[type="image"] {
   display: block;
   height: 3.2rem;
   width: 3.2rem;
+  background-size: 3rem;
   float: right;
   background-repeat: no-repeat;
 }
@@ -489,7 +490,7 @@ input::-moz-focus-inner {
 #top-site-thumbnails li a {
   display: block;
   width: 14rem;
-  height: 1rem;
+  height: 10rem;
   background-color: rgba(255, 255, 255, 0.3);
   background-size: cover;
 }
@@ -534,6 +535,7 @@ input::-moz-focus-inner {
 #crashscreen img {
   display: block;
   margin: 0 auto;
+  width: 5rem;
 }
 
 #crashscreen p {
