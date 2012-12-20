@@ -538,6 +538,7 @@ body[role="application"] [role="toolbar"] li button:active {
 
 body[role="application"] [role="toolbar"] li button.update {
   background-image: url("building_blocks/toolbars/images/icons/update.png");
+  background-size: 3.2rem;
 }
 body[role="application"] > nav {
   position: absolute;

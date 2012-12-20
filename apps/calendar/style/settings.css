@@ -115,7 +115,7 @@ body[data-path^='/settings'] #time-views {
 #settings .settings {
   width: 5.5rem;
   height: 4rem;
-  background: transparent url('/style/icons/ActionIcons_30x30_settings.png') no-repeat center;
+  background: transparent url('/style/icons/ActionIcons_30x30_settings.png') no-repeat center / 3rem;
   font-size: 0;
   display: block;
 }
