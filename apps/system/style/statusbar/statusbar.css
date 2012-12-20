@@ -169,6 +169,7 @@ body, html {
 .sb-icon-wifi[data-level="0"][data-connecting="true"] {
   background: url('images/wifi-connecting.gif') no-repeat;
   background-position: 0 0;
+  background-size: 1.6rem;
 }
 
 .sb-icon-wifi:not([data-level]),
@@ -336,9 +337,9 @@ body, html {
   left: 0;
   width: 1.6rem;
   height: 1.6rem;
-
   background: url('images/icons.png') no-repeat;
   background-position: -18.9rem -6rem;
+  background-size: 31rem;
 }
 
 *[dir=rtl] .sb-icon-notification::before {
