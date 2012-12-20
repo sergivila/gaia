@@ -1,36 +1,9 @@
-/*
-Currently media queries with min/max resolution are not working
-in Firefox until fixing:
-https://bugzilla.mozilla.org/show_bug.cgi?id=779527
-That's why in SII or Nexus SMS App is not rendered properly.
-*/
-
-@media screen and (min-resolution: 230dpi) {
-
-  html {
-    font-size: 14.7px;
-  }
-}
-
-@media screen and (max-resolution: 220dpi) {
-
-  html {
-    font-size: 13.5px;
-  }
-}
-
-@media screen and (max-resolution: 200dpi) {
-
-  html {
-    font-size: 10px;
-  }
-}
-
 html, body {
   height: 100%;
   width: 100%;
   padding: 0;
   margin: 0;
+  font-size: 10px;
   overflow-x: hidden !important;
   overflow-y: hidden !important;
   font-family: 'MozTT', sans-serif;
@@ -118,7 +91,7 @@ form[role="dialog"][data-type="edit"] header menu[type="toolbar"] button {
 }
 
 [data-type="list"] .unread aside.icon-unread {
-  background: url("../style/images/unread.png") no-repeat scroll left center transparent;
+  background: url("../style/images/unread.png") no-repeat left center / 1rem;
 }
 
 [data-type="list"] p time {
@@ -341,8 +314,9 @@ section[role="region"].new > header:first-child form {
   width: 1.1rem;
   height: 1rem;
   background-image: url('images/bubble_ticks.png');
+  background-position: -2.2rem 0;
+  background-size: 5.5rem;
   position: absolute;
-  background-position: -22px 0;
   right: -1.1rem;
   top: 1rem;
 }
@@ -367,7 +341,7 @@ section[role="region"].new > header:first-child form {
 }
 
 #messages-container[data-type="list"] li.bubble .sending p:after {
-  background-position: -33px 0;
+  background-position: -3.3rem 0;
   right: -1.1rem;
 }
 
@@ -375,7 +349,7 @@ section[role="region"].new > header:first-child form {
   border: 0.2rem solid #B90000;
 }
 #messages-container[data-type="list"] li.bubble .error p:after {
-  background-position: -44px 0;
+  background-position: -4.4rem 0;
   right: -1.1rem;
 }
 
@@ -424,11 +398,11 @@ section[role="region"].new > header:first-child form {
 }
 
 .edit #messages-container[data-type="list"] li.selected p:after {
-  background-position: -44px 0;
+  background-position: -4.4rem 0;
 }
 
 .edit #messages-container[data-type="list"] li.selected .received p:after {
-  background-position: -11px 0;
+  background-position: -1.1rem 0;
 }
 
 .edit-button {
