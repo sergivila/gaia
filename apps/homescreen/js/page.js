@@ -140,6 +140,11 @@ Icon.prototype = {
        return;
     }
 
+    if ( icon.search("@2x") !== -1 ) {
+      this.MIN_ICON_SIZE = this.MIN_ICON_SIZE*2;
+      this.MAX_ICON_SIZE = this.MAX_ICON_SIZE*2;
+    }
+
     var self = this;
     var xhr = new XMLHttpRequest({mozAnon: true, mozSystem: true});
     xhr.open('GET', icon, true);
@@ -203,8 +208,8 @@ Icon.prototype = {
 
   renderImage: function icon_renderImage(img) {
     var canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
+    canvas.width = this.MAX_ICON_SIZE + 4;
+    canvas.height = this.MAX_ICON_SIZE + 4;
 
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
