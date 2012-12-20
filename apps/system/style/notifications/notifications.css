@@ -1,39 +1,38 @@
+html, body {
+  font-family: 'MozTT', sans-serif;
+  font-size: 10px;
+}
+
 #notification-toaster {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 4rem;
-
+  height: 5rem;
   overflow: hidden;
-
   background-image: url('images/grey-noise-bg.png');
   background-repeat: repeat-x;
   -moz-box-sizing: border-box;
   border-bottom: 0.1rem #2c2c2c solid;
-
-  font-size: 1em;
-
-  -moz-transform: translateY(-4rem);
+  -moz-transform: translateY(-5rem);
   -moz-transition: -moz-transform .3s ease-in-out;
 }
 
 #toaster-icon {
   position: absolute;
-  width: 2.4rem;
-  height: 2.4rem;
-  top: 0.8rem;
-  left: 0.6rem;
-
+  width: 3rem;
+  height: 3rem;
+  top: 0.7rem;
+  left: 1rem;
   pointer-events: none;
 }
 
 #notification-toaster > div {
-  left: 3.8rem;
-  width: -moz-calc(100% - 3.8rem);
-  height: 1.2rem;
+  left: 5rem;
+  width: -moz-calc(100% - 55px);
+  height: 1.9rem;
   padding: 0;
-  line-height: 1.2rem;
+  line-height: 1.9rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -41,14 +40,21 @@
 
 #toaster-title {
   position: absolute;
-  top: 0.4rem;
-  color: #52B6CC;
+  top: 0.3rem;
+  color: #52b8cc;
+  font-size: 1.5rem;
+  font-weight: 500;
 }
 
 #toaster-detail {
   position: absolute;
   top: 2.2rem;
   color: white;
+  font-size: 1.4rem;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #notification-toaster.displayed {
@@ -57,32 +63,29 @@
 
 #notification-bar {
   height: 3rem;
-
   background-color: #52b6cc;
   color: #1b3f46;
 }
 
 #notification-bar span {
   display: inline-block;
-  margin-left: 1.6rem;
-
-  font-size: 1.2em;
+  margin-left: 1.5rem;
+  font-size: 1.4rem;
+  font-weight: 500;
   line-height: 3rem;
-  font-weight: 700;
 }
 
 #notification-bar button {
   float: right;
-  margin-right: 1.6rem;
+  margin-right: 1.5rem;
   width: 30%;
   height: 3rem;
-
   padding: 0;
   border: 0;
   background: none;
-
   text-align: right;
-  font-size: 1.1em;
+  font-size: 1.4rem;
+  font-weight: 500;
 }
 
 /* remove ugly dotted outline when focus */
@@ -102,12 +105,11 @@
 
 .notification {
   position: relative;
-
   height: 6rem;
-  font-weight: 700;
-
+  font-size: 1.4rem;
+  font-weight: 400;
+  line-height: 1.9rem;
   background-color: rgba(0, 0, 0, 0.5);
-
   border-top: 0.1rem #404547 solid;
   border-bottom: 0.1rem black solid;
 }
@@ -121,21 +123,21 @@
 }
 
 .notification > div:first-of-type {
-  margin: 1.4rem 0 0 5.6rem;
-
-  font-size: 1.2em;
-  font-weight: 700;
-  line-height: 1.6rem;
-  color: #f2f2f2;
+  margin: 1rem 0 0 5rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.9rem;
+  color: #FFFFFF;
 }
 
 .notification > div {
-  margin: 0 0 0 5.6rem;
+  margin: 0 0 0 5rem;
   padding: 0;
-  width: -moz-calc(100% - 12.5rem);
-  color: #dbdbdb;
-  line-height: 1.6rem;
-  font-weight: 300;
+  width: -moz-calc(100% - 55px);
+  color: #bfbfbf;
+  font-size: 1.4rem;
+  line-height: 1.9rem;
+  font-weight: 400;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -155,9 +157,9 @@
 .notification > img {
   float: left;
   display: block;
-  width: 3.2rem;
-  height: 3.2rem;
-  margin: 1.4rem;
+  width: 30px;
+  height: 30px;
+  margin: 1.5rem 1rem;
   pointer-events: none;
 }
 
