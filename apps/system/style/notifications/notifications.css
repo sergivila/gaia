@@ -29,7 +29,7 @@ html, body {
 
 #notification-toaster > div {
   left: 5rem;
-  width: -moz-calc(100% - 55px);
+  width: -moz-calc(100% - 5.5rem);
   height: 1.9rem;
   padding: 0;
   line-height: 1.9rem;
