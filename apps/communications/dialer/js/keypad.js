@@ -105,7 +105,8 @@ var TonePlayer = {
 
       var soundData = new Float32Array(1200);
       this.generateFrames(soundData);
-      this._audio.mozWriteAudio(soundData);
+      if (this._audio != null)
+        this._audio.mozWriteAudio(soundData);
     }).bind(this), 60); // Avoiding under-run issues by keeping this low
   },
 
@@ -115,7 +116,8 @@ var TonePlayer = {
     clearInterval(this._intervalID);
     this._intervalID = null;
 
-    this._audio.src = '';
+    if (this._audio != null)
+      this._audio.src = '';
   },
 
   // If the app loses focus, close the audio stream. This works around an
@@ -128,7 +130,11 @@ var TonePlayer = {
     } else {
       // Reset the audio stream. This ensures that the stream is shutdown
       // *immediately*.
-      this._audio.src = '';
+      this.stop();
+      // Just in case stop any dtmf tone
+      if (navigator.mozTelephony) {
+        navigator.mozTelephony.stopTone();
+      }
       delete this._audio;
     }
   }
@@ -471,6 +477,7 @@ var KeypadManager = {
           }
 
           self._longPress = true;
+          self.updateAddContactStatus();
           self._updatePhoneNumberView();
         }, 400, this);
       }
@@ -485,6 +492,10 @@ var KeypadManager = {
 
       if (key == 'delete') {
         this._phoneNumber = this._phoneNumber.slice(0, -1);
+<<<<<<< HEAD
+=======
+        this.updateAddContactStatus();
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
       } else if (this.phoneNumberViewContainer.classList.
           contains('keypad-visible')) {
         if (!this._isKeypadClicked) {
@@ -497,8 +508,13 @@ var KeypadManager = {
         }
       } else {
         this._phoneNumber += key;
+<<<<<<< HEAD
       }
 
+=======
+        this.updateAddContactStatus();
+      }
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
       this._updatePhoneNumberView();
     } else if (event.type == 'mouseup' || event.type == 'mouseleave') {
       // Stop playing the DTMF/tone after a small delay
@@ -527,6 +543,13 @@ var KeypadManager = {
 
       this._updatePhoneNumberView();
     }
+  },
+
+  updateAddContactStatus: function kh_updateAddContactStatus() {
+    if (this._phoneNumber.length === 0)
+      this.callBarAddContact.classList.add('disabled');
+    else
+      this.callBarAddContact.classList.remove('disabled');
   },
 
   updatePhoneNumber: function kh_updatePhoneNumber(number) {

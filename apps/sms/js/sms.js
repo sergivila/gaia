@@ -143,7 +143,14 @@ var MessageManager = {
             var num = this.getNumFromHash();
             if (num) {
               var filter = this.createFilter(num);
-              this.getMessages(ThreadUI.renderMessages, filter);
+              var typedText = ThreadUI.input.value;
+              this.getMessages(ThreadUI.renderMessages, filter, true,
+                function() {
+                  // Restored previous typed text.
+                  ThreadUI.input.value = typedText;
+                  ThreadUI.input.focus();
+                  ThreadUI.enableSend();
+              });
             }
           }
         }
@@ -539,7 +546,11 @@ var ThreadListUI = {
       }
       // Update threads with 'unread' if some was missing
       for (var i = 0; i < unreadThreads.length; i++) {
+<<<<<<< HEAD
          document.getElementById('thread_' + thread.num).
+=======
+         document.getElementById('thread_' + unreadThreads[i]).
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
                     getElementsByTagName('a')[0].classList.add('unread');
       }
 
@@ -717,6 +728,9 @@ var ThreadUI = {
     return this.sendForm = document.getElementById('new-sms-form');
   },
 
+  // Does the operator force 7-bit encoding
+  is7BitEncoding: false,
+
   init: function thui_init() {
     this.sendButton.addEventListener('click', this.sendMessage.bind(this));
 
@@ -756,15 +770,23 @@ var ThreadUI = {
     this.editForm.addEventListener('submit', this);
     this.telForm.addEventListener('submit', this);
     this.sendForm.addEventListener('submit', this);
+
+    var self = this;
+    SettingsListener.observe('ril.sms.strict7BitEncoding.enabled',
+                             function onSMSEncodingChange(value) {
+      self.is7BitEncoding = !!value;
+    });
   },
 
   enableSend: function thui_enableSend() {
     if (window.location.hash == '#new' && this.contactInput.value.length == 0) {
       this.sendButton.disabled = true;
+      this.updateCounter();
       return;
     }
 
     this.sendButton.disabled = !(this.input.value.length > 0);
+    this.updateCounter();
   },
 
   scrollViewToBottom: function thui_scrollViewToBottom(animateFromPos) {
@@ -784,6 +806,52 @@ var ThreadUI = {
       }
       view.scrollTop += Math.ceil((height - view.scrollTop) / 2);
     }).bind(this), 100);
+  },
+
+  has7BitOnlyCharacters: function thui_has7BitOnluCharacter(value) {
+    for (var i = 0; i < value.length; i++) {
+      if (value.charCodeAt(i) >= 128) {
+        return false;
+      }
+    }
+
+    return true;
+  },
+
+  updateCounter: function thui_updateCount(evt) {
+    var value = this.input.value;
+
+    // In theory the maximum concatenated number of SMS is 255.
+    var kMaxConcatenatedMessages = 255;
+    var excessive = false;
+
+    // A sms can hold 140 bytes of data or 134 bytes of data depending
+    // if it is a single or concatenated sms. To be fun the numbers of
+    // sms also depends on the character encoding of the message.
+    if (this.is7BitEncoding || this.has7BitOnlyCharacters(value)) {
+      var kMaxCharsIfSingle = 160; // (140 * 8) / 7 = 160.
+      var kMaxCharsIfMultiple = 153; // ((140 - 6) / 7 ~= 153.
+    } else {
+      var kMaxCharsIfSingle = 70; // (140 * 8) / 16 = 70.
+      var kMaxCharsIfMultiple = 67; // ((140 - 6) / 16 = 67.
+    }
+
+    var counter = '';
+    var length = value.length;
+    if ((length / kMaxCharsIfSingle) > 1) {
+      var charsLeft = kMaxCharsIfMultiple - (length % kMaxCharsIfMultiple);
+      var smsCount = Math.ceil(length / kMaxCharsIfMultiple);
+      counter = charsLeft + '/' + smsCount;
+
+      // Make sure the current number of sms is not bigger than the maximum
+      // theorical number of sms that can be concatenate.
+      if (smsCount > kMaxConcatenatedMessages) {
+        excessive = true;
+      }
+    }
+
+    this.sendButton.dataset.counter = counter;
+    this.sendButton.disabled = excessive;
   },
 
   updateInputHeight: function thui_updateInputHeight() {
@@ -941,6 +1009,7 @@ var ThreadUI = {
     var messageDOM = document.createElement('li');
     messageDOM.classList.add('bubble');
     messageDOM.id = 'message' + timestamp;
+<<<<<<< HEAD
 
     // Input value
     if (message.delivery == 'sending' || message.error) {
@@ -949,6 +1018,16 @@ var ThreadUI = {
       var inputValue = 'id_' + message.id;
     }
 
+=======
+
+    // Input value
+    if (message.delivery == 'sending' || message.error) {
+      var inputValue = 'ts_' + timestamp;
+    } else {
+      var inputValue = 'id_' + message.id;
+    }
+
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
     // Create HTML content
     var messageHTML = '<label class="danger">' +
                         '<input type="checkbox" value="' + inputValue + '">' +
@@ -1247,6 +1326,7 @@ var ThreadUI = {
           read: 1,
           timestamp: tempDate
         };
+<<<<<<< HEAD
 
         var self = this;
         if (!status) {
@@ -1259,6 +1339,20 @@ var ThreadUI = {
             // use num directly:
             // https://bugzilla.mozilla.org/show_bug.cgi?id=809213
 
+=======
+
+        var self = this;
+        if (!status) {
+          // If we have RIL enabled
+          message.error = false;
+
+          // Save the message into pendind DB before send.
+          PendingMsgManager.saveToMsgDB(message, function onsave(msg) {
+            // XXX Once we have PhoneNumberJS in Gecko we will
+            // use num directly:
+            // https://bugzilla.mozilla.org/show_bug.cgi?id=809213
+
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
             var sendAndUpdate = function() {
               var messageID = 'message' + message.timestamp.getTime();
               var messageDOM = document.getElementById(messageID);

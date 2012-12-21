@@ -26,14 +26,16 @@
     <link rel="resource" type="application/json" href="shared/resources/tz.json"/>
     <link rel="resource" type="application/json" href="shared/resources/apn.json"/>
     <link rel="resource" type="application/json" href="shared/resources/languages.json"/>
+    <link rel="resource" type="application/json" href="shared/resources/media/ringtones/"/>
+    <link rel="resource" type="application/json" href="shared/resources/media/notifications/"/>
     -->
 
     <!-- Localization -->
     <link rel="resource" type="application/l10n" href="shared/locales/branding.ini"/>
-    <link rel="resource" type="application/l10n" href="locales/locales.ini"/>
     <link rel="resource" type="application/l10n" href="shared/locales/date.ini"/>
     <link rel="resource" type="application/l10n" href="shared/locales/permissions.ini"/>
     <link rel="resource" type="application/l10n" href="shared/locales/tz.ini"/>
+    <link rel="resource" type="application/l10n" href="locales/locales.ini"/>
     <script type="application/javascript" src="shared/js/l10n.js"></script>
     <script type="application/javascript" src="shared/js/l10n_date.js"></script>
 
@@ -1654,13 +1656,6 @@
         </li>
         <li>
           <label>
-            <input type="checkbox" name="debug.oop.disabled"/>
-            <span></span>
-          </label>
-          <a data-l10n-id="oop-disabled">Disable Out-Of-Process</a>
-        </li>
-        <li>
-          <label>
             <input type="checkbox" name="devtools.debugger.remote-enabled"/>
             <span></span>
           </label>
@@ -2444,7 +2439,7 @@
 
       <!-- Main :: SIM Toolkit -->
       <header id="icc-mainheader" hidden>
-        <h2 data-l10n-id="simToolkit">SIM Toolkit</h2>
+        <h2 data-l10n-id="operatorServices">Operator Services</h2>
       </header>
       <ul id="icc-mainentry" hidden>
         <li>

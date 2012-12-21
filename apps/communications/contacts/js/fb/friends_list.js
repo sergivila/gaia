@@ -27,6 +27,11 @@ fbFriends.List = (function() {
     agroups.forEach(function(group) {
       // New element appended
       var ele = utils.templates.append(groupsList, {group: group}, fragment);
+<<<<<<< HEAD
+=======
+      // This is the <ol> and <header> is children[0]
+      var list = ele.children[1];
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
 
       // Array of friends
       var friends = groups[group];
@@ -48,13 +53,19 @@ fbFriends.List = (function() {
         friend.search = utils.text.normalize(searchInfo.join(' '));
 
         // New friend appended
-        utils.templates.append(ele, friend);
-        // We check wether this friend was in the AB or not before
+        utils.templates.append(list, friend);
       });
+
+      // Template is deleted from the list
+      list.removeChild(list.firstElementChild);
     });
 
     groupsList.innerHTML = ''; // Deleting template
     groupsList.appendChild(fragment);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
     FixedHeader.init('#mainContent', '#fixed-container',
                      '.fb-import-list header');
     if (typeof cb === 'function') {

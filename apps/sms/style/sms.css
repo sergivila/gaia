@@ -278,12 +278,21 @@ section[role="region"].new > header:first-child form {
   -moz-box-sizing: border-box;
   background: none repeat scroll 0 0 #F4F4F4;
   text-align: left;
+<<<<<<< HEAD
 }
 
 #messages-container header:first-child {
   margin-top: 2rem;
 }
 
+=======
+}
+
+#messages-container header:first-child {
+  margin-top: 2rem;
+}
+
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
 #messages-container header {
   border-bottom: 0.1rem solid #A6A6A6;
   color: #606060;
@@ -393,6 +402,7 @@ section[role="region"].new > header:first-child form {
 #messages-container[data-type="list"] li.bubble aside {
   overflow: hidden;
 }
+<<<<<<< HEAD
 
 /* 
   Styles for Edit mode in Messages Container
@@ -406,12 +416,28 @@ section[role="region"].new > header:first-child form {
   border-color: transparent;
 }
 
+=======
+
+/* 
+  Styles for Edit mode in Messages Container
+*/
+
+.edit #messages-container[data-type="list"] li {
+  border-color: #e7e7e7;
+}
+
+.edit #messages-container[data-type="list"] li:last-child {
+  border-color: transparent;
+}
+
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
 .edit [data-type="list"] li a {
   pointer-events: none;
 }
 
 .edit #messages-container[data-type="list"] li p {
   transform: translateX(0);
+<<<<<<< HEAD
 }
 
 .edit #messages-container[data-type="list"] li .received p {
@@ -427,6 +453,23 @@ section[role="region"].new > header:first-child form {
   background-position: -44px 0;
 }
 
+=======
+}
+
+.edit #messages-container[data-type="list"] li .received p {
+  transform: translateX(4rem);
+  transition: all 0.3s ease 0s;
+}
+
+.edit #messages-container[data-type="list"] li.selected p {
+  border: 0.2rem solid #B90000;
+}
+
+.edit #messages-container[data-type="list"] li.selected p:after {
+  background-position: -44px 0;
+}
+
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
 .edit #messages-container[data-type="list"] li.selected .received p:after {
   background-position: -11px 0;
 }
@@ -462,7 +505,20 @@ form.bottom[role="search"].new-sms-form {
 }
 
 #send-message.active {
+<<<<<<< HEAD
   background: #aaf;
+=======
+  background: #008aaa;
+}
+
+#send-message:before {
+  content: attr(data-counter);
+  font-size: 1.2rem;
+  color: #606060;
+  position: absolute;
+  right: 1.5rem;
+  bottom: 2.4rem;
+>>>>>>> 035abaa05fe1b95a7390e0e502a16b06a57d03f2
 }
 
 #message-to-send {
