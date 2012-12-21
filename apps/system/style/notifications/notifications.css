@@ -12,6 +12,7 @@ html, body {
   overflow: hidden;
   background-image: url('images/grey-noise-bg.png');
   background-repeat: repeat-x;
+  background-size: auto 100%;
   -moz-box-sizing: border-box;
   border-bottom: 0.1rem #2c2c2c solid;
   -moz-transform: translateY(-5rem);
@@ -133,7 +134,7 @@ html, body {
 .notification > div {
   margin: 0 0 0 5rem;
   padding: 0;
-  width: -moz-calc(100% - 55px);
+  width: -moz-calc(100% - 5.5rem);
   color: #bfbfbf;
   font-size: 1.4rem;
   line-height: 1.9rem;
@@ -157,8 +158,8 @@ html, body {
 .notification > img {
   float: left;
   display: block;
-  width: 30px;
-  height: 30px;
+  width: 3rem;
+  height: 3rem;
   margin: 1.5rem 1rem;
   pointer-events: none;
 }

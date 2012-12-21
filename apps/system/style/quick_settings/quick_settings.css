@@ -28,7 +28,8 @@ html, body {
   outline: none;
   font-size: 1.4rem;
   line-height: 1.8rem;
-
+  background: center no-repeat;
+  background-size: 3rem;
   border-right: 0.1rem black solid;
   border-left: 0.1rem gray solid;
 }
@@ -43,10 +44,6 @@ html, body {
   border-right: 0;
 }
 
-#quick-settings > a {
-  background: center no-repeat;
-  background-size: 2.5rem 2.5rem;
-}
 #quick-settings > *[data-initializing] {
   opacity: 0.5;
 }
