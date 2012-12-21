@@ -109,11 +109,10 @@ li button:after,
 li a[role="button"]:after {
   content: "";
   position: absolute;
-  top: 100%;
+  bottom: -0.2rem;
   left: 0;
   right: 0;
   height: 0.2rem;
-  margin-top: 0.1rem;
   background: url( buttons/images/ui/shadow.png) repeat-x left bottom / auto 100%;
 }
 
