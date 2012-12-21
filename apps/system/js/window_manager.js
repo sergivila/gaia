@@ -116,13 +116,14 @@ var WindowManager = (function() {
     if (!app)
       return false;
 
-    if (app.manifest.entry_points) {
-      var entryPoint = app.manifest.entry_points[origin.split('/')[3]];
+    var manifest = app.manifest;
+    if (manifest.entry_points && manifest.type == "certified") {
+      var entryPoint = manifest.entry_points[origin.split('/')[3]];
       if (entryPoint)
           return entryPoint.fullscreen;
       return false;
     } else {
-      return app.manifest.fullscreen;
+      return manifest.fullscreen;
     }
   }
 
@@ -1094,6 +1095,7 @@ var WindowManager = (function() {
         createFrame(origFrame, origin, url, name, manifest, manifestURL);
     frame.id = 'appframe' + nextAppId++;
     frame.dataset.frameType = 'window';
+    frame.name = 'main';
 
     // If this frame corresponds to the homescreen, set mozapptype=homescreen
     // so we're less likely to kill this frame's process when we're running low
@@ -1148,6 +1150,7 @@ var WindowManager = (function() {
     var frame = createFrame(null, origin, url, name, manifest, manifestURL);
     frame.classList.add('inlineActivity');
     frame.dataset.frameType = 'inline-activity';
+    frame.name = 'inline';
 
     // Discard any existing activity
     stopInlineActivity();
@@ -1241,19 +1244,20 @@ var WindowManager = (function() {
     if (!app)
       return;
 
-    var name = app.manifest.name;
-    if (app.manifest.locales &&
-        app.manifest.locales[document.documentElement.lang] &&
-        app.manifest.locales[document.documentElement.lang].name) {
-      name = app.manifest.locales[document.documentElement.lang].name;
+    var manifest = app.manifest;
+    var name = manifest.name;
+    if (manifest.locales &&
+        manifest.locales[document.documentElement.lang] &&
+        manifest.locales[document.documentElement.lang].name) {
+      name = manifest.locales[document.documentElement.lang].name;
     }
     var origin = app.origin;
 
     // Check if it's a virtual app from a entry point.
     // If so, change the app name and origin to the
     // entry point.
-    var entryPoints = app.manifest.entry_points;
-    if (entryPoints) {
+    var entryPoints = manifest.entry_points;
+    if (entryPoints && manifest.type == "certified") {
       var givenPath = e.detail.url.substr(origin.length);
 
       // Workaround here until the bug (to be filed) is fixed
@@ -1309,7 +1313,7 @@ var WindowManager = (function() {
           // let's deal them here.
 
           startInlineActivity(origin, e.detail.url,
-                              name, app.manifest, app.manifestURL);
+                              name, manifest, app.manifestURL);
 
           return;
         }
@@ -1333,7 +1337,7 @@ var WindowManager = (function() {
           // XXX: We could ended opening URls not for the app frame
           // in the app frame. But we don't care.
           appendFrame(null, origin, e.detail.url,
-                      name, app.manifest, app.manifestURL);
+                      name, manifest, app.manifestURL);
 
           // set the size of the iframe
           // so Cards View will get a correct screenshot of the frame
@@ -1376,6 +1380,14 @@ var WindowManager = (function() {
     }
   });
 
+  // Deal with locationchange
+  window.addEventListener('mozbrowserlocationchange', function(e) {
+    if (!'frameType' in e.target.dataset)
+      return;
+
+    e.target.dataset.url = e.detail;
+  });
+
   // Deal with application uninstall event
   // if the application is being uninstalled, we ensure it stop running here.
   window.addEventListener('applicationuninstall', function(e) {
@@ -1389,7 +1401,7 @@ var WindowManager = (function() {
   // And reset to true when the layer is gone.
   // We may need to handle windowclosing, windowopened in the future.
   var attentionScreenTimer = null;
-  
+
   var overlayEvents = ['lock', 'unlock', 'attentionscreenshow', 'attentionscreenhide', 'status-active', 'status-inactive'];
 
   function overlayEventHandler(evt) {
@@ -1466,7 +1478,7 @@ var WindowManager = (function() {
       return '';
 
     var lang = document.documentElement.lang;
-    if (manifest.entry_points) {
+    if (manifest.entry_points && manifest.type == "certified") {
       var entryPoint = manifest.entry_points[origin.split('/')[3]];
       if (entryPoint.locales && entryPoint.locales[lang] &&
           entryPoint.locales[lang].name) {

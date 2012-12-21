@@ -44,6 +44,10 @@
  background-position: -12rem 0;
 }
 
+#menuItem-callSettings:before {
+  background-position: 0 -15rem;
+}
+
 #menuItem-internetSharing:before {
  background-position: 0 -3rem;
 }
