@@ -112,7 +112,7 @@ section {
   left: calc(50% - 1.50rem);
   width: 2.90rem;
   height: 2.90rem;
-  background: url(images/spinner.png) no-repeat center center;
+  background: url(images/spinner.png) no-repeat center center / 2.9rem;
   animation: 0.9s spinner-animation infinite steps(30);
   border: none;
 }
@@ -170,8 +170,9 @@ section {
 }
 
 .thumbnail {
-  margin-right: 0.10rem;
-  margin-bottom: 0.10rem;
+  border: solid 0.1rem transparent;
+  border-top: none;
+  border-left: none;
   padding: 0;
   /* default to left-to-right, but overridden for rtl languages below */
   float: left;
@@ -179,6 +180,7 @@ section {
   list-style-type: none;
   /* don't let the user select the items */
   -moz-user-select: none;
+  -moz-box-sizing: border-box;
   /* thumbnail images will be displayed with background-image */
   /* these properties scale and position the images correctly */
   background-size: cover;        /* allow some cropping */
@@ -191,11 +193,21 @@ section {
    * at least get the effect of a grid rather than a black screen
    */
   background-color: #444;
+  width: 8rem;
+  height: 8rem;
+  position: relative;
 }
 
-.thumbnail.selected {
-  outline: solid #00aacc 0.30rem;
-  outline-offset: -0.30rem;
+.thumbnail.selected:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border: solid 0.3rem #00aacc;
+  pointer-events: none;
 }
 
 /*
