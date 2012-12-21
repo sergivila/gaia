@@ -136,6 +136,11 @@
 /* swiper */
 #swiper-wrapper{
   display: inline-block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28rem;
 }
 
 #swiper-wrapper.hide{
@@ -180,3 +185,13 @@
   opacity: 1;
 }
 
+
+/* Supported device: Twist: 540×960:?;
+    This scale should be done at js level, performing some scale factor at the path matrix:
+      CURVE_START_DATA: 'M0,80 C100,150 220,150 320,80',
+      CURVE_END_DATA: 'M0,80 C100,-20 220,-20 320,80',
+*/
+@media only screen and ( min-width: 540px ) and ( max-width: 640px )  {
+  #swiper-area { transform: scale(1.68); }
+  #swiper-curve { transform: scale(1.68); transform-origin: 0 10rem; }
+}
