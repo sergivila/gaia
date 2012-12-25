@@ -1,7 +1,7 @@
 #header {
     position: relative;
     z-index: 50;
-    min-height: 8.00rem;
+    min-height: 8rem;
 }
 #evmeContainer:not(.empty-query) #header, #evmeContainer.keyboard-visible #header {
     background: rgba(0, 0, 0, .3);
@@ -9,42 +9,42 @@
 #search-header {
     position: absolute;
     top: 0;
-    left: 0.60rem;
-    right: 0.60rem;
-    height: 3.10rem;
+    left: 0.6rem;
+    right: 0.6rem;
+    height: 3.1rem;
     z-index: 51;
-    padding-top: 0.90rem;
+    padding-top: 0.9rem;
 }
     #search-rapper {
         position: absolute;
-        top: 0.90rem;
+        top: 0.9rem;
         left: 0;
         right: 0;
         z-index: 25;
         vertical-align: middle;
-        height: 2.80rem;
-        line-height: 3.00rem;
+        height: 2.8rem;
+        line-height: 3rem;
     }
     .empty-query:not(.keyboard-visible) #search-rapper {
-        -moz-transform: translate3d(0, 2.30rem, 0);
-        height: 3.60rem;
-        line-height: 3.60rem;
-        left: 0.50rem;
-        right: 0.50rem;
+        -moz-transform: translate3d(0, 2.3rem, 0);
+        height: 3.6rem;
+        line-height: 3.6rem;
+        left: 0.5rem;
+        right: 0.5rem;
     }
     .empty-query:not(.keyboard-visible) #search-q {
-        height: 3.60rem;
-        line-height: 3.60rem;
+        height: 3.6rem;
+        line-height: 3.6rem;
     }
     .empty-query:not(.keyboard-visible) #search-q-bg {
-        background-position: 98% 1.00rem;
+        background-position: 98% 1rem;
     }
     
     #search-q, #search-q-bg, #search-selection {
         position: relative;
-        font-size: 1.50rem;
+        font-size: 1.5rem;
         vertical-align: middle;
-        padding: 0 0.40rem;
+        padding: 0 0.4rem;
         text-transform: lowercase;
         height: 100%;
         -moz-box-sizing: border-box;
@@ -59,16 +59,16 @@
     #search-q {
         border: none;
         z-index: 10;
-        padding: 0.20rem 1.80rem 0.40rem 0;
+        padding: 0.2rem 1.8rem 0.4rem 0;
         width: 100%;
-        height: 2.60rem;
-        top: -0.10rem;
+        height: 2.6rem;
+        top: -0.1rem;
         display: inline;
         background: transparent;
     }
     #search-q-bg {
-        border-radius: 0.20rem;
-        box-shadow: 0.10rem 0.10rem 0 0 #ccc inset, 0 0 0 0.10rem rgba(0, 0, 0, .3);
+        border-radius: 0.2rem;
+        box-shadow: 0.1rem 0.1rem 0 0 #ccc inset, 0 0 0 0.1rem rgba(0, 0, 0, .3);
         background: #fff;
         border: none;
         z-index: 5;
@@ -76,7 +76,7 @@
         top: 0;
         background-image: url('/everything.me/images/search-icon.png');
         background-repeat: no-repeat;
-        background-position: 98% 1.5rem;
+        background-position: 98% 0.7rem;
     }
     .clear-visible #search-q-bg {
         background-image: none;
@@ -87,14 +87,14 @@
         
     #button-clear {
         position: absolute;
-        top: 1.40rem;
-        right: 0.40rem;
+        top: 1.4rem;
+        right: 0.4rem;
         z-index: 30;
-        width: 2.00rem;
-        height: 2.00rem;
+        width: 2rem;
+        height: 2rem;
         cursor: pointer;
         font-size: 0;
-        background-position: -3.80rem -7.80rem;
+        background: url('/everything.me/images/search-clear.png') no-repeat;
         -moz-user-select: none;
         overflow: hidden;
         display: none;
@@ -105,17 +105,17 @@
         .clear-visible #button-clear:before {
             content: "";
             position: absolute;
-            top: -1.50rem;
-            right: -1.50rem;
-            left: -0.80rem;
-            bottom: -0.80rem;
+            top: -1.5rem;
+            right: -1.5rem;
+            left: -0.8rem;
+            bottom: -0.8rem;
         }
     
     #default-text {
         position: absolute;
         top: 0;
         bottom: 0;
-        left: 0.70rem;
+        left: 0.7rem;
         color: #bbb;
         text-transform: none;
         display: none;
@@ -126,12 +126,12 @@
     
 #homepage-search-text {
     position: absolute;
-    top: 8.80rem;
-    left: 1.60rem;
+    top: 8.8rem;
+    left: 1.6rem;
     cursor: pointer;
-    text-indent: 0.60rem;
+    text-indent: 0.6rem;
     z-index: 305;
-    font-size: 1.30rem;
+    font-size: 1.3rem;
     color: #444;
     pointer-events: none;
     display: none;
@@ -141,10 +141,10 @@
 #homepage-search-text:before {
     content: "";
     position: absolute;
-    top: -2.00rem;
-    left: -2.00rem;
-    right: -2.00rem;
-    bottom: -2.00rem;
+    top: -2rem;
+    left: -2rem;
+    right: -2rem;
+    bottom: -2rem;
 }
 
 .screen-homepage #homepage-search-text {

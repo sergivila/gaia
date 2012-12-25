@@ -133,8 +133,7 @@
 .fbbutton .button-real .icon:before,
 #shortcuts-customize:before,
 #shortcuts-favorites li.on:before,
-#close-category,
-#button-clear
+#close-category
 {
     background-image: url('/everything.me/images/sprite.png');
     background-repeat: no-repeat;
