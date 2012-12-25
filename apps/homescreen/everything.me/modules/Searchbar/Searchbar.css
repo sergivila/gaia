@@ -1,7 +1,7 @@
 #header {
     position: relative;
     z-index: 50;
-    min-height: 80px;
+    min-height: 8.00rem;
 }
 #evmeContainer:not(.empty-query) #header, #evmeContainer.keyboard-visible #header {
     background: rgba(0, 0, 0, .3);
@@ -9,42 +9,42 @@
 #search-header {
     position: absolute;
     top: 0;
-    left: 6px;
-    right: 6px;
-    height: 31px;
+    left: 0.60rem;
+    right: 0.60rem;
+    height: 3.10rem;
     z-index: 51;
-    padding-top: 9px;
+    padding-top: 0.90rem;
 }
     #search-rapper {
         position: absolute;
-        top: 9px;
+        top: 0.90rem;
         left: 0;
         right: 0;
         z-index: 25;
         vertical-align: middle;
-        height: 28px;
-        line-height: 30px;
+        height: 2.80rem;
+        line-height: 3.00rem;
     }
     .empty-query:not(.keyboard-visible) #search-rapper {
-        -moz-transform: translate3d(0, 23px, 0);
-        height: 36px;
-        line-height: 36px;
-        left: 5px;
-        right: 5px;
+        -moz-transform: translate3d(0, 2.30rem, 0);
+        height: 3.60rem;
+        line-height: 3.60rem;
+        left: 0.50rem;
+        right: 0.50rem;
     }
     .empty-query:not(.keyboard-visible) #search-q {
-        height: 36px;
-        line-height: 36px;
+        height: 3.60rem;
+        line-height: 3.60rem;
     }
     .empty-query:not(.keyboard-visible) #search-q-bg {
-        background-position: 98% 10px;
+        background-position: 98% 1.00rem;
     }
     
     #search-q, #search-q-bg, #search-selection {
         position: relative;
-        font-size: 15px;
+        font-size: 1.50rem;
         vertical-align: middle;
-        padding: 0 4px;
+        padding: 0 0.40rem;
         text-transform: lowercase;
         height: 100%;
         -moz-box-sizing: border-box;
@@ -53,22 +53,22 @@
         height: 100%;
         line-height: inherit;
         background: none;
-		border-radius: 0;
-		border: none;
+        border-radius: 0;
+        border: none;
     }
     #search-q {
         border: none;
         z-index: 10;
-        padding: 2px 18px 4px 0;
+        padding: 0.20rem 1.80rem 0.40rem 0;
         width: 100%;
-        height: 26px;
-        top: -1px;
+        height: 2.60rem;
+        top: -0.10rem;
         display: inline;
         background: transparent;
     }
     #search-q-bg {
-        border-radius: 2px;
-        box-shadow: 1px 1px 0 0 #ccc inset, 0 0 0 1px rgba(0, 0, 0, .3);
+        border-radius: 0.20rem;
+        box-shadow: 0.10rem 0.10rem 0 0 #ccc inset, 0 0 0 0.10rem rgba(0, 0, 0, .3);
         background: #fff;
         border: none;
         z-index: 5;
@@ -76,7 +76,7 @@
         top: 0;
         background-image: url('/everything.me/images/search-icon.png');
         background-repeat: no-repeat;
-        background-position: 98% 7px;
+        background-position: 98% 1.5rem;
     }
     .clear-visible #search-q-bg {
         background-image: none;
@@ -87,14 +87,14 @@
         
     #button-clear {
         position: absolute;
-        top: 14px;
-        right: 4px;
+        top: 1.40rem;
+        right: 0.40rem;
         z-index: 30;
-        width: 20px;
-        height: 20px;
+        width: 2.00rem;
+        height: 2.00rem;
         cursor: pointer;
         font-size: 0;
-        background-position: -38px -78px;
+        background-position: -3.80rem -7.80rem;
         -moz-user-select: none;
         overflow: hidden;
         display: none;
@@ -105,17 +105,17 @@
         .clear-visible #button-clear:before {
             content: "";
             position: absolute;
-            top: -15px;
-            right: -15px;
-            left: -8px;
-            bottom: -8px;
+            top: -1.50rem;
+            right: -1.50rem;
+            left: -0.80rem;
+            bottom: -0.80rem;
         }
     
     #default-text {
         position: absolute;
         top: 0;
         bottom: 0;
-        left: 7px;
+        left: 0.70rem;
         color: #bbb;
         text-transform: none;
         display: none;
@@ -126,12 +126,12 @@
     
 #homepage-search-text {
     position: absolute;
-    top: 88px;
-    left: 16px;
+    top: 8.80rem;
+    left: 1.60rem;
     cursor: pointer;
-    text-indent: 6px;
+    text-indent: 0.60rem;
     z-index: 305;
-    font-size: 13px;
+    font-size: 1.30rem;
     color: #444;
     pointer-events: none;
     display: none;
@@ -141,10 +141,10 @@
 #homepage-search-text:before {
     content: "";
     position: absolute;
-    top: -20px;
-    left: -20px;
-    right: -20px;
-    bottom: -20px;
+    top: -2.00rem;
+    left: -2.00rem;
+    right: -2.00rem;
+    bottom: -2.00rem;
 }
 
 .screen-homepage #homepage-search-text {
