@@ -121,7 +121,7 @@
 }
 
 #menuItem-improveBrowserOS:before {
- background-position: -9rem -12rem;
+ background-position: -3rem -15rem;
 }
 
 #menuItem-help:before {
@@ -183,6 +183,17 @@
   background-image: url(images/wifi_lock.png);
   background-size: 5.6rem;
 }
+
+/******************************************************************************
+ * Call Settings icons
+ */
+
+ #menuItem-callWaiting .alert-label > span {
+  position: absolute;
+  width: 3rem;
+  height: 3rem;
+  background-image: url(images/call_waiting_disabled.png);
+ }
 
 
 /******************************************************************************
@@ -345,6 +356,7 @@
 .privacy-marketPlace:before {
   background-position: -6.4rem 0;
 }
+
 
 /******************************************************************************
  * Right-To-Left layout
