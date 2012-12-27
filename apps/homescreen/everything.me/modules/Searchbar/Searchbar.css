@@ -37,7 +37,7 @@
         line-height: 3.6rem;
     }
     .empty-query:not(.keyboard-visible) #search-q-bg {
-        background-position: 98% 1rem;
+        background-position: 98% 1.1rem;
     }
     
     #search-q, #search-q-bg, #search-selection {
@@ -77,6 +77,7 @@
         background-image: url('/everything.me/images/search-icon.png');
         background-repeat: no-repeat;
         background-position: 98% 0.7rem;
+        background-size: 1.5rem;
     }
     .clear-visible #search-q-bg {
         background-image: none;
@@ -95,6 +96,7 @@
         cursor: pointer;
         font-size: 0;
         background: url('/everything.me/images/search-clear.png') no-repeat;
+        background-size: 1.7rem;
         -moz-user-select: none;
         overflow: hidden;
         display: none;

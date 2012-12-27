@@ -137,8 +137,10 @@
 {
     background-image: url('/everything.me/images/sprite.png');
     background-repeat: no-repeat;
+    background-size: 13.1rem 25rem;
 }
 #location-selector .options div:before,
 #dialog_location .content:before {
     background-image: url('/everything.me/images/location/location_sprite.png');
+    background-size: 6.4rem 10.6rem;
 }

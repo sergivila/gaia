@@ -91,6 +91,7 @@
         }
     #evmeContainer .smart-folder > .close {
         background: rgba(0, 0, 0, .1) url('/everything.me/images/imageclose.png') 50% 50% no-repeat;
+        background-size: 1.7rem;
         position: absolute;
         top: 0;
         left: 0;
