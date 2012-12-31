@@ -10,8 +10,8 @@ Evme.Brain = new function Evme_Brain() {
         logger = null,
         elContainer = null,
         QUERIES_TO_NOT_CACHE = "",
-        DEFAULT_NUMBER_OF_APPS_TO_LOAD = 16,
-        NUMBER_OF_APPS_TO_LOAD_IN_FOLDER = 16,
+        DEFAULT_NUMBER_OF_APPS_TO_LOAD = 20,
+        NUMBER_OF_APPS_TO_LOAD_IN_FOLDER = 20,
         NUMBER_OF_APPS_TO_LOAD = DEFAULT_NUMBER_OF_APPS_TO_LOAD,
         TIME_BEFORE_INVOKING_HASH_CHANGE = 200,
         TIMEOUT_BEFORE_ALLOWING_DIALOG_REMOVE = "FROM CONFIG",
@@ -882,7 +882,8 @@ Evme.Brain = new function Evme_Brain() {
             currentFolder.loadApps({
                 "apps": installedApps,
                 "iconsFormat": iconsFormat,
-                "offset": 0
+                "offset": 0,
+                "installed": true
             }, function onDone() {
                 requestSmartFolderApps = Evme.DoATAPI.search({
                     "query": query,
