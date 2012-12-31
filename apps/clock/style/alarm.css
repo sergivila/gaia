@@ -73,7 +73,7 @@ a.button.right {
 }
 
 a.button.right.plus {
-  background: url(images/add_alarm.png) no-repeat center;
+  background: url(images/add_alarm.png) no-repeat center / 3.2rem;
   padding: 2.2rem 1.5rem;
   height: 2.5rem;
   width: 3.2rem;
@@ -548,7 +548,7 @@ li img {
   margin-left: auto;
   margin-right: auto;
   border-bottom: solid 0.13rem;
-  -moz-border-bottom-colors: #CBCBCC #FFFFFF; 
+  -moz-border-bottom-colors: #CBCBCC #FFFFFF;
 }
 
 #picker-bar.format12h {}
@@ -586,7 +586,7 @@ li img {
 }
 
 #value-indicator-wrapper {
-  background: url(/style/images/picker_label.png) no-repeat -6px 0;
+  background: url(/style/images/picker_label.png) no-repeat -0.6rem 0 / 28.2rem;
   position: absolute;
   top: 5.6rem;
   height: 6rem;
@@ -596,7 +596,7 @@ li img {
 
 #value-indicator-left,
 #value-indicator-right {
-  background: url(/style/images/picker_label.png) no-repeat 0 0;
+  background: url(/style/images/picker_label.png) no-repeat 0 0 / 28.2rem;
   position: absolute;
   width: 0.6rem;
   height: 6rem;
@@ -776,7 +776,7 @@ div.animation-on {
     font-size: 10px;
   }
   .alarmList-detail {
-    margin-left: 0.31rem; 
+    margin-left: 0.31rem;
   }
   .alarmList-time span.time {
     font: 2.25rem/2.25rem 'MozTT', sans-serif;

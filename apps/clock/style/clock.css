@@ -87,7 +87,7 @@ html, body {
 }
 
 #views {
-  background: url(images/background.png) no-repeat;
+  background: url(images/background.png) no-repeat left top / cover;
   position: fixed;
   top: 0;
   left: 0;
@@ -327,7 +327,7 @@ html, body {
 #digital-clock-background.visible {
   height: 22.1rem; /* 48%; */
   display: block;
-  background: url(images/digital_bk.png) no-repeat;
+  background: url(images/digital_bk.png) repeat-x left bottom / auto 100%;
 }
 
 #digital-clock {
@@ -372,7 +372,7 @@ html, body {
 }
 
 #clock-day-date {
-  font: lighter normal 21px 'MozTT', sans-serif;
+  font: lighter normal 2.1rem 'MozTT', sans-serif;
   text-transform: capitalize;
   margin: 2.6rem 0 0 1.5rem;
   line-height: 1.7rem;
@@ -396,6 +396,7 @@ html, body {
 /*270x270*/
 #analog-clock-container.marks1 {
   background-image: url(images/analog_clock_marks1.png);
+  background-size: 27rem;
   width: 27rem; height: 27rem;
 }
 #analog-clock-container.marks1 svg {
