@@ -41,6 +41,37 @@ Evme.Utils = new function Evme_Utils() {
         dump("(" + (new Date().getTime()) + ") DOAT: " + message);
     };
     
+    this.l10n = function l10n(module, key, args) {
+        return navigator.mozL10n.get(Evme.Utils.l10nKey(module, key), args);
+    };
+    this.l10nAttr = function l10nAttr(module, key, args) {
+        var attr = 'data-l10n-id="' + Evme.Utils.l10nKey(module, key) + '"';
+        
+        if (args) {
+            try {
+                attr += ' data-l10n-args="' + JSON.stringify(args).replace(/"/g, '&quot;') + '"';
+            } catch(ex) {
+                
+            }
+        }
+        
+        return attr;
+    };
+    this.l10nKey = function l10nKey(module, key) {
+        return ('evme-' + module + '-' + key).toLowerCase();
+    };
+    this.l10nParseConfig = function l10nParseConfig(text) {
+        if (typeof text === "string") {
+            return text;
+        }
+        
+        var firstLanguage = Object.keys(text)[0],
+            currentLang = navigator.mozL10n.language.code || firstLanguage,
+            translation = text[currentLang] || text[firstLanguage] || '';
+        
+        return translation;
+    };
+    
     this.sendToOS = function sendToOS(type, data) {
         switch (type) {
             case OSMessages.APP_CLICK:
@@ -83,7 +114,7 @@ Evme.Utils = new function Evme_Utils() {
     };
 
     this.getRoundIcon = function getRoundIcon(imageSrc, callback) {
-        var size = Evme.Utils.sendToOS(Evme.Utils.OSMessages.GET_ICON_SIZE) - 2,
+        var size = self.sendToOS(self.OSMessages.GET_ICON_SIZE) - 2,
             radius = size/2,
             img = new Image();
         
@@ -124,8 +155,8 @@ Evme.Utils = new function Evme_Utils() {
     };
 
     this.getIconGroup = function getIconGroup() {
-        return Evme.Utils.cloneObject(Evme.__config.iconsGroupSettings);
-    }
+        return self.cloneObject(Evme.__config.iconsGroupSettings);
+    };
 
     this.getIconsFormat = function getIconsFormat() {
         return iconsFormat || _getIconsFormat();

@@ -84,7 +84,7 @@
     #helper-rapper.close ul {
         display: none;
     }
-    
+
     #helper-tip {
         position: absolute;
         left: 2.2rem;
@@ -110,8 +110,8 @@
         transform: rotate(45deg);
         box-shadow: -0.4rem -0.4rem 0.4rem -0.2rem rgba(0, 0, 0, .4);
     }
-    
-    
+
+
 #helper-rapper.flash {
     -moz-animation: flash 4s linear 1 alternate;
 }
@@ -124,7 +124,7 @@
     50% { background: #ffe57f; }
     100% { background: #fff; }
 }
-    
+
 #helper {
     height: 100%;
 }
@@ -134,17 +134,7 @@
     -moz-transition: -moz-transform .4s ease;
     transition: transform .4s ease;
 }
-    #helper-rapper .loading {
-        position: absolute;
-        top: 1.7rem;
-        right: 1.6rem;
-        width: 0;
-        height: 0;
-        display: none;
-    }
-    #helper-rapper .loading.visible {
-        display: block;
-    }
+
     #helper ul {
         position: absolute;
         top: -0.3rem !important;
