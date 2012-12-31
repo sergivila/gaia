@@ -59,8 +59,8 @@ window.Evme = new function Evme_Core() {
     this.onHide = function onHide() {
         document.body.classList.remove('evme-displayed');
         
-        Evme.Brain.Shortcuts.doneEdit();
-        Evme.Brain.SmartFolder.closeCurrent();
+        //Evme.Brain.Shortcuts.doneEdit();
+        //Evme.Brain.SmartFolder.closeCurrent();
     };
     
     this.onHideStart = function onHideStart(source) {
