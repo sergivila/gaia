@@ -190,7 +190,8 @@ html, body {
   z-index: 3000;
   transition: all 1s ease;
   background-image: url(/shared/resources/branding/powered.png);
-  background-size: 100% auto;
+  background-size: cover;
+  background-position: center top;
 }
 
 #splash-screen.show {
@@ -356,6 +357,7 @@ html, body {
   height: calc(100% - 6rem);
   padding: 0 3rem;
   width: calc(100% - 6rem);
+  background-size: 17.6rem;
 }
 
 #finish-screen [role=navigation],#tutorialFinish [role=navigation] {
@@ -378,6 +380,7 @@ html, body {
 #time_zone_overlay {
   background-position: bottom;
   background-repeat: no-repeat;
+  background-size: 100%;
   position: relative;
   position: absolute;
   z-index: 10;
@@ -432,6 +435,7 @@ html, body {
   background-image: url('images/timezone/map.png') ;
   background-position: bottom;
   background-repeat: no-repeat;
+  background-size: 100%;
   position: relative;
   height: 21.5rem;
   width: 100%;
