@@ -16,23 +16,23 @@ ul {
 }
 li {
   margin: 0;
-  height: 120px;
+  height: 12rem;
   width: 100%;
   overflow: hidden;
   position: relative;
   list-style-type: none;
-  padding-bottom: 1px;
+  padding-bottom: 0.1rem;
 }
 .unwatched {
-  width: 2px;
+  width: 0.2rem;
   position: absolute;
-  top: 0px;
-  bottom: 0px;
+  top: 0.00rem;
+  bottom: 0.00rem;
   background: #21a6b9;
 }
 li img {
-  height: 120px;
-  width: 210px;
+  height: 12rem;
+  width: 21rem;
   overflow: hidden;
   position: absolute;
   left: 0;
@@ -42,7 +42,7 @@ li img {
 li p {
   display: block;
   width: auto;
-  margin: 20px 10px 0 220px;
+  margin: 2rem 1rem 0 22rem;
   padding: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -50,11 +50,11 @@ li p {
 li p.name {
   color: #fff;
   font-weight: bold;
-  font-size: 16px;
+  font-size: 1.6rem;
 }
 li p.time {
-  margin-top: 4px;
-  font-size: 16px;
+  margin-top: 0.40rem;
+  font-size: 1.60rem;
   color: #bbb;
 }
 li:last-child hr {
@@ -62,12 +62,12 @@ li:last-child hr {
 }
 li hr {
   position: absolute;
-  bottom: -5px;
-  left: 210px;
-  right: 20px;
-  height: 0px;
+  bottom: -0.50rem;
+  left: 21.00rem;
+  right: 2.00rem;
+  height: 0.00rem;
   border: 0;
-  border-bottom: 1px solid rgba(150, 150, 150, 0.1);
+  border-bottom: 0.10rem solid rgba(150, 150, 150, 0.1);
 }
 
 /* fullscreen video player */
@@ -83,7 +83,7 @@ li hr {
   content: "";
   display: inline-block;
   vertical-align: middle;
-  width: 1px;
+  width: 0.10rem;
   height: 100%;
 }
 
@@ -98,8 +98,8 @@ li hr {
   transform: none!important;
 }
 
-#delete-video-button {
-  background: transparent url(images/delete.png) no-repeat center center;
+#delete-video-button span {
+  background-image: url(images/delete.png);
 }
 
 #delete-video-button:active {
@@ -149,8 +149,8 @@ li hr {
   margin-left: 10%;
   margin-right: 10%;
   padding: 10%;
-  border: solid black 4px;
-  border-radius: 10px;
+  border: solid black 0.40rem;
+  border-radius: 1.00rem;
   background-color: rgba(0, 0, 0, 0.6);
   font-family: "MozTT", sans-serif;
   color: #fff;
@@ -160,11 +160,11 @@ li hr {
 #overlay-title {
   text-align: center;
   font-weight: bold;
-  font-size: 26px;
+  font-size: 2.60rem;
 }
 
 #overlay-text {
-  font-size: 18px;
+  font-size: 1.80rem;
 }
 
 /* localization */
@@ -172,7 +172,7 @@ body.hidden *[data-l10n-id] {
   visibility: hidden;
 }
 *[dir=rtl] li {
-  padding: 0 144px 0 20px;
+  padding: 0 14.40rem 0 2.00rem;
 }
 *[dir=rtl] li img {
   left: auto;
@@ -199,7 +199,7 @@ header {
 header h1 {
   font-size: 2.5rem !important;
   line-height: 5rem !important;
-  margin: 0px 0px 0px 3.4rem !important;
+  margin: 0.00rem 0.00rem 0.00rem 3.4rem !important;
 }
 
 
@@ -207,16 +207,16 @@ header h1 {
 /* the indeterminate progress bar displayed while scanning */
 #throbber {
   position: absolute;
-  top: 0px;
-  left: 0px;
+  top: 0.00rem;
+  left: 0.00rem;
   width: 100%;
-  height: 3px;
+  height: 0.30rem;
   display: none;
   z-index: 100;
 }
 
 #throbber > div {
-  height: 24px;
+  height: 2.40rem;
   background-image: url(images/progress.png);
 }
 
@@ -226,10 +226,10 @@ header h1 {
 
 @keyframes throb {
   from {
-    transform: translateY(0px);
+    transform: translateY(0.00rem);
   }
   to {
-    transform: translateY(-21px);
+    transform: translateY(-2.10rem);
   }
 }
 
@@ -257,12 +257,12 @@ header .icon:after {
   background-image: url(images/scroll_bar_bg.png);
   background-color: rgba(0, 0, 0, 0.75);
   background-position: center right;
-  background-repeat: no-repeat;
+  background-repeat: repeat-x;
   position: absolute;
   overflow: hidden;
-  left: 0px;
-  right: 0px;
-  bottom: 0px;
+  left: 0.00rem;
+  right: 0.00rem;
+  bottom: 0.00rem;
   height: 4.5rem;
   margin: 0;
   padding: 0;
@@ -274,7 +274,7 @@ header .icon:after {
 }
 
 #play {
-  background: url(images/button_bg_normal.png) no-repeat;
+  background: url(images/button_bg_normal.png) no-repeat center center / 8rem;
   position: absolute;
   border: none;
   padding: 0;
@@ -285,12 +285,13 @@ header .icon:after {
 }
 
 #play:active {
-  background: url(images/button_bg_pressed.png) no-repeat;
+  background-image: url(images/button_bg_pressed.png);
 }
 
 #play:after {
   background-position: 2.3rem 0.8rem;
   background-repeat: no-repeat;
+  background-size: 3rem;
   content: " ";
   display: block;
   position: relative;
@@ -309,8 +310,8 @@ header .icon:after {
 #timeSlider {
   position: absolute;
   left: 8.5rem;
-  top: 0px;
-  right: 0px;
+  top: 0.00rem;
+  right: 0.00rem;
   height: 100%;
 }
 
@@ -331,7 +332,7 @@ header .icon:after {
 
 #slider-wrapper {
   position: absolute;
-  top: 0px;
+  top: 0.00rem;
   left: 7rem;
   right: 7rem;
   height: 100%;
@@ -343,14 +344,14 @@ header .icon:after {
 }
 
 .progress {
-  height: 4px;
+  height: 0.4rem;
   width: 0%;
   top: 50%;
-  margin-top: -2px;
+  margin-top: -0.2rem;
 }
 
 #elapsedTime {
-  background: url(images/timeline_filled.png) no-repeat left center;
+  background: url(images/timeline_filled.png) no-repeat left center / 25.5rem;
   z-index: 30;
 }
 
@@ -360,14 +361,14 @@ header .icon:after {
 }
 
 #timeBackground {
-  background: url(images/timeline.png);
+  background: url(images/timeline.png) repeat-x left top / 25.5rem;
   z-index: 10;
   width: 100%;
 }
 
 #playHead {
   -moz-transition: background 1s linear;
-  background: url(images/scrubber.png);
+  background: url(images/scrubber.png) no-repeat center center / 100%;
   margin: -1.1rem 0 0 -1.2rem;
   position: absolute;
   pointer-events: none;
@@ -380,7 +381,7 @@ header .icon:after {
 }
 
 #playHead.active {
-  background: url(images/scrubber_pressed.png);
+  background: url(images/scrubber_pressed.png) no-repeat center center / 100%;
   width: 8.1rem;
   height: 4.5rem;
   margin: -1rem 0 0 -3.93rem;
