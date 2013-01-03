@@ -94,7 +94,7 @@ body {
 
 #throbber {
   height: 2.40rem;
-  background-image: url(images/progress.png);
+  background: url(images/progress.png) repeat-x left bottom / auto 100%;
 }
 
 #throbber.throb {
@@ -633,6 +633,7 @@ button::-moz-focus-inner {
   background-position: center center;
   background-repeat: repeat-x;
   background-color: #151515;
+  background-size: 26.3rem;
   overflow: hidden;
 }
 
