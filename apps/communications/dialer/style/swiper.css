@@ -22,6 +22,7 @@
   background-image: url("images/hangup_icon.png");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: 4.1rem;
   margin-left: 4.2rem;
   margin-right: auto;
   transition: opacity 0.5s ease;
@@ -80,6 +81,7 @@
   background-image: url("images/pickup_icon.png");
   background-position: center;
   background-repeat: no-repeat;
+  background-size: 3.2rem;
   margin-right: 4.2rem;
   margin-left: auto;
   transition: opacity 0.5s ease;
@@ -107,6 +109,7 @@
   background-image: url('images/handle.png');
   background-repeat: no-repeat;
   background-position: center;
+  background-size: 2rem;
   border-top: 0.1rem solid transparent;
   top: 0;
   height: 0.9rem;
@@ -170,16 +173,6 @@
 
 .triggered #swiper-area-pickup > div {
   opacity: 1;
-}
-
-/* Supported device: Twist: 540×960:?;
-    This scale should be done at js level, performing some scale factor at the path matrix:
-      CURVE_START_DATA: 'M0,80 C100,150 220,150 320,80',
-      CURVE_END_DATA: 'M0,80 C100,-20 220,-20 320,80',
-*/
-@media only screen and ( min-width: 540px ) and ( max-width: 640px )  {
-  #swiper-area { transform: scale(1.68); }
-  #swiper-curve { transform: scale(1.68); transform-origin: 0 10rem; }
 }
 
 .triggered #swiper-area-hangup > div {
