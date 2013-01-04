@@ -246,7 +246,7 @@ input[type="image"] {
 }
 
 #throbber.loading {
-  background-image: url('images/progress.gif');
+  background: url('images/progress.gif') repeat-x left bottom / 100%;
 }
 
 #toolbar-end {

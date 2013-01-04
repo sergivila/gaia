@@ -4,15 +4,15 @@
 
 #appPermissions ul li img {
   float: left;
-  margin-top: calc(3rem - 15px);
+  margin-top: 1rem;
   margin-right: 1.4rem;
-  width: 30px;
-  height: 30px;
+  width: 4rem;
+  height: 4rem;
 }
 
 #permissionsListHeader + ul li select {
   width: 25%;
-  padding: 5px;
+  padding: 0.5rem;
   border: 0;
   background: #367fa2;
   text-align: center;
@@ -36,6 +36,6 @@
   font-size: 1.4rem;
   line-height: 1em;
   width: calc(100% - 5rem);
-  height: calc(60px - 2rem);
+  height: calc(6rem - 2rem);
 }
 

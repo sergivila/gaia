@@ -149,7 +149,7 @@
   font-size: 150%;
 }
 .msg-header-star-starred {
-  background: url("images/icons/message-list-star.png") no-repeat scroll center transparent;
+  background: url("images/icons/message-list-star.png") no-repeat center center / 2rem;
   position: absolute;
   width: 2rem;
   height: 2rem;
@@ -159,7 +159,7 @@
   display: block;
 }
 .msg-header-attachments-yes {
-  background: url("images/icons/message-list-attachment.png") no-repeat scroll center transparent;
+  background: url("images/icons/message-list-attachment.png") no-repeat center center / 2rem;
   position: absolute;
   width: 2rem;
   height: 2rem;
@@ -379,23 +379,23 @@
 }
 
 .msg-star-btn {
-  background: url("images/icons/star.png") no-repeat scroll center transparent;
+  background: url("images/icons/star.png") no-repeat center center / 3rem;
 }
 
 .msg-mark-read-btn {
-  background: url("images/icons/mark.png") no-repeat scroll center transparent;
+  background: url("images/icons/mark.png") no-repeat center center / 3rem;
 }
 
 .msg-delete-btn {
-  background: url("images/icons/delete.png") no-repeat scroll center transparent;
+  background: url("images/icons/delete.png") no-repeat center center / 3rem;
 }
 
 .msg-move-btn {
-  background: url("images/icons/move.png") no-repeat scroll center transparent;
+  background: url("images/icons/move.png") no-repeat center center / 3rem;
 }
 
 .msg-forward-btn {
-  background: url("images/icons/forward.png") no-repeat scroll center transparent;
+  background: url("images/icons/forward.png") no-repeat center center / 3rem;
 }
 
 /* Message list edit mode layout control */
@@ -424,6 +424,7 @@
   background-image: url('images/mail_watermark.png');
   background-repeat:no-repeat;
   background-position: 50% 40%;
+  background-size: 19rem;
   height: 20rem;
   width: 100%;
   position: absolute;

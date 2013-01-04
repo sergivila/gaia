@@ -121,6 +121,7 @@ html, body {
 #video-timer {
   display: none;
   color: white;
+  font-size: 1.8rem;
 }
 
 /* Specific to when we are capturing video */

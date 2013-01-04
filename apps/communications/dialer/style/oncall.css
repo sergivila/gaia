@@ -523,6 +523,7 @@ button[disabled] .icon-keypad-visibility {
   background-image:  url("images/incoming-call.png");
   background-position: top 2rem right 1.5rem;
   background-repeat: no-repeat;
+  background-size: 1.6rem;
 }
 
 #incoming-container.displayed {

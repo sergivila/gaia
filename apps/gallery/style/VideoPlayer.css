@@ -23,14 +23,14 @@
   height: 10.60rem;
   left: calc(50% - 5.30rem);
   top: calc(50% - 5.30rem);
-  background: url("images/video_play_button.png") center no-repeat,
-              url("images/video_play_normal.png") center no-repeat;
+  background: url("images/video_play_button.png")no-repeat center center / 10.6rem,
+              url("images/video_play_normal.png")no-repeat center center / 10.6rem;
   border-width: 0;
 }
 
 .videoPlayerPlayButton:active {
-  background: url("images/video_play_button.png") center no-repeat,
-              url("images/video_play_focus.png") center no-repeat
+  background: url("images/video_play_button.png")no-repeat center center / 10.6rem,
+              url("images/video_play_focus.png")no-repeat center center / 10.6rem
 }
 
 .videoPlayerPlayButton.hidden {
@@ -60,11 +60,11 @@
 
 .videoPlayerPauseButton {
   position: absolute;
-  width: 10;
-  height: 10;
+  width: 10rem;
+  height: 10rem;
   padding: 0;
   margin: 0;
-  background: url("images/video_pause_button.png") center no-repeat,
+  background: url("images/video_pause_button.png") no-repeat center center / 9.6rem,
               rgba(0,0,0,.5);
   border-radius: 5.30rem;
   border: solid #ccc 0.30rem;
@@ -73,8 +73,8 @@
 }
 
 .videoPlayerPauseButton:active {
-  background: url("images/video_pause_button.png") center no-repeat,
-              url("images/video_play_focus.png") center no-repeat
+  background: url("images/video_pause_button.png") no-repeat center center / 9.6rem,
+              url("images/video_play_focus.png") no-repeat center center / 10.6rem
 }
 
 button::-moz-focus-inner {
