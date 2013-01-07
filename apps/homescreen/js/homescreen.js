@@ -3,7 +3,8 @@
 
 const Homescreen = (function() {
   var mode = 'normal';
-
+  var origin = document.location.protocol + '//homescreen.' +
+    document.location.host.replace(/(^[\w\d]+.)?([\w\d]+.[a-z]+)/, '$2');
   var _ = navigator.mozL10n.get;
   setLocale();
   window.addEventListener('localized', function localize() {
@@ -15,7 +16,11 @@ const Homescreen = (function() {
   PaginationBar.init('.paginationScroller');
   GridManager.init('.apps', '.dockWrapper', function gm_init() {
     PaginationBar.show();
-    GridManager.goToPage(1);
+    if (document.location.hash === '#root') {
+      // Switch to the first page only if the user has not already start to pan
+      // while home is loading
+      GridManager.goToPage(1);
+    }
     DragDropManager.init();
     Wallpaper.init();
   });
@@ -34,23 +39,22 @@ const Homescreen = (function() {
     }
   });
 
+  window.addEventListener('message', function hs_onMessage(event) {
+    if (event.origin === origin) {
+      var message = event.data;
+      switch (message.type) {
+        case Message.Type.ADD_BOOKMARK:
+          var app = new Bookmark(message.data);
+          GridManager.install(app);
+          break;
+      }
+    }
+  });
+
   function setLocale() {
     // set the 'lang' and 'dir' attributes to <html> when the page is translated
     document.documentElement.lang = navigator.mozL10n.language.code;
     document.documentElement.dir = navigator.mozL10n.language.direction;
-  }
-
-  if (navigator.mozSetMessageHandler) {
-    navigator.mozSetMessageHandler('activity', function onActivity(activity) {
-      var data = activity.source.data;
-      switch (activity.source.name) {
-        case 'save-bookmark':
-          if (data.type === 'url') {
-            BookmarkEditor.init(data);
-          }
-          break;
-      }
-    });
   }
 
   return {
@@ -83,6 +87,8 @@ const Homescreen = (function() {
         body = _('remove-body', { name: manifest.name });
         confirm.title = _('remove');
       } else {
+        // Make sure to get the localized name
+        manifest = new ManifestHelper(manifest);
         title = _('delete-title', { name: manifest.name });
         body = _('delete-body', { name: manifest.name });
         confirm.title = _('delete');

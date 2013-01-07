@@ -37,7 +37,7 @@ const GridManager = (function() {
   function handleEvent(evt) {
     switch (evt.type) {
       case 'mousedown':
-        touchStartTimestamp = evt.timeStamp;
+        touchStartTimestamp = MouseEventShim.getEventTimestamp(evt);
         evt.stopPropagation();
         startEvent = evt;
         attachEvents();
@@ -139,15 +139,16 @@ const GridManager = (function() {
             window.mozRequestAnimationFrame(function() {
               setOverlayPanning(index, deltaX, forward);
             });
-          }
+          };
         }
 
         var container = pages[index].container;
         container.setCapture(true);
+        MouseEventShim.setCapture(container);
         container.addEventListener('mousemove', pan, true);
 
         window.addEventListener('mouseup', function removePanHandler(e) {
-          touchEndTimestamp = e.timeStamp;
+          touchEndTimestamp = MouseEventShim.getEventTimestamp(e);
           window.removeEventListener('mouseup', removePanHandler, true);
 
           container.removeEventListener('mousemove', pan, true);
@@ -248,7 +249,7 @@ const GridManager = (function() {
                 kPageTransitionDuration;
     lastGoingPageTimestamp += delay;
     var duration = delay < kPageTransitionDuration ?
-                   delay : kPageTransitionDuration
+                   delay : kPageTransitionDuration;
 
     var goToPageCallback = function() {
       delete document.body.dataset.transitioning;
@@ -260,7 +261,7 @@ const GridManager = (function() {
       newPage.container.dispatchEvent(new CustomEvent('gridpageshowend'));
       overlayStyle.MozTransition = '';
       togglePagesVisibility(index, index);
-    }
+    };
 
     var previousPage = pages[currentPage];
     var newPage = pages[index];
@@ -343,13 +344,15 @@ const GridManager = (function() {
     // switch RTL-sensitive methods accordingly
     setDirCtrl();
 
-    for each (var iconsForApp in appIcons) {
-      for each (var icon in iconsForApp) {
-        icon.translate();
+    for (var manifestURL in appIcons) {
+      var iconsForApp = appIcons[manifestURL];
+      for (var entryPoint in iconsForApp) {
+        iconsForApp[entryPoint].translate();
       }
     }
-    for each (var icon in bookmarkIcons) {
-      icon.translate();
+
+    for (var bookmarkURL in bookmarkIcons) {
+      bookmarkIcons[bookmarkURL].translate();
     }
 
     haveLocale = true;
@@ -499,7 +502,7 @@ const GridManager = (function() {
     if (!iconsForApp)
       iconsForApp = appIcons[descriptor.manifestURL] = Object.create(null);
 
-    iconsForApp[descriptor.entry_point || ""] = icon;
+    iconsForApp[descriptor.entry_point || ''] = icon;
   }
 
   function forgetIcon(icon) {
@@ -512,7 +515,7 @@ const GridManager = (function() {
     if (!iconsForApp)
       return;
 
-    delete iconsForApp[descriptor.entry_point || ""];
+    delete iconsForApp[descriptor.entry_point || ''];
   }
 
   function getIcon(descriptor) {
@@ -520,7 +523,7 @@ const GridManager = (function() {
       return bookmarkIcons[descriptor.bookmarkURL];
 
     var iconsForApp = appIcons[descriptor.manifestURL];
-    return iconsForApp && iconsForApp[descriptor.entry_point || ""];
+    return iconsForApp && iconsForApp[descriptor.entry_point || ''];
   }
 
   function getIconsForApp(app) {
@@ -686,13 +689,15 @@ const GridManager = (function() {
       };
       app.ondownloaderror = function ondownloaderror(event) {
         createOrUpdateIconForApp(app, entryPoint);
-      }
+      };
     }
 
     var manifest = app.manifest ? app.manifest : app.updateManifest;
     var iconsAndNameHolder = manifest;
     if (entryPoint)
       iconsAndNameHolder = manifest.entry_points[entryPoint];
+
+    iconsAndNameHolder = new ManifestHelper(iconsAndNameHolder);
 
     var descriptor = {
       bookmarkURL: app.bookmarkURL,
@@ -704,12 +709,7 @@ const GridManager = (function() {
       icon: bestMatchingIcon(app, iconsAndNameHolder)
     };
     if (haveLocale && !app.isBookmark) {
-      var locales = iconsAndNameHolder.locales;
-      if (locales) {
-        var locale = locales[document.documentElement.lang];
-        if (locale && locale.name)
-          descriptor.localizedName = locale.name;
-      }
+      descriptor.localizedName = iconsAndNameHolder.name;
     }
 
     // If there's an existing icon for this bookmark/app/entry point already, let
@@ -742,7 +742,7 @@ const GridManager = (function() {
   function showRestartDownloadDialog(icon) {
     var app = icon.app;
     var _ = navigator.mozL10n.get;
-    var confirm =  {
+    var confirm = {
       title: _('download'),
       callback: function onAccept() {
         app.download();
@@ -753,7 +753,7 @@ const GridManager = (function() {
         app.onprogress = function onProgress(evt) {
           app.onprogress = null;
           icon.updateAppStatus(evt.application);
-        }
+        };
         icon.showDownloading();
         ConfirmDialog.hide();
       },
@@ -766,9 +766,9 @@ const GridManager = (function() {
     };
 
     var localizedName = icon.descriptor.localizedName || icon.descriptor.name;
-    ConfirmDialog.show(_('restart-download-title'), 
-      _('restart-download-body', {'name': localizedName}), 
-      cancel, 
+    ConfirmDialog.show(_('restart-download-title'),
+      _('restart-download-body', {'name': localizedName}),
+      cancel,
       confirm);
     return;
   }
@@ -780,8 +780,9 @@ const GridManager = (function() {
         Icon.prototype.CANCELED_ICON_URL;
     }
     var icons = manifest.icons;
-    if (!icons)
-      return Icon.prototype.DEFAULT_ICON_URL;
+    if (!icons) {
+      return getDefaultIcon(app);
+    }
 
     var preferredSize = Number.MAX_VALUE;
     var max = 0;
@@ -800,8 +801,9 @@ const GridManager = (function() {
       preferredSize = max;
 
     var url = icons[preferredSize];
-    if (!url)
-      return Icon.prototype.DEFAULT_ICON_URL;
+    if (!url) {
+      return getDefaultIcon(app);
+    }
 
     // If the icon path is not an absolute URL, prepend the app's origin.
     if (url.indexOf('data:') == 0 ||

@@ -132,6 +132,18 @@ var LockScreen = {
       this.updateConnState();
       this.connstate.hidden = false;
     }
+    if (navigator && navigator.mozCellBroadcast) {
+      var self = this;
+      navigator.mozCellBroadcast.onreceived = function onReceived(event) {
+        var msg = event.message;
+        if (conn &&
+            conn.voice.network.mcc === MobileOperator.BRAZIL_MCC &&
+            msg.messageId === MobileOperator.BRAZIL_CELLBROADCAST_CHANNEL) {
+          self.cellbroadcastLabel = msg.body;
+          self.updateConnState();
+        }
+      };
+    }
 
     var self = this;
     SettingsListener.observe('lockscreen.enabled', true, function(value) {
@@ -683,7 +695,7 @@ var LockScreen = {
     var timeFormat = _('shortTimeFormat') || '%H:%M';
     var dateFormat = _('longDateFormat') || '%A %e %B';
     var time = f.localeFormat(d, timeFormat);
-    this.clockNumbers.textContent = time.match(/([012]?\d):[0-5]\d/g);
+    this.clockNumbers.textContent = time.match(/([012]?\d).[0-5]\d/g);
     this.clockMeridiem.textContent = (time.match(/AM|PM/i) || []).join('');
     this.date.textContent = f.localeFormat(d, dateFormat);
 
@@ -769,33 +781,18 @@ var LockScreen = {
 
       return;
     }
-
-    if (voice.network.mcc == 724 &&
-        voice.cell && voice.cell.gsmLocationAreaCode) {
-      // We are in Brazil, It is legally required to show local info
-      // about current registered GSM network in a legally specified way.
-      var lac = voice.cell.gsmLocationAreaCode % 100;
-      var carriers = MobileInfo.brazil.carriers;
-      var regions = MobileInfo.brazil.regions;
-
-      connstateLine2.textContent =
-        (carriers[voice.network.mnc] || ('724' + voice.network.mnc)) +
-        ' ' +
-        (regions[lac] ? regions[lac] + ' ' + lac : '');
+    var operatorInfos = MobileOperator.userFacingInfo(conn);
+    if (this.cellbroadcastLabel) {
+      connstateLine2.textContent = this.cellbroadcastLabel;
+    } else if (operatorInfos.carrier) {
+      connstateLine2.textContent = operatorInfos.carrier + ' ' +
+        operatorInfos.region;
     }
 
-    var carrierName = voice.network.shortName || voice.network.longName;
-
-    if (iccInfo.isDisplaySpnRequired && iccInfo.spn) {
-      if (iccInfo.isDisplayNetworkNameRequired) {
-        carrierName = carrierName + ' ' + iccInfo.spn;
-      } else {
-        carrierName = iccInfo.spn;
-      }
-    }
+    var operator = operatorInfos.operator;
 
     if (voice.roaming) {
-      var l10nArgs = { operator: carrierName };
+      var l10nArgs = { operator: operator };
       connstateLine1.dataset.l10nId = 'roaming';
       connstateLine1.dataset.l10nArgs = JSON.stringify(l10nArgs);
       connstateLine1.textContent = _('roaming', l10nArgs);
@@ -804,7 +801,7 @@ var LockScreen = {
     }
 
     delete connstateLine1.dataset.l10nId;
-    connstateLine1.textContent = carrierName;
+    connstateLine1.textContent = operator;
   },
 
   updatePassCodeUI: function lockscreen_updatePassCodeUI() {
@@ -915,4 +912,10 @@ var LockScreen = {
   }
 };
 
-LockScreen.init();
+if (navigator.mozL10n.readyState == 'complete' ||
+    navigator.mozL10n.readyState == 'interactive') {
+  LockScreen.init();
+} else {
+  window.addEventListener('localized', LockScreen.init.bind(LockScreen));
+}
+
