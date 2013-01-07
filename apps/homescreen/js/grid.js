@@ -127,6 +127,7 @@ const GridManager = (function() {
         }
 
         // Generate a function accordingly to the current page position.
+        var cont = 0;
         if (Homescreen.isInEditMode() || currentPage > 2) {
           var pan = function(e) {
             deltaX = e.clientX - startX;
@@ -134,6 +135,9 @@ const GridManager = (function() {
           };
         } else {
           var pan = function(e) {
+            if (  ++cont%2 !== 0 ) {
+              return;
+            }
             deltaX = e.clientX - startX;
             window.mozRequestAnimationFrame(refresh);
             window.mozRequestAnimationFrame(function() {

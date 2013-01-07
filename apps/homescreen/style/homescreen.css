@@ -49,11 +49,6 @@ section,footer,nav,a,img {
   left: 0;
 }
 
-.icon img {
-  width: 6rem;
-  height: 6rem;
-}
-
 button:focus::-moz-focus-inner {
   border-color: transparent !important;
 }

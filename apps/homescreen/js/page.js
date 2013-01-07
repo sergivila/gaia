@@ -56,6 +56,13 @@ Icon.prototype = {
      *   <span class="options"></span>
      * </li>
      */
+
+     // Support different devices screen
+    var BASE_SIZE = 320;
+    var scaleRatio = window.innerWidth / BASE_SIZE;
+    this.MIN_ICON_SIZE = this.MIN_ICON_SIZE*scaleRatio;
+    this.MAX_ICON_SIZE = this.MAX_ICON_SIZE*scaleRatio;
+
     var container = this.container = document.createElement('li');
     container.className = 'icon';
     if (this.descriptor.hidden) {
@@ -87,8 +94,8 @@ Icon.prototype = {
       img.style.visibility = 'visible';
     } else {
       img.setAttribute('role', 'presentation');
-      img.width = 64;
-      img.height = 64;
+      img.width = this.MAX_ICON_SIZE+4;
+      img.height = this.MAX_ICON_SIZE+4;
       if (descriptor.renderedIcon) {
         this.displayRenderedIcon();
       } else {
@@ -131,6 +138,7 @@ Icon.prototype = {
   fetchImageData: function icon_fetchImageData() {
     var descriptor = this.descriptor;
     var icon = descriptor.icon;
+
     if (!icon) {
       this.loadImageData();
       return;
@@ -140,11 +148,6 @@ Icon.prototype = {
     if (icon.indexOf('data:') == 0) {
        this.loadImageData();
        return;
-    }
-
-    if ( icon.search("@2x") !== -1 ) {
-      this.MIN_ICON_SIZE = this.MIN_ICON_SIZE*2;
-      this.MAX_ICON_SIZE = this.MAX_ICON_SIZE*2;
     }
 
     var self = this;
@@ -209,8 +212,8 @@ Icon.prototype = {
   renderImageForBookMark: function icon_renderImageForBookmark(img){
     var self = this;
     var canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
+    canvas.width = this.MAX_ICON_SIZE+4;
+    canvas.height = this.MAX_ICON_SIZE+4;
     var ctx = canvas.getContext('2d');
 
     // Draw the background
