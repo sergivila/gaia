@@ -90,10 +90,19 @@ fb.utils.runQuery = function(query, callback, access_token) {
 fb.utils.getFriendPicture = function(uid, callback, access_token) {
    // Access token is necessary just in case the image is not public
    // When passing an access token to FB https must be used
+
+ // Scale ratio for different devices
+  var BASE_SIZE = 320;
+  var scaleRatio = window.innerWidth / BASE_SIZE;
+
+  // FB query profile detail picture size
+  var picwidth = BASE_SIZE*scaleRatio;
+  var picwidth = picwidth.toFixed();
+
   var imgSrc = 'https://graph.facebook.com/' + uid + '/picture?';
 
   var params = [
-    'type=large',
+    'width='+picwidth,
     'access_token' + '=' + access_token
   ];
 

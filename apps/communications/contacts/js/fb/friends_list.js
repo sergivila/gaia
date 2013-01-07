@@ -9,6 +9,16 @@ fbFriends.List = (function() {
     // Hash containing each group
     var groups = {};
 
+    // Scale ratio for different devices
+    var BASE_SIZE = 320;
+    var scaleRatio = window.innerWidth / BASE_SIZE;
+
+    // FB import profile picture size
+    var picwidth = 120*scaleRatio;
+    var picwidth = picwidth.toFixed();
+    var picheight = 120*scaleRatio;
+    var picheight = picheight.toFixed();
+
     contacts.forEach(function(contact) {
       // Contacts are ordered so it is pretty easy to group them
       var groupName = getGroupName(contact);
@@ -41,6 +51,10 @@ fbFriends.List = (function() {
             searchInfo.push(friend[field][0]);
           }
         });
+
+        // Set the picture size
+        friend.picwidth = picwidth;
+        friend.picheight = picheight;
 
         // Enabling searching by email
         if (friend['email1']) {

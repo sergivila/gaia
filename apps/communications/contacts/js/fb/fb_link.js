@@ -254,11 +254,23 @@ if (!fb.link) {
         var data = response.data;
         currentRecommendation = data;
 
+        // Scale ratio for different devices
+        var BASE_SIZE = 320;
+        var scaleRatio = window.innerWidth / BASE_SIZE;
+
+        // FB import profile picture size
+        var picwidth = 120*scaleRatio;
+        var picwidth = picwidth.toFixed();
+        var picheight = 120*scaleRatio;
+        var picheight = picheight.toFixed();
+
         var numFriendsProposed = response.data.length;
         data.forEach(function(item) {
           if (!item.email) {
             item.email = '';
           }
+          item.picwidth = picwidth;
+          item.picheight = picheight;
         });
 
         if (numQueries === 3) {
@@ -363,7 +375,7 @@ if (!fb.link) {
         });
 
         clearList();
-        
+
         var fragment = document.createDocumentFragment();
         utils.templates.append(friendsList, response.data, fragment);
         friendsList.appendChild(fragment);
