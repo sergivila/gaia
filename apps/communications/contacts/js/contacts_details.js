@@ -73,9 +73,13 @@ contacts.Details = (function() {
       contactDetails.classList.add('up');
       cover.classList.add('up');
 
+      var BASE_HEIGHT = 480;
+      var scale_ratio = window.innerHeight / BASE_HEIGHT
+      var max_margin = 150*scale_ratio;
+
       var onMouseMove = function onMouseMove(event) {
         var newMargin = event.clientY - startPosition;
-        if (newMargin > 0 && newMargin < 150) {
+        if (newMargin > 0 && newMargin < max_margin) {
           contactDetails.classList.remove('up');
           cover.classList.remove('up');
           var calc = 'calc(' + initMargin + 'rem + ' + newMargin + 'px)';
