@@ -36,6 +36,18 @@
   display: none;
 }
 
+/* Adds 1 row of icons */
+@media all and (min-height: 900px ) and (min-width: 480px) {
+  .apps ol > li:nth-child(17) {
+    display: inline-block;
+  }
+/* Maximum 20 icons for page */
+  .apps ol > li:nth-child(21) {
+    display: none;
+  }
+}
+
+
 /* Option to delete apps */
 .apps ol > li span.options {
   position: absolute;
