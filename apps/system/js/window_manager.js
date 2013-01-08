@@ -1642,7 +1642,7 @@ var WindowManager = (function() {
       }
     }
 
-    var title = '', icon = ''; var remote = false;
+    var title = '', icon = '', remote = false, useAsyncPanZoom = false;
     var originName, originURL, searchName, searchURL;
 
     try {
@@ -1661,6 +1661,9 @@ var WindowManager = (function() {
         searchName = features.search.name.replace(regExp, ' ');
         searchURL = decodeURIComponent(features.search.url);
       }
+
+      if (features.useAsyncPanZoom)
+        useAsyncPanZoom = true;
     } catch (ex) { }
 
     // If we don't reuse an existing app, open a brand new one
@@ -1684,6 +1687,13 @@ var WindowManager = (function() {
         delete frame.dataset.loading;
         wrapperHeader.classList.remove('visible');
       });
+
+      // `mozasyncpanzoom` only works when added before attaching the iframe
+      // node to the document.
+      if (useAsyncPanZoom) {
+        frame.dataset.useAsyncPanZoom = true;
+        frame.setAttribute('mozasyncpanzoom', 'true');
+      }
 
       var app = appendFrame(frame, origin, url, title, {
         'name': title
