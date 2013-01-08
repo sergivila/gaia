@@ -149,7 +149,7 @@ html, body {
   right: 0;
   top: 0;
   color: #52B6CC;
-  margin: 1.4rem 1.4rem 0 0;
+  margin: 1.2rem 1.5rem 0 0;
   padding: 0;
   display: inline;
   line-height: 1.6rem;
@@ -164,7 +164,8 @@ html, body {
   pointer-events: none;
 }
 
-.notification.disappearing {
+.notification.disappearing,
+#notification-toaster.disappearing {
   transition: transform 0.3s linear;
   transform: translateX(100%);
 }
