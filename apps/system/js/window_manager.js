@@ -128,6 +128,33 @@ var WindowManager = (function() {
     }
   }
 
+  function scaleContent(frame) {
+    // We need to remove "remote", as it causes mismapped events:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=827802
+    var viewport = document.createElement("section");
+    viewport.className="wrappedViewport";
+
+    frame.removeAttribute('remote');
+
+    // Virtual scale for proper webapps display
+    var virtualScale = (function vScale(){
+      var BASE_SIZE = 320;
+      var scaleRatio = window.innerWidth/BASE_SIZE;
+
+      var frameWidth = frame.offsetWidth/scaleRatio;
+      var frameHeight = frame.offsetHeight/scaleRatio;
+
+      // Apply new values
+      viewport.style.width = frameWidth+'px';
+      viewport.style.height = frameHeight+'px';
+      viewport.style.transform = 'scale('+scaleRatio+')';
+    })();
+
+    // Move app to scaled viewport
+    viewport.appendChild(frame);
+    windows.appendChild(viewport);
+  }
+
   // Make the specified app the displayed app.
   // Public function.  Pass null to make the homescreen visible
   function launch(origin) {
@@ -1063,6 +1090,7 @@ var WindowManager = (function() {
 
     if (!manifestURL) {
       frame.setAttribute('data-wrapper', 'true');
+      frame.classList.add('wrappedApp')
       return frame;
     }
 
@@ -1114,6 +1142,11 @@ var WindowManager = (function() {
 
     // Add the iframe to the document
     windows.appendChild(frame);
+
+    // If is wrapped scale and append
+    if ('wrapper' in frame.dataset) {
+      scaleContent(frame);
+    }
 
     // And map the app origin to the info we need for the app
     var app = {
@@ -1189,9 +1222,14 @@ var WindowManager = (function() {
     var frame = app.frame;
 
     if (frame) {
-      windows.removeChild(frame);
+      if ('wrapper' in frame.dataset) {
+        windows.removeChild(frame.parentNode);
+      } else {
+        windows.removeChild(frame);
+      }
       clearFrameBackground(frame);
     }
+
 
     if (openFrame == frame) {
       setOpenFrame(null);
@@ -1252,7 +1290,7 @@ var WindowManager = (function() {
           wrapperFooter.classList.add('visible');
         }
       }
-      screenElement.classList.remove('inline-activity');  
+      screenElement.classList.remove('inline-activity');
     }
   }
 
@@ -1664,7 +1702,11 @@ var WindowManager = (function() {
       // system app content processes data jar.
       frame = document.createElement('iframe');
       frame.setAttribute('mozbrowser', 'true');
-      frame.setAttribute('remote', 'true');
+
+      // We need to remove "remote", as it causes mismapped events:
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=827802
+      // frame.setAttribute('remote', 'true');
+      // This should be removed just here instead on popup_manager.js
 
       frame.addEventListener('mozbrowserloadstart', function start() {
         frame.dataset.loading = true;

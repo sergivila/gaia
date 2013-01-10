@@ -223,7 +223,7 @@ body {
   max-height: 100%;
 }
 
-#windows > iframe.appWindow {
+#windows .appWindow {
   position: fixed;
   border: 0;
   margin: 0;
@@ -231,6 +231,8 @@ body {
   overflow: auto;
   left: 0;
   top: 2rem;
+  width: 100%;
+  height: calc(100% - 2rem);
 
   /* Need to leave this in here to prevent flickering. */
   transform: scale(1);
@@ -250,115 +252,138 @@ body {
  */
 }
 
-#screen.active-statusbar #windows > iframe.appWindow {
+#windows .wrappedViewport {
+  transform: scale(1);
+  transform-origin: left top;
+  margin: 0;
+  padding: 0;
+  position: fixed;
+  left: 0;
+  top: 2rem;
+  width: 100%;
+  height: calc(100% - 2rem);
+  margin: 0 auto;
+}
+
+#windows .wrappedApp {
+  top: 0;
+  width: 100%!important;
+  height: 100%!important;
+}
+
+#windows .inlineActivity {
+  top: 2rem!important;
+}
+
+#screen.active-statusbar #windows .appWindow {
   top: 4rem;
 }
 
-#windows > iframe.appWindow:not(.homescreen) {
+#windows .appWindow:not(.homescreen) {
   background-color: #fff;
 }
 
-#windows > iframe.appWindow:not(.homescreen).default-background {
+#windows .appWindow:not(.homescreen).default-background {
   background: #fff url('/shared/resources/branding/splash_screen_generic.png') no-repeat center center / cover;
 }
 
-#windows > iframe.appWindow:not(.active):not(.homescreen):not(.opening):not(.closing) {
+#windows .appWindow:not(.active):not(.homescreen):not(.opening):not(.closing) {
   visibility: hidden;
 }
 
-#windows > iframe.appWindow:not(.homescreen):not(.active):not(.inlineActivity):not(.opening) {
+#windows .appWindow:not(.homescreen):not(.active):not(.inlineActivity):not(.opening) {
   opacity: 0;
   transform: scale(0.6);
 }
 
-#windows > iframe.appWindow.opening {
+#windows .appWindow.opening {
   transition: transform 0.5s ease, opacity 0.3s ease;
 }
 
-#windows.slow-transition > iframe.appWindow.opening {
+#windows.slow-transition .appWindow.opening {
   transition: transform 5s ease, opacity 3s ease;
 }
 
-#screen.cards-view > #windows > iframe.appWindow.opening,
-#screen.cards-view > #windows > iframe.appWindow.closing,
-#screen.switch-app > #windows > iframe.appWindow.opening,
-#screen.switch-app > #windows > iframe.appWindow.closing {
+#screen.cards-view > #windows .appWindow.opening,
+#screen.cards-view > #windows .appWindow.closing,
+#screen.switch-app > #windows .appWindow.opening,
+#screen.switch-app > #windows .appWindow.closing {
   transition: transform 0.5s ease;
   visibility: inherit;
   opacity: 1;
 }
 
-#screen.switch-app > #windows.slow-transition > iframe.appWindow.opening,
-#screen.switch-app > #windows.slow-transition > iframe.appWindow.closing {
+#screen.switch-app > #windows.slow-transition .appWindow.opening,
+#screen.switch-app > #windows.slow-transition .appWindow.closing {
   transition: transform 5s ease;
 }
 
-#screen.switch-app > #windows > iframe.appWindow.opening-card {
+#screen.switch-app > #windows .appWindow.opening-card {
   transform: translateX(70%) scale(0.6);
   visibility: inherit;
   opacity: 1;
 }
 
-#screen.switch-app > #windows > iframe.appWindow.opening-switching {
+#screen.switch-app > #windows .appWindow.opening-switching {
   transform: scale(0.6);
   transition: transform 0.5s ease;
   visibility: inherit;
   opacity: 1;
 }
 
-#screen.switch-app > #windows.slow-transition > iframe.appWindow.opening-switching {
+#screen.switch-app > #windows.slow-transition .appWindow.opening-switching {
   transition: transform 5s ease;
 }
 
-#screen.switch-app > #windows > iframe.appWindow.closing-card {
+#screen.switch-app > #windows .appWindow.closing-card {
   transform: translateX(-70%) scale(0.6);
   transition: transform 0.5s ease;
   visibility: inherit;
   opacity: 1;
 }
 
-#screen.switch-app > #windows.slow-transition > iframe.appWindow.closing-card {
+#screen.switch-app > #windows.slow-transition .appWindow.closing-card {
   transition: transform 5s ease;
 }
 
-#windows > iframe.appWindow.closing {
+#windows .appWindow.closing {
   transition: transform 0.5s ease, opacity 0.3s ease 0.2s;
 }
 
-#windows.slow-transition > iframe.appWindow.closing {
+#windows.slow-transition .appWindow.closing {
   transition: transform 5s ease, opacity 3s ease 2s;
 }
 
-#windows > iframe.appWindow.inlineActivity,
-#windows > iframe.appWindow.hideBottom {
+#windows .appWindow.inlineActivity,
+#windows .appWindow.hideBottom {
   transform: translateY(100%);
   transition: transform 0.5s ease, visibility 0.5s ease;
 }
 
-#windows.slow-transition > iframe.appWindow.inlineActivity,
-#windows.slow-transition > iframe.appWindow.hideBottom {
+#windows.slow-transition .appWindow.inlineActivity,
+#windows.slow-transition .appWindow.hideBottom {
   transition: transform 5s ease, visibility 5s ease;
 }
 
-#windows > iframe.appWindow.back {
+#windows .appWindow.back {
   transition: transform 0.5s ease, visibility 0.5s ease;
   transform: scale(0.86);
 }
 
-#windows > iframe.appWindow.restored {
+#windows .appWindow.restored {
   transform: none;
   transition: transform 0.5s ease;
 }
 
-#windows > iframe.appWindow.inlineActivity.active {
+#windows .appWindow.inlineActivity.active {
   transform: none;
 }
 
-#screen > #windows > iframe.appWindow.fullscreen-app {
+#screen > #windows .appWindow.fullscreen-app {
   top: 0;
 }
 
-#screen.attention > #windows > iframe.appWindow.fullscreen-app,
+#screen.attention > #windows .appWindow.fullscreen-app,
 #screen.attention > #windowSprite,
 #screen.fullscreen-app.attention > #windowSprite {
   height: calc(100% - 4rem);
@@ -534,8 +559,8 @@ iframe.backgroundWindow {
   Styles for FTU starting
 */
 
-#screen.ftu > [data-z-index-level="app"] > iframe.appWindow.homescreen,
-#screen.ftu > [data-z-index-level="app"] > iframe.appWindow.homescreen.active {
+#screen.ftu > [data-z-index-level="app"] .appWindow.homescreen,
+#screen.ftu > [data-z-index-level="app"] .appWindow.homescreen.active {
   opacity: 0;
 }
 
