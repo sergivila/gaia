@@ -16,9 +16,14 @@ function Icon(descriptor, app) {
   this.updateAppStatus(app);
 }
 
+
+  // Support different devices screen
+var BASE_SIZE = 320;
+var SCALE_RATIO = window.innerWidth / BASE_SIZE;
+var MIN_ICON_SIZE = 52*SCALE_RATIO;
+var MAX_ICON_SIZE = 60*SCALE_RATIO;
+
 Icon.prototype = {
-  MIN_ICON_SIZE: 52,
-  MAX_ICON_SIZE: 60,
 
   DEFAULT_BOOKMARK_ICON_URL: window.location.protocol + '//' + window.location.host +
                     '/style/images/default_favicon.png',
@@ -58,12 +63,6 @@ Icon.prototype = {
      * </li>
      */
 
-     // Support different devices screen
-    var BASE_SIZE = 320;
-    var scaleRatio = window.innerWidth / BASE_SIZE;
-    this.MIN_ICON_SIZE = this.MIN_ICON_SIZE*scaleRatio;
-    this.MAX_ICON_SIZE = this.MAX_ICON_SIZE*scaleRatio;
-
     var container = this.container = document.createElement('li');
     container.className = 'icon';
     if (this.descriptor.hidden) {
@@ -95,8 +94,8 @@ Icon.prototype = {
       img.style.visibility = 'visible';
     } else {
       img.setAttribute('role', 'presentation');
-      img.width = this.MAX_ICON_SIZE+4;
-      img.height = this.MAX_ICON_SIZE+4;
+      img.width = MAX_ICON_SIZE+4;
+      img.height = MAX_ICON_SIZE+4;
       if (descriptor.renderedIcon) {
         this.displayRenderedIcon();
       } else {
@@ -223,8 +222,8 @@ Icon.prototype = {
   renderImageForBookMark: function icon_renderImageForBookmark(img){
     var self = this;
     var canvas = document.createElement('canvas');
-    canvas.width = this.MAX_ICON_SIZE+4;
-    canvas.height = this.MAX_ICON_SIZE+4;
+    canvas.width = MAX_ICON_SIZE+4;
+    canvas.height = MAX_ICON_SIZE+4;
     var ctx = canvas.getContext('2d');
 
     // Draw the background
@@ -234,12 +233,12 @@ Icon.prototype = {
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
       ctx.shadowBlur = 2;
       ctx.shadowOffsetY = 2;
-      ctx.drawImage(background,2,2);
+      ctx.drawImage(background,2*SCALE_RATIO,2*SCALE_RATIO, MAX_ICON_SIZE, MAX_ICON_SIZE);
       // Disable smoothing on icon resize
       ctx.shadowBlur = 0;
       ctx.shadowOffsetY = 0;
       ctx.mozImageSmoothingEnabled = false;
-      ctx.drawImage(img,16,16,32,32);
+      ctx.drawImage(img,16*SCALE_RATIO,16*SCALE_RATIO,32*SCALE_RATIO,32*SCALE_RATIO);
       canvas.toBlob(self.renderBlob.bind(self));
     };
   },
@@ -251,8 +250,8 @@ Icon.prototype = {
     }
 
     var canvas = document.createElement('canvas');
-    canvas.width = this.MAX_ICON_SIZE + 4;
-    canvas.height = this.MAX_ICON_SIZE + 4;
+    canvas.width = MAX_ICON_SIZE + 4;
+    canvas.height = MAX_ICON_SIZE + 4;
 
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -262,9 +261,9 @@ Icon.prototype = {
 
     // Deal with very small or very large icons
     img.width =
-        Math.min(this.MAX_ICON_SIZE, Math.max(img.width, this.MIN_ICON_SIZE));
+        Math.min(MAX_ICON_SIZE, Math.max(img.width, MIN_ICON_SIZE));
     img.height =
-        Math.min(this.MAX_ICON_SIZE, Math.max(img.height, this.MIN_ICON_SIZE));
+        Math.min(MAX_ICON_SIZE, Math.max(img.height, MIN_ICON_SIZE));
 
     var width = Math.min(img.width, canvas.width - 4);
     var height = Math.min(img.width, canvas.height - 4);
