@@ -1181,11 +1181,10 @@ var Browser = {
       }
     }
 
-    iframe.style.top = '-999px';
+    iframe.style.top = '-100%';
 
     iframe.setAttribute('mozasyncpanzoom', 'true');
     // FIXME: content shouldn't control this directly
-    iframe.setAttribute('remote', 'true');
 
     if (tab) {
       tab.dom = iframe;
@@ -1205,6 +1204,24 @@ var Browser = {
 
     this.tabs[tab.id] = tab;
     this.frames.appendChild(iframe);
+
+    // We need to remove "remote", as it causes mismapped events:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=827802
+    // iframe.setAttribute('remote', 'true');
+
+    // Virtual scale for proper webapps display
+    var virtualScale = (function vScale(){
+      var BASE_SIZE = 320;
+      var scaleRatio = window.innerWidth/BASE_SIZE;
+      var viewportWidth = iframe.offsetWidth/scaleRatio;
+      var viewportHeight = iframe.offsetHeight/scaleRatio;
+
+      iframe.style.width = viewportWidth+'px';
+      iframe.style.height = viewportHeight+'px';
+      iframe.style.transform = 'scale('+scaleRatio+')';
+      iframe.style.transformOrigin = 'left top';
+    })();
+
     return tab.id;
   },
 

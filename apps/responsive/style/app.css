@@ -70,7 +70,13 @@ form[data-type="edit"]:target { display: block; }
 
 
 
+@media all and (min--moz-device-pixel-ratio: 1.5) {
+	* { background: yellow!important; }
+}
 
+@media all and (min-resolution: 1.5dppx) {
+	* { background: blue!important; }
+}
 
 
 
