@@ -82,6 +82,7 @@ GAIA_LOCALES_PATH?=locales
 LOCALES_FILE?=shared/resources/languages.json
 GAIA_LOCALE_SRCDIRS=shared $(GAIA_APP_SRCDIRS)
 GAIA_DEFAULT_LOCALE?=en-US
+GAIA_INLINE_LOCALES?=1
 
 ###############################################################################
 # The above rules generate the profile/ folder and all its content.           #
@@ -327,10 +328,12 @@ define run-js-command
 	const HOMESCREEN = "$(HOMESCREEN)"; const GAIA_PORT = "$(GAIA_PORT)";       \
 	const GAIA_APP_SRCDIRS = "$(GAIA_APP_SRCDIRS)";                             \
 	const GAIA_LOCALES_PATH = "$(GAIA_LOCALES_PATH)";                           \
+	const LOCALES_FILE = "$(LOCALES_FILE)";                                     \
 	const BUILD_APP_NAME = "$(BUILD_APP_NAME)";                                 \
 	const PRODUCTION = "$(PRODUCTION)";                                         \
 	const OFFICIAL = "$(MOZILLA_OFFICIAL)";                                     \
 	const GAIA_DEFAULT_LOCALE = "$(GAIA_DEFAULT_LOCALE)";                       \
+	const GAIA_INLINE_LOCALES = "$(GAIA_INLINE_LOCALES)";                       \
 	const GAIA_ENGINE = "xpcshell";                                             \
 	';                                                                          \
 	$(XULRUNNERSDK) $(XPCSHELLSDK) -e "$$JS_CONSTS" -f build/utils.js "build/$(strip $1).js"
@@ -652,7 +655,7 @@ SETTINGS_ARG=--noftu
 endif
 
 profile/settings.json: build/settings.py build/wallpaper.jpg
-	python build/settings.py $(SETTINGS_ARG) --console --homescreen $(SCHEME)homescreen.$(GAIA_DOMAIN)$(GAIA_PORT)/manifest.webapp --ftu $(SCHEME)communications.$(GAIA_DOMAIN)$(GAIA_PORT)/manifest.webapp --wallpaper build/wallpaper.jpg --override build/custom-settings.json --output $@
+	python build/settings.py $(SETTINGS_ARG) --console --locale $(GAIA_DEFAULT_LOCALE) --homescreen $(SCHEME)homescreen.$(GAIA_DOMAIN)$(GAIA_PORT)/manifest.webapp --ftu $(SCHEME)communications.$(GAIA_DOMAIN)$(GAIA_PORT)/manifest.webapp --wallpaper build/wallpaper.jpg --override build/custom-settings.json --output $@
 
 # push profile/settings.json to the phone
 install-settings-defaults: profile/settings.json

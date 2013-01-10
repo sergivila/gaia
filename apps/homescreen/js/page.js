@@ -113,6 +113,7 @@ Icon.prototype = {
     var label = this.label = document.createElement('span');
     label.textContent = localizedName;
     wrapper.appendChild(label);
+    this.applyOverflowTextMask();
 
     icon.appendChild(wrapper);
 
@@ -133,6 +134,15 @@ Icon.prototype = {
       // with the label and the animation (associated to the span)
       container.style.visibility = 'visible';
       icon.classList.add('loading');
+    }
+  },
+
+  applyOverflowTextMask: function icon_applyOverflowTextMask() {
+    var label = this.label;
+    if (TextOverflowDetective.check(label.textContent)) {
+      label.parentNode.classList.add('mask');
+    } else {
+      label.parentNode.classList.remove('mask');
     }
   },
 
@@ -377,6 +387,8 @@ Icon.prototype = {
       descriptor.localizedName = localizedName;
       GridManager.markDirtyState();
     }
+
+    this.applyOverflowTextMask();
   },
 
   /*
@@ -808,3 +820,16 @@ dockProto.getChildren = function dk_getChildren() {
 };
 
 HTMLCollection.prototype.indexOf = Array.prototype.indexOf;
+
+const TextOverflowDetective = (function() {
+  var iconFakeWrapperWidht = document.querySelector('#fake-icon-name-wrapper').
+                                                                    offsetWidth;
+  var iconFakeLabel = document.querySelector('#fake-icon-name');
+
+  return {
+    check: function od_check(text) {
+      iconFakeLabel.textContent = text;
+      return iconFakeLabel.offsetWidth >= iconFakeWrapperWidht;
+    }
+  }
+})();

@@ -33,7 +33,11 @@ onLocalized(function bluetoothSettings() {
 
   // activate main button
   gBluetoothCheckBox.onchange = function changeBluetooth() {
-    settings.createLock().set({'bluetooth.enabled': this.checked});
+    var req = settings.createLock().set({'bluetooth.enabled': this.checked});
+    this.disabled = true;
+    req.onerror = function() {
+      gBluetoothCheckBox.disabled = false;
+    };
   };
 
   function initialDefaultAdapter() {
@@ -333,13 +337,13 @@ onLocalized(function bluetoothSettings() {
 
       navigator.mozSetMessageHandler('bluetooth-cancel',
         function bt_gotCancelMessage(message) {
-          showDevicePaired(false);
+          showDevicePaired(false, null);
         }
       );
 
       navigator.mozSetMessageHandler('bluetooth-pairedstatuschanged',
         function bt_getPairedMessage(message) {
-          showDevicePaired(message.paired);
+          showDevicePaired(message.paired, 'Authentication Failed');
         }
       );
 
@@ -433,8 +437,8 @@ onLocalized(function bluetoothSettings() {
         pairingMode = 'active';
         pairingAddress = device.address;
         stopDiscovery();
-        req.onerror = function bt_pairError() {
-          showDevicePaired(false);
+        req.onerror = function bt_pairError(error) {
+          showDevicePaired(false, req.error.name);
         };
 
       };
@@ -442,7 +446,7 @@ onLocalized(function bluetoothSettings() {
       openList.index[device.address] = [device, aItem];
     }
 
-    function showDevicePaired(paired) {
+    function showDevicePaired(paired, errorMessage) {
       // if we are in a pairing process, update found device list
       // or do error handling.
       if (pairingAddress) {
@@ -462,7 +466,12 @@ onLocalized(function bluetoothSettings() {
           // display failure only when active request
           if (pairingMode === 'active' && !userCanceledPairing) {
             // show pair process fail.
-            var msg = _('error-pair-title') + '\n' + _('error-pair-pincode');
+            var msg = _('error-pair-title');
+            if (errorMessage === 'Repeated Attempts') {
+              msg = msg + '\n' + _('error-pair-toofast');
+            } else if (errorMessage === 'Authentication Failed') {
+              msg = msg + '\n' + _('error-pair-pincode');
+            }
             window.alert(msg);
           }
           userCanceledPairing = false;
@@ -489,7 +498,7 @@ onLocalized(function bluetoothSettings() {
       // backend takes responsibility to disconnect first.
       var req = defaultAdapter.unpair(device);
       req.onerror = function bt_pairError() {
-        showDevicePaired(true);
+        showDevicePaired(true, null);
       };
     }
 
@@ -584,7 +593,7 @@ onLocalized(function bluetoothSettings() {
     }
 
     function startDiscovery() {
-      if (!bluetooth.enabled || !defaultAdapter)
+      if (!bluetooth.enabled || !defaultAdapter || discoverTimeout)
         return;
 
       var req = defaultAdapter.startDiscovery();
@@ -607,7 +616,7 @@ onLocalized(function bluetoothSettings() {
     }
 
     function stopDiscovery() {
-      if (!bluetooth.enabled || !defaultAdapter)
+      if (!bluetooth.enabled || !defaultAdapter || !discoverTimeout)
         return;
       var req = defaultAdapter.stopDiscovery();
       req.onsuccess = function bt_discoveryStopped() {

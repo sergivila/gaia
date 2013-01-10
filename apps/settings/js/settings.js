@@ -432,7 +432,7 @@ var Settings = {
 window.addEventListener('load', function loadSettings() {
   window.removeEventListener('load', loadSettings);
   window.addEventListener('change', Settings);
-  window.addEventListener('click', Settings); // XXX really needed?
+
   Settings.init();
   handleDataConnectivity();
 
@@ -511,7 +511,6 @@ window.addEventListener('load', function loadSettings() {
 
     // load panel (+ dependencies) if necessary -- this should be synchronous
     lazyLoad(newPanel);
-    newPanel.hidden = false;
 
     // switch previous/current classes -- the timeout is required to make the
     // transition smooth after lazy-loading a panel
@@ -544,7 +543,11 @@ window.addEventListener('load', function loadSettings() {
 
       oldPanel.addEventListener('transitionend', function onTransitionEnd() {
         oldPanel.removeEventListener('transitionend', onTransitionEnd);
-        oldPanel.hidden = true;
+        // Workaround for bug 825622, remove when fixed
+        if (newPanel.id == 'about-licensing') {
+          var iframe = document.getElementById('os-license');
+          iframe.src = iframe.dataset.src;
+        }
       });
 
     });
