@@ -1181,7 +1181,7 @@ var Browser = {
       }
     }
 
-    iframe.style.top = '-100%';
+    iframe.style.top = 'calc(-100% - 5rem)';
 
     iframe.setAttribute('mozasyncpanzoom', 'true');
     // FIXME: content shouldn't control this directly
