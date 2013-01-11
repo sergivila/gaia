@@ -92,6 +92,10 @@
 	text-overflow: '';
 }
 
+li:active > div > img {
+  filter: url('app_tapped_filter.svg#blur');
+}
+
 /* text label */
 .apps ol > li > div > span > span {
   font-size: 1.2rem; /* was 5pt */

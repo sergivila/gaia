@@ -124,7 +124,6 @@
             display: block;
             font-size: 1.2rem;
             margin-top: 1.2rem;
-            text-transform: capitalize;
             z-index: 50;
             color: #fff;
             font-weight: 600;
@@ -141,10 +140,6 @@
             -moz-transform: scale(.7) !important;
             transform: scale(.7) !important;
         }
-
-    #evmeContainer #category-page-name {
-        text-transform: capitalize;
-    }
 
 #evmeContainer #category-page-screen {
     position: absolute;
