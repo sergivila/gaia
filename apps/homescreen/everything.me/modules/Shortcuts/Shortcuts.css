@@ -60,14 +60,19 @@
     }
         #evmeContainer .shortcut .remove {
             position: absolute;
+<<<<<<< HEAD
             top: -0.5rem;
             left: 0;
+=======
+            top: -5px;
+            left: .5rem;
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
             right: 0;
             height: 2.5rem;
             z-index: 100;
             display: none;
             cursor: pointer;
-            background: transparent url('/resources/images/delete.png') 50% 0 no-repeat;
+            background: transparent url('/resources/images/delete.png') no-repeat left top;
         }
     #evmeContainer .shortcut.disabled {
         opacity: 0;

@@ -223,12 +223,16 @@ body {
   max-height: 100%;
 }
 
+<<<<<<< HEAD
 #windows .appWindow {
+=======
+#windows > .appWindow {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   position: fixed;
   border: 0;
   margin: 0;
   padding: 0;
-  overflow: auto;
+  overflow: hidden;
   left: 0;
   top: 2rem;
   width: 100%;
@@ -238,8 +242,8 @@ body {
   transform: scale(1);
 
 /*
- * Do not specify height/width here! They should go to
- * Window.prototype.resize() in window_manager.js
+ * Do not specify height/width here!
+ * They should be handle executively in window_manager.js
  *
  */
 
@@ -252,6 +256,7 @@ body {
  */
 }
 
+<<<<<<< HEAD
 #windows .wrappedViewport {
   transform: scale(1);
   transform-origin: left top;
@@ -292,10 +297,39 @@ body {
 }
 
 #windows .appWindow:not(.homescreen):not(.active):not(.inlineActivity):not(.opening) {
+=======
+#windows > .appWindow > iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+#screen.active-statusbar #windows > .appWindow {
+  top: 40px;
+}
+
+#windows > .appWindow:not(.homescreen) {
+  background-color: #fff;
+}
+
+#windows > .appWindow:not(.homescreen).default-background {
+  background: url('/shared/resources/branding/splash_screen_generic.png') center center no-repeat #fff;
+}
+
+#windows > .appWindow:not(.active):not(.homescreen):not(.opening):not(.closing) {
+  visibility: hidden;
+}
+
+#windows > .appWindow:not(.homescreen):not(.active):not(.inlineActivity):not(.opening) {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   opacity: 0;
   transform: scale(0.6);
 }
 
+<<<<<<< HEAD
 #windows .appWindow.opening {
   transition: transform 0.25s ease, opacity 0.15s ease;
 }
@@ -308,40 +342,76 @@ body {
 #screen.cards-view > #windows .appWindow.closing,
 #screen.switch-app > #windows .appWindow.opening,
 #screen.switch-app > #windows .appWindow.closing {
+=======
+#windows > .appWindow.opening {
+  transition: transform 0.25s ease, opacity 0.15s ease;
+}
+
+#windows.slow-transition > .appWindow.opening {
+  transition: transform 5s ease, opacity 3s ease;
+}
+
+#screen.cards-view > #windows > .appWindow.opening,
+#screen.cards-view > #windows > .appWindow.closing,
+#screen.switch-app > #windows > .appWindow.opening,
+#screen.switch-app > #windows > .appWindow.closing {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   transition: transform 0.25s ease;
   visibility: inherit;
   opacity: 1;
 }
 
+<<<<<<< HEAD
 #screen.switch-app > #windows.slow-transition .appWindow.opening,
 #screen.switch-app > #windows.slow-transition .appWindow.closing {
   transition: transform 5s ease;
 }
 
 #screen.switch-app > #windows .appWindow.opening-card {
+=======
+#screen.switch-app > #windows.slow-transition > .appWindow.opening,
+#screen.switch-app > #windows.slow-transition > .appWindow.closing {
+  transition: transform 5s ease;
+}
+
+#screen.switch-app > #windows > .appWindow.opening-card {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   transform: translateX(70%) scale(0.6);
   visibility: inherit;
   opacity: 1;
 }
 
+<<<<<<< HEAD
 #screen.switch-app > #windows .appWindow.opening-switching {
+=======
+#screen.switch-app > #windows > .appWindow.opening-switching {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   transform: scale(0.6);
   transition: transform 0.25s ease;
   visibility: inherit;
   opacity: 1;
 }
 
+<<<<<<< HEAD
 #screen.switch-app > #windows.slow-transition .appWindow.opening-switching {
   transition: transform 5s ease;
 }
 
 #screen.switch-app > #windows .appWindow.closing-card {
+=======
+#screen.switch-app > #windows.slow-transition > .appWindow.opening-switching {
+  transition: transform 5s ease;
+}
+
+#screen.switch-app > #windows > .appWindow.closing-card {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   transform: translateX(-70%) scale(0.6);
   transition: transform 0.25s ease;
   visibility: inherit;
   opacity: 1;
 }
 
+<<<<<<< HEAD
 #screen.switch-app > #windows.slow-transition .appWindow.closing-card {
   transition: transform 5s ease;
 }
@@ -356,25 +426,55 @@ body {
 
 #windows .appWindow.inlineActivity,
 #windows .appWindow.hideBottom {
+=======
+#screen.switch-app > #windows.slow-transition > .appWindow.closing-card {
+  transition: transform 5s ease;
+}
+
+#windows > .appWindow.closing {
+  transition: transform 0.25s ease, opacity 0.15s ease 0.1s;
+}
+
+#windows.slow-transition > .appWindow.closing {
+  transition: transform 5s ease, opacity 3s ease 2s;
+}
+
+#windows > .appWindow.inlineActivity,
+#windows > .appWindow.hideBottom {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   transform: translateY(100%);
   transition: transform 0.25s ease, visibility 0.25s ease;
 }
 
+<<<<<<< HEAD
 #windows.slow-transition .appWindow.inlineActivity,
 #windows.slow-transition .appWindow.hideBottom {
   transition: transform 5s ease, visibility 5s ease;
 }
 
 #windows .appWindow.back {
+=======
+#windows.slow-transition > .appWindow.inlineActivity,
+#windows.slow-transition > .appWindow.hideBottom {
+  transition: transform 5s ease, visibility 5s ease;
+}
+
+#windows > .appWindow.back {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   transition: transform 0.25s ease, visibility 0.25s ease;
   transform: scale(0.86);
 }
 
+<<<<<<< HEAD
 #windows .appWindow.restored {
+=======
+#windows > .appWindow.restored {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   transform: none;
   transition: transform 0.25s ease;
 }
 
+<<<<<<< HEAD
 #windows .appWindow.inlineActivity.active {
   transform: none;
 }
@@ -384,6 +484,17 @@ body {
 }
 
 #screen.attention > #windows .appWindow.fullscreen-app,
+=======
+#windows > .appWindow.inlineActivity.active {
+  transform: none;
+}
+
+#screen > #windows > .appWindow.fullscreen-app {
+  top: 0;
+}
+
+#screen.attention > #windows > .appWindow.fullscreen-app,
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
 #screen.attention > #windowSprite,
 #screen.fullscreen-app.attention > #windowSprite {
   height: calc(100% - 4rem);
@@ -559,8 +670,13 @@ iframe.backgroundWindow {
   Styles for FTU starting
 */
 
+<<<<<<< HEAD
 #screen.ftu > [data-z-index-level="app"] .appWindow.homescreen,
 #screen.ftu > [data-z-index-level="app"] .appWindow.homescreen.active {
+=======
+#screen.ftu > [data-z-index-level="app"] > .appWindow.homescreen,
+#screen.ftu > [data-z-index-level="app"] > .appWindow.homescreen.active {
+>>>>>>> 6c8ef67fb7f40282ff4a3ddec3ec0a3cba63a580
   opacity: 0;
 }
 
@@ -570,4 +686,25 @@ iframe.backgroundWindow {
 
 #screen.ftuStarting #statusbar {
   opacity: 0;
+}
+
+/* For app error */
+
+.appWindow > iframe {
+  z-index: 1;
+}
+
+.appError {
+  display: none;
+  background-color: black;
+  z-index: 0;
+}
+
+.appWindow > .appError {
+  background-color: black;
+}
+
+.appError.visible {
+  z-index: 2;
+  display: block;
 }
