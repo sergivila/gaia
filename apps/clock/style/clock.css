@@ -372,8 +372,12 @@ html, body {
 }
 
 #clock-day-date {
+<<<<<<< HEAD
   font: lighter normal 2.1rem 'MozTT', sans-serif;
   text-transform: capitalize;
+=======
+  font: lighter normal 21px 'MozTT', sans-serif;
+>>>>>>> e964e46c4e54218af291720a3d47872ceb657968
   margin: 2.6rem 0 0 1.5rem;
   line-height: 1.7rem;
   position: absolute;

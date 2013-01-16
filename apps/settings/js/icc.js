@@ -147,6 +147,16 @@
   }
 
   /**
+   * Send Terminal Response : UICC SESSION TERMINATED BY USER
+   */
+  function sendSessionEndTROnFocusLose() {
+    if (document.mozHidden)
+      responseSTKCommand({
+        resultCode: icc.STK_RESULT_UICC_SESSION_TERM_BY_USER
+      });
+  }
+
+  /**
    * Response ICC Command
    */
   function responseSTKCommand(response, force) {
@@ -239,8 +249,11 @@
         responseSTKCommand({
           resultCode: icc.STK_RESULT_OK
         });
-        // TODO: Show a spinner instead the message (UX decission).
-        // Stop it on any other command
+        if(options.text) {
+          debug("display text" + options.text)
+          command.options.userClear = true;
+          displayText(command);
+        }
         break;
 
       case icc.STK_CMD_SET_UP_CALL:
@@ -586,6 +599,7 @@
 
     debug('STK Input title: ' + options.text);
 
+    document.addEventListener('mozvisibilitychange', sendSessionEndTROnFocusLose, true);
     var li = document.createElement('li');
     var p = document.createElement('p');
     p.id = 'stk-item-title';
@@ -722,6 +736,9 @@
 
     var tonePlayer = new Audio();
     var selectedPhoneSound;
+    if (typeof options.tone == "string") {
+      options.tone = options.tone.charCodeAt(0);
+    }
     switch (options.tone) {
       case icc.STK_TONE_TYPE_DIAL_TONE:
         selectedPhoneSound = 'resources/dtmf_tones/350Hz+440Hz_200ms.ogg';
@@ -758,10 +775,12 @@
     tonePlayer.loop = true;
     tonePlayer.play();
 
-    timeout = calculateDurationInMS(options.duration);
-    setTimeout(function() {
-      tonePlayer.pause();
-    },timeout);
+    if (options.duration) {
+      timeout = calculateDurationInMS(options.duration);
+      setTimeout(function() {
+        tonePlayer.pause();
+      }, timeout);
+    }
 
     if (options.isVibrate == true) {
       window.navigator.vibrate([200]);

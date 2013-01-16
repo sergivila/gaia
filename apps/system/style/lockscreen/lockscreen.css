@@ -197,6 +197,11 @@
   display: none;
 }
 
+#lockscreen-connstate.twolines > span:first-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
 /* For some reason display: inline-block disregards hidden attribute */
 #lockscreen-connstate[hidden] {
   display: none;
@@ -216,8 +221,8 @@
 }
 
 .lockscreen-clock {
-	margin: -0.8rem 0 -1rem -0.4rem;
-	font-weight: 300;
+  margin: -0.8rem 0 -1rem -0.4rem;
+  font-weight: 300;
 }
 
 #lockscreen-clock-numbers {
@@ -230,13 +235,19 @@
 
 #lockscreen-date {
   font-weight: 400;
-	font-size: calc(7 * 0.226rem);
+  font-size: calc(7 * 0.226rem);
 }
 
 .lockscreen-clock, #lockscreen-date {
+<<<<<<< HEAD
 	font-family: 'MozTT', sans-serif;
   text-shadow: 0.1rem 0.1rem 0.3rem #000000;
 	color: #fff;
+=======
+  font-family: 'MozTT', sans-serif;
+  text-shadow: 1px 1px 3px #000000;
+  color: #fff;
+>>>>>>> e964e46c4e54218af291720a3d47872ceb657968
 }
 
 #lockscreen-area {
